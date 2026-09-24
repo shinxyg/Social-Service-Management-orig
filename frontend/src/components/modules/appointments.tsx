@@ -51,6 +51,17 @@ export function findApplicantEmail(appt: { email?: string; referenceNo?: string;
   if (appt.rawApp?.email && appt.rawApp.email.includes("@")) return appt.rawApp.email.trim()
   if (appt.rawApp?.applicant_email && appt.rawApp.applicant_email.includes("@")) return appt.rawApp.applicant_email.trim()
   try {
+    const rawSolo = localStorage.getItem("solo_parent_applications")
+    if (rawSolo) {
+      const parsed = JSON.parse(rawSolo)
+      const found = parsed.find((p: any) =>
+        (appt.referenceNo && (p.referenceNumber === appt.referenceNo || p.id === appt.referenceNo || p.reference_number === appt.referenceNo)) ||
+        (appt.applicantName && [p.firstName, p.lastName].filter(Boolean).join(" ").toLowerCase() === appt.applicantName.toLowerCase())
+      )
+      if (found?.email && found.email.includes("@")) return found.email.trim()
+    }
+  } catch {}
+  try {
     const rawPwd = localStorage.getItem("pwd_senior_applications")
     if (rawPwd) {
       const parsed = JSON.parse(rawPwd)
@@ -384,6 +395,7 @@ function AppointmentCard({
   const st = getAppointmentStatusTheme(effectiveStatus)
   const isPwdAppt = appt.module === "PWD" || String(appt.concern || "").toLowerCase().includes("pwd") || String(appt.concern || "").toLowerCase().includes("disability")
   const isSeniorAppt = appt.module === "Senior Citizen" || String(appt.concern || "").toLowerCase().includes("senior") || String(appt.concern || "").toLowerCase().includes("osca")
+  const isSoloParentAppt = appt.module === "Solo Parent" || String(appt.concern || "").toLowerCase().includes("solo parent")
 
   return (
     <div className={`border rounded-xl p-4 ${st?.card || 'bg-slate-50/60 border-slate-200'}`}>
@@ -492,6 +504,27 @@ function AppointmentCard({
                     <span>Reject</span>
                   </button>
                 </div>
+              ) : isSoloParentAppt ? (
+                <div className="flex flex-wrap items-center gap-1.5 justify-end">
+                  <button
+                    type="button"
+                    onClick={() => onApprove?.(appt)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 text-white text-xs font-bold hover:bg-violet-700 transition-colors cursor-pointer shadow-2xs"
+                    title="Approve Solo Parent Financial Subsidy"
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5" />
+                    <span>Approve Subsidy (₱1,000/mo)</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onReject?.(appt)}
+                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200 text-xs font-bold transition-colors cursor-pointer"
+                    title="Reject Solo Parent Application"
+                  >
+                    <XCircle className="h-3.5 w-3.5" />
+                    <span>Reject</span>
+                  </button>
+                </div>
               ) : (
                 <div className="flex flex-wrap items-center gap-1.5 justify-end">
                   <button
@@ -538,6 +571,13 @@ function AppointmentCard({
                   <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 text-xs font-bold shadow-2xs">
                     <CheckCircle2 className="h-3.5 w-3.5 text-amber-600" />
                     <span>✓ Senior Pension Active (₱500/mo)</span>
+                  </span>
+                </div>
+              ) : isSoloParentAppt ? (
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-50 dark:bg-violet-950/40 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-800/60 text-xs font-bold shadow-2xs">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-violet-600" />
+                    <span>✓ Solo Parent Subsidy Approved (₱1,000/mo)</span>
                   </span>
                 </div>
               ) : (() => {
@@ -685,12 +725,19 @@ export default function Appointments() {
           resPwdSettled,
           resLivSettled,
           resCwSettled,
+          resSpSettled,
         ] = await Promise.allSettled([
           fetch(`${API_BASE}/api/appointments`),
           fetch(`${API_BASE}/api/aics/applications`),
           fetch(`${API_BASE}/api/pwd-senior/applications`),
           fetch(`${API_BASE}/api/livelihood/applications`),
           fetch(`${API_BASE}/api/child-welfare/admin/all?limit=100`, {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+            },
+          }),
+          fetch(`${API_BASE}/api/solo-parent/admin/all?limit=100`, {
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
@@ -1048,10 +1095,67 @@ export default function Appointments() {
           } catch {}
         }
 
+        let soloParentApps: any[] = []
+        if (resSpSettled.status === "fulfilled" && resSpSettled.value.ok) {
+          try {
+            const dataSp = await resSpSettled.value.json()
+            if (Array.isArray(dataSp)) {
+              soloParentApps = dataSp
+            } else if (Array.isArray(dataSp?.applications)) {
+              soloParentApps = dataSp.applications
+            }
+          } catch {}
+        }
+        if (!soloParentApps || soloParentApps.length === 0) {
+          try {
+            const local = localStorage.getItem("solo_parent_applications")
+            if (local) soloParentApps = JSON.parse(local)
+          } catch {}
+        }
+        if (Array.isArray(soloParentApps)) {
+          soloParentApps.forEach((sp: any) => {
+            const st = String(sp.status || sp.application_status || "").toLowerCase()
+            if (["rejected", "denied", "disapproved", "cancelled"].includes(st)) return
+
+            const ref = sp.referenceNumber || sp.reference_number || (sp.id ? (String(sp.id).startsWith("SP-") ? sp.id : `SP-${sp.id}`) : `SP-2026-0001`)
+            const apptId = `sp-appt-${sp.id || ref}`
+            const concern = "Solo Parent Financial Subsidy Payout"
+            const fullName = [sp.firstName || sp.first_name, sp.middleName || sp.middle_name, sp.lastName || sp.last_name, sp.suffix].filter(Boolean).join(" ").trim().toUpperCase() || "SOLO PARENT APPLICANT"
+            const cached = localScheduledMap[apptId] || localScheduledMap[ref] || localScheduledMap[`${ref}_${concern}`] || localScheduledMap[`Solo Parent_${ref}`]
+
+            const schedDate = cleanDate(cached?.scheduledDate || sp.scheduledDate || sp.scheduled_date || sp.appointmentDate)
+            const schedTime = cached?.scheduledTime || sp.scheduledTime || sp.scheduled_time || sp.appointmentTime || null
+            const isApproved = st === "approved" || st === "for_distribution" || st === "completed" || cached?.decision === "approved" || cached?.status === "approved"
+            const isReferred = st === "referred" || cached?.decision === "referred" || cached?.status === "referred"
+            const isRejected = st === "rejected" || cached?.decision === "rejected" || cached?.status === "rejected"
+
+            const decision: ("approved" | "referred" | "rejected" | undefined) = isApproved ? "approved" : (isReferred ? "referred" : (isRejected ? "rejected" : undefined))
+            const apptStatus: AppointmentStatus = isApproved ? (schedDate ? "approved" : "pending") : (isReferred ? "referred" : (isRejected ? "rejected" : (schedDate ? "scheduled" : "pending")))
+
+            appts.push({
+              id: apptId,
+              rawAppId: sp.id,
+              referenceNo: ref,
+              module: "Solo Parent",
+              applicantName: fullName,
+              submittedAt: sp.submittedAt || sp.created_at || new Date().toISOString(),
+              concern,
+              status: apptStatus,
+              decision,
+              scheduledDate: schedDate,
+              scheduledTime: schedTime,
+              officeLocation: cached?.officeLocation || sp.officeLocation || "Quezon City Hall - SSDD Solo Parent Welfare Section",
+              notes: cached?.notes || sp.notes,
+              rawApp: sp,
+              email: sp.email,
+            })
+          })
+        }
+
         appts = appts.filter((a) => {
           const ref = String(a.referenceNo || '').toLowerCase().trim()
           const id = String(a.id || '').toLowerCase().trim()
-          const rawId = id.replace(/^(db-appt-|aics-appt-|pwd-senior-appt-|cw-appt-|liv-appt-)/, '')
+          const rawId = id.replace(/^(db-appt-|aics-appt-|pwd-senior-appt-|cw-appt-|liv-appt-|sp-appt-)/, '')
           return !dismissedSet.has(ref) && !dismissedSet.has(id) && !dismissedSet.has(rawId)
         })
 
@@ -1130,11 +1234,17 @@ export default function Appointments() {
 
     const handleStorageChange = () => fetchAppointments()
     window.addEventListener("appointments_updated", handleStorageChange)
+    window.addEventListener("pwd_senior_applications_updated", handleStorageChange)
+    window.addEventListener("solo_parent_applications_updated", handleStorageChange)
+    window.addEventListener("aics_applications_updated", handleStorageChange)
     window.addEventListener("storage", handleStorageChange)
     return () => {
       clearInterval(liveTimer)
       unsubscribeRealtime()
       window.removeEventListener("appointments_updated", handleStorageChange)
+      window.removeEventListener("pwd_senior_applications_updated", handleStorageChange)
+      window.removeEventListener("solo_parent_applications_updated", handleStorageChange)
+      window.removeEventListener("aics_applications_updated", handleStorageChange)
       window.removeEventListener("storage", handleStorageChange)
     }
   }, [])
@@ -1187,6 +1297,7 @@ export default function Appointments() {
         try {
           const isAics = targetAppt.module === "AICS" || String(targetAppt.concern || "").toLowerCase().includes("medical")
           const isPwd = targetAppt.module === "PWD" || String(targetAppt.concern || "").toLowerCase().includes("pwd") || String(targetAppt.concern || "").toLowerCase().includes("disability")
+          const isSolo = targetAppt.module === "Solo Parent" || String(targetAppt.concern || "").toLowerCase().includes("solo parent")
           const targetAppId = targetAppt.rawAppId || targetAppt.id.replace('aics-appt-', '').replace('db-appt-', '')
 
           const schedCalls: Promise<any>[] = [
@@ -1279,6 +1390,27 @@ export default function Appointments() {
               type: 'appointment',
               link: '/portal/my-applications',
             })
+          } else if (isSolo) {
+            try {
+              const rawSolo = localStorage.getItem("solo_parent_applications") || "[]"
+              const soloList = JSON.parse(rawSolo)
+              const updated = soloList.map((s: any) => {
+                if (s.referenceNumber === targetAppt.referenceNo || s.id === targetAppt.referenceNo || s.reference_number === targetAppt.referenceNo) {
+                  return { ...s, scheduledDate: date, scheduledTime: time, officeLocation: location, notes }
+                }
+                return s
+              })
+              localStorage.setItem("solo_parent_applications", JSON.stringify(updated))
+            } catch {}
+
+            pushUserNotification({
+              userId: targetAppt.referenceNo || 'all',
+              title: 'Solo Parent: Subsidy Payout / Assessment Scheduled',
+              desc: `Nakatakda ang inyong Solo Parent appointment sa ${date} (${time}) sa ${location || "Quezon City Hall - SSDD Solo Parent Welfare Section"}.`,
+              applicationRef: targetAppt.referenceNo,
+              type: 'appointment',
+              link: '/portal/my-applications',
+            })
           } else {
             pushUserNotification({
               userId: targetAppt.referenceNo || 'all',
@@ -1289,9 +1421,10 @@ export default function Appointments() {
             })
           }
 
-          notifyApplicationChange('STATUS_CHANGED', isPwd ? 'pwd_senior' : 'aics', targetAppt.referenceNo)
+          notifyApplicationChange('STATUS_CHANGED', isPwd ? 'pwd_senior' : (isSolo ? 'solo_parent' : 'aics'), targetAppt.referenceNo)
           window.dispatchEvent(new Event("aics_applications_updated"))
           window.dispatchEvent(new Event("pwd_senior_applications_updated"))
+          window.dispatchEvent(new Event("solo_parent_applications_updated"))
           window.dispatchEvent(new Event("appointments_updated"))
           window.dispatchEvent(new Event("user_notifications_updated"))
         } catch (err) {
@@ -1394,7 +1527,8 @@ function to12HourTime(timeStr?: string): string {
       const cleanName = String(appt.applicantName || '').toLowerCase().trim()
       const isPwd = appt.module === "PWD" || String(appt.concern || "").toLowerCase().includes("pwd") || String(appt.concern || "").toLowerCase().includes("disability")
       const isSenior = appt.module === "Senior Citizen" || String(appt.concern || "").toLowerCase().includes("senior") || String(appt.concern || "").toLowerCase().includes("osca")
-      const isAics = (appt.module === "AICS" || String(appt.concern || "").toLowerCase().includes("medical") || String(appt.concern || "").toLowerCase().includes("funeral") || String(appt.concern || "").toLowerCase().includes("educational")) && !isPwd && !isSenior
+      const isSoloParent = appt.module === "Solo Parent" || String(appt.concern || "").toLowerCase().includes("solo parent")
+      const isAics = (appt.module === "AICS" || String(appt.concern || "").toLowerCase().includes("medical") || String(appt.concern || "").toLowerCase().includes("funeral") || String(appt.concern || "").toLowerCase().includes("educational")) && !isPwd && !isSenior && !isSoloParent
 
       const defaultLoc = "SSDD Civic Center E, 2nd Floor, Quezon City Hall Compound, Mayaman St., Brgy. Central, Quezon City (Public Assistance Division - PAD)"
       const finalDate = dateOverride || appt.scheduledDate || new Date().toISOString().split("T")[0]
@@ -1448,6 +1582,21 @@ function to12HourTime(timeStr?: string): string {
               approvedBy: "Social Worker Admin",
             }),
           })
+        )
+      } else if (isSoloParent) {
+        calls.push(
+          fetch(`${API_BASE}/api/solo-parent/admin/applications/${encodeURIComponent(targetRef)}/status`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+            },
+            body: JSON.stringify({
+              status: 'approved',
+              approvedDate: approvedIsoDate,
+              approvedBy: "Social Worker Admin",
+            }),
+          }).catch(() => null)
         )
       } else if (isAics) {
         calls.push(
@@ -1559,6 +1708,33 @@ function to12HourTime(timeStr?: string): string {
           amount: 3000,
           link: '/portal/financial-aid',
         })
+      } else if (isSoloParent) {
+        try {
+          const rawSolo = localStorage.getItem("solo_parent_applications") || "[]"
+          const soloList = JSON.parse(rawSolo)
+          const updatedSolo = soloList.map((s: any) => {
+            const match = s.referenceNumber === appt.referenceNo || s.id === appt.referenceNo || (cleanName && [s.firstName, s.lastName].filter(Boolean).join(" ").toLowerCase().includes(cleanName))
+            if (match) {
+              return {
+                ...s,
+                status: "approved",
+                approvedDate: approvedIsoDate,
+                approvedBy: "Social Worker Admin",
+              }
+            }
+            return s
+          })
+          localStorage.setItem("solo_parent_applications", JSON.stringify(updatedSolo))
+        } catch {}
+
+        pushUserNotification({
+          userId: appt.referenceNo || 'all',
+          title: 'Solo Parent: Subsidy Approved',
+          desc: `Congratulations! Your Solo Parent application and Monthly Financial Subsidy (₱1,000/month) have been approved.`,
+          applicationRef: appt.referenceNo,
+          type: 'solo_parent',
+          link: '/portal/my-applications',
+        })
       } else {
         pushUserNotification({
           userId: appt.referenceNo || 'all',
@@ -1582,18 +1758,19 @@ function to12HourTime(timeStr?: string): string {
       syncAppointmentToFinancialAid({
         referenceNo: appt.referenceNo,
         applicantName: appt.applicantName,
-        concern: isSenior ? "Senior Social Assistance" : (isPwd ? "PWD Social Assistance" : appt.concern),
+        concern: isSenior ? "Senior Social Assistance" : (isPwd ? "PWD Social Assistance" : (isSoloParent ? "Solo Parent Financial Subsidy Payout" : appt.concern)),
         date: (isPwd || isSenior) ? undefined : finalDate,
         time: (isPwd || isSenior) ? undefined : finalTime,
         location: finalLocation,
         notes: isSenior
           ? "Approved Senior Citizen Pension (₱500/month). Accumulating for 6-month consolidated payout (₱3,000)."
-          : (isPwd ? "Approved PWD Pension (₱500/month). Accumulating for 3-month consolidated payout." : (finalNotes || "Approved appointment for financial aid payout.")),
+          : (isPwd ? "Approved PWD Pension (₱500/month). Accumulating for 3-month consolidated payout." : (isSoloParent ? "Approved Solo Parent Monthly Statutory Cash Subsidy (₱1,000/month)." : (finalNotes || "Approved appointment for financial aid payout."))),
       })
 
-      notifyApplicationChange('APPLICATION_APPROVED', isPwd ? 'pwd_senior' : (isSenior ? 'pwd_senior' : 'aics'), appt.referenceNo)
+      notifyApplicationChange('APPLICATION_APPROVED', isPwd ? 'pwd_senior' : (isSenior ? 'pwd_senior' : (isSoloParent ? 'solo_parent' : 'aics')), appt.referenceNo)
       window.dispatchEvent(new Event("appointments_updated"))
       window.dispatchEvent(new Event("pwd_senior_applications_updated"))
+      window.dispatchEvent(new Event("solo_parent_applications_updated"))
       window.dispatchEvent(new Event("aics_applications_updated"))
       window.dispatchEvent(new Event("applications_updated"))
       window.dispatchEvent(new Event("financial_disbursements_updated"))
