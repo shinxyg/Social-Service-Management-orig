@@ -696,19 +696,15 @@ exports.releaseDisbursement = async (req, res) => {
         ]
       ).catch(() => {});
 
-      // Mark linked appointments as completed
       await db.query(
         `UPDATE appointments
          SET status = 'completed', updated_at = NOW()
          WHERE reference_no = $1
             OR reference_no = $2
-            OR REPLACE(reference_no, '-', '') = $3
-            OR (LOWER(TRIM(applicant_name)) = LOWER(TRIM($4)) AND status = 'scheduled')
-            OR (reference_no ILIKE '%' || $5 || '%' AND status = 'scheduled')`,
-        [d.application_ref, cleanId, unhyphenated, d.applicant_name, cleanId.slice(-4)]
+            OR REPLACE(reference_no, '-', '') = $3`,
+        [d.application_ref, cleanId, unhyphenated]
       ).catch(() => {});
 
-      // Mark AICS application as released
       await db.query(
         `UPDATE aics_applications
          SET status = 'released', updated_at = NOW()
@@ -717,65 +713,50 @@ exports.releaseDisbursement = async (req, res) => {
             OR reference_no = $2
             OR qc_id = $2
             OR REPLACE(reference_no, '-', '') = $3
-            OR REPLACE(qc_id, '-', '') = $3
-            OR (first_name ILIKE '%' || $4 || '%' AND last_name ILIKE '%' || $5 || '%')`,
-        [d.application_ref, cleanId, unhyphenated, (d.applicant_name || '').split(' ')[0] || '', (d.applicant_name || '').split(' ').slice(-1)[0] || '']
+            OR REPLACE(qc_id, '-', '') = $3`,
+        [d.application_ref, cleanId, unhyphenated]
       ).catch(() => {});
 
-      // Mark Solo Parent / Child Welfare application as released
+      const nameParts = (d.applicant_name || '').trim().split(/\s+/);
+      const fName = nameParts[0] || '';
+      const lName = nameParts[nameParts.length - 1] || '';
+
       await db.query(
         `UPDATE solo_parent_child_welfare_applications
-         SET application_status = 'released',
-             admin_notes = COALESCE(admin_notes, '') || ' [Assistance Released]',
-             updated_at = NOW()
+         SET application_status = 'released', updated_at = NOW()
          WHERE reference_number = $1
             OR reference_number = $2
             OR REPLACE(reference_number, '-', '') = $3
-            OR reference_number ILIKE '%' || $4 || '%'
-            OR (
-              (module_type = 'SOLO_PARENT' OR module_type IS NULL)
-              AND (
-                LOWER(TRIM(first_name || ' ' || last_name)) = LOWER(TRIM($5))
-                OR (first_name ILIKE '%' || $6 || '%' AND last_name ILIKE '%' || $7 || '%')
-              )
-            )`,
-        [
-          d.application_ref,
-          cleanId,
-          unhyphenated,
-          cleanId.slice(-4),
-          d.applicant_name,
-          (d.applicant_name || '').split(' ')[0] || '',
-          (d.applicant_name || '').split(' ').slice(-1)[0] || '',
-        ]
+            OR (first_name ILIKE $4 AND last_name ILIKE $5)`,
+        [d.application_ref, cleanId, unhyphenated, `%${fName}%`, `%${lName}%`]
       ).catch(() => {});
 
-      // Mark PWD / Senior Citizen application as released
       await db.query(
         `UPDATE pwd_senior_applications
-         SET status = 'released', approved_date = NOW()
+         SET status = 'released', approved_date = COALESCE(approved_date, $6)
          WHERE reference_number = $1
             OR reference_number = $2
             OR REPLACE(reference_number, '-', '') = $3
-            OR reference_number ILIKE '%' || $4 || '%'
-            OR (
-              (category ILIKE '%pwd%' OR category ILIKE '%senior%')
-              AND LOWER(TRIM(first_name || ' ' || last_name)) = LOWER(TRIM($5))
-            )`,
-        [d.application_ref, cleanId, unhyphenated, cleanId.slice(-4), d.applicant_name]
+            OR (first_name ILIKE $4 AND last_name ILIKE $5)`,
+        [d.application_ref, cleanId, unhyphenated, `%${fName}%`, `%${lName}%`, finalDate]
       ).catch(() => {});
 
-      // Mark Livelihood application as released
       await db.query(
         `UPDATE livelihood_applications
          SET application_status = 'released', updated_at = NOW()
-         WHERE reference_number = $1 OR reference_number = $2 OR REPLACE(reference_number, '-', '') = $3`,
-        [d.application_ref, cleanId, unhyphenated]
+         WHERE reference_number = $1
+            OR reference_number = $2
+            OR REPLACE(reference_number, '-', '') = $3
+            OR (first_name ILIKE $4 AND last_name ILIKE $5)`,
+        [d.application_ref, cleanId, unhyphenated, `%${fName}%`, `%${lName}%`]
       ).catch(() => {});
+
       await db.query(
         `UPDATE livelihood_assistance
          SET assistance_status = 'released', updated_at = NOW()
-         WHERE reference_number = $1 OR reference_number = $2 OR REPLACE(reference_number, '-', '') = $3`,
+         WHERE reference_number = $1
+            OR reference_number = $2
+            OR REPLACE(reference_number, '-', '') = $3`,
         [d.application_ref, cleanId, unhyphenated]
       ).catch(() => {});
 

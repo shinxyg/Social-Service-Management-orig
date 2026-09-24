@@ -417,24 +417,16 @@ export function getManuallyReleasedKeys(): Set<string> {
   return new Set()
 }
 
-export function markDisbursementAsManuallyReleased(record: { id?: string; disbursementId?: string; applicationRef?: string; applicantName?: string }) {
+export function markDisbursementAsManuallyReleased(record: { id?: string; disbursementId?: string; applicationRef?: string }) {
   try {
     const raw = localStorage.getItem("manually_released_disbursements")
     const list: string[] = raw ? JSON.parse(raw) : []
-    const keysToAdd = [record.id, record.disbursementId, record.applicationRef, record.applicantName]
+    const keysToAdd = [record.id, record.disbursementId, record.applicationRef]
       .filter(Boolean)
       .map(k => String(k).toLowerCase().trim())
     keysToAdd.forEach(k => {
       if (!list.includes(k)) list.push(k)
     })
-    if (record.disbursementId && record.disbursementId.length >= 4) {
-      const suffix = record.disbursementId.slice(-4).toLowerCase().trim()
-      if (!list.includes(suffix)) list.push(suffix)
-    }
-    if (record.applicationRef && record.applicationRef.length >= 4) {
-      const suffix = record.applicationRef.slice(-4).toLowerCase().trim()
-      if (!list.includes(suffix)) list.push(suffix)
-    }
     localStorage.setItem("manually_released_disbursements", JSON.stringify(list))
     window.dispatchEvent(new Event("financial_disbursements_updated"))
     window.dispatchEvent(new Event("storage"))
@@ -442,21 +434,22 @@ export function markDisbursementAsManuallyReleased(record: { id?: string; disbur
 }
 
 export function isDisbursementManuallyReleased(record: { id?: string; disbursementId?: string; applicationRef?: string; applicantName?: string; releasedBy?: string; status?: string }): boolean {
-  if (record.status === "RELEASED" && record.releasedBy && !record.releasedBy.includes("Automated") && !record.releasedBy.includes("Appointment")) {
+  if (record.releasedBy && (record.releasedBy.includes("Automated") || record.releasedBy.includes("Appointment") || record.releasedBy.includes("Social Worker"))) {
+    return false
+  }
+  if (String(record.status || "").toUpperCase() === "RELEASED") {
     return true
   }
   const manualKeys = getManuallyReleasedKeys()
   const cleanId = String(record.id || "").toLowerCase().trim()
   const cleanDisbId = String(record.disbursementId || "").toLowerCase().trim()
   const cleanAppRef = String(record.applicationRef || "").toLowerCase().trim()
-  const name = String(record.applicantName || "").toLowerCase().trim()
+  const unhyphenated = cleanAppRef.replace(/[^a-zA-Z0-9]/g, "")
 
   if (cleanId && manualKeys.has(cleanId)) return true
   if (cleanDisbId && manualKeys.has(cleanDisbId)) return true
   if (cleanAppRef && manualKeys.has(cleanAppRef)) return true
-  if (cleanDisbId.length >= 4 && Array.from(manualKeys).some(k => k.includes(cleanDisbId.slice(-4)))) return true
-  if (cleanAppRef.length >= 4 && Array.from(manualKeys).some(k => k.includes(cleanAppRef.slice(-4)))) return true
-  if (name && manualKeys.has(name)) return true
+  if (unhyphenated && manualKeys.has(unhyphenated)) return true
   return false
 }
 
@@ -484,7 +477,7 @@ export function getSavedDisbursements(): SyncedDisbursementRecord[] {
         const recordMap = new Map<string, SyncedDisbursementRecord>()
         realOnes.forEach((r) => {
           const key = `${(r.applicationRef || r.disbursementId || r.id || "").trim()}_${(r.assistanceType || "").trim()}`
-          const isManual = isDisbursementManuallyReleased(r) || r.status === "RELEASED"
+          const isManual = isDisbursementManuallyReleased(r)
           const fixedStatus: DisbursementStage = isManual ? "RELEASED" : "PENDING"
           const correctAmount = resolveFixedAmount(r.assistanceType)
           const recordWithCorrectAmount: SyncedDisbursementRecord = {

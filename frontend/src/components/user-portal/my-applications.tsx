@@ -2481,32 +2481,14 @@ export default function MyApplications() {
               const appDate = extractAnyDateFromApp(app)
 
               const rawStatus = String(app.application_status || app.status || "pending").toLowerCase()
-
-              const rawDisbList = typeof window !== "undefined" ? localStorage.getItem("all_financial_disbursements") : null
-              const disbList: any[] = rawDisbList ? JSON.parse(rawDisbList) : []
-              const refNo = String(app.reference_number || app.referenceNumber || app.assigned_id_number || app.id || "").toLowerCase().trim()
-              const isDisbReleased =
-                rawStatus === "released" ||
-                rawStatus === "assistance_released" ||
-                rawStatus === "completed" ||
-                disbList.some((d: any) =>
-                  (d.status === "RELEASED" || isDisbursementManuallyReleased(d)) &&
-                  (
-                    String(d.applicationRef || "").toLowerCase().trim() === refNo ||
-                    (refNo.length >= 4 && String(d.applicationRef || "").toLowerCase().includes(refNo.slice(-4))) ||
-                    (refNo.length >= 4 && String(d.disbursementId || "").toLowerCase().includes(refNo.slice(-4))) ||
-                    (d.applicantName && `${app.first_name || app.firstName} ${app.last_name || app.lastName}`.toUpperCase().includes(d.applicantName.toUpperCase()))
-                  )
-                )
-
               const displayStatus =
-                isDisbReleased
-                  ? "Assistance Released"
-                  : rawStatus === "approved"
+                rawStatus === "approved"
                   ? "Approved"
+                  : rawStatus === "assistance_released" || rawStatus === "released" || rawStatus === "completed"
+                  ? "Assistance Released"
                   : rawStatus === "for_distribution" || rawStatus === "for_release"
                   ? "For Distribution"
-                  : rawStatus === "interview_scheduled" || rawStatus === "scheduled" || Boolean(app.interview_schedule || app.appointmentDate)
+                  : rawStatus === "interview_scheduled" || rawStatus === "scheduled"
                   ? "Interview Scheduled"
                   : rawStatus === "for_approval" || rawStatus === "under_assessment"
                   ? "Under Assessment"
@@ -2920,18 +2902,10 @@ export default function MyApplications() {
           label: "For Release",
         }
       case "Released":
-      case "Assistance Released":
         return {
           bg: "bg-teal-50 text-teal-800 border-teal-200",
           icon: <CheckCircle2 className="w-3.5 h-3.5 text-teal-600" />,
-          label: "Assistance Released",
-        }
-      case "Interview Scheduled":
-      case "Scheduled":
-        return {
-          bg: "bg-blue-50 text-blue-800 border-blue-200",
-          icon: <Clock className="w-3.5 h-3.5 text-blue-600" />,
-          label: "Interview Scheduled",
+          label: "Released",
         }
       case "Rejected":
         return {
@@ -3656,14 +3630,12 @@ export default function MyApplications() {
             const selAppRefNo = String(selectedApp.applicationNo || selectedApp.id || "").toLowerCase().trim()
             const matchDisb = savedDisbs.find(
               (d) =>
-                (d.applicationRef && (d.applicationRef.toLowerCase().trim() === selAppRefNo || selAppRefNo.includes(d.applicationRef.toLowerCase().trim()) || d.applicationRef.toLowerCase().includes(selAppRefNo))) ||
-                (d.disbursementId && (d.disbursementId.toLowerCase().trim() === selAppRefNo || selAppRefNo.includes(d.disbursementId.toLowerCase().trim()))) ||
-                (selAppRefNo.length >= 4 && String(d.applicationRef || d.disbursementId || "").toLowerCase().includes(selAppRefNo.slice(-4))) ||
-                (d.applicantName && String(selectedApp.applicantName || "").toUpperCase().includes(d.applicantName.toUpperCase()))
+                (d.applicationRef && (d.applicationRef.toLowerCase().trim() === selAppRefNo || selAppRefNo.includes(d.applicationRef.toLowerCase().trim()))) ||
+                (d.disbursementId && (d.disbursementId.toLowerCase().trim() === selAppRefNo || selAppRefNo.includes(d.disbursementId.toLowerCase().trim())))
             )
 
-            const isDisbClaimed = matchDisb ? (matchDisb.status === "RELEASED" || isDisbursementManuallyReleased(matchDisb)) : false
-            const isClaimed = selectedApp.status === "Assistance Released" || selectedApp.status === "Released" || selectedApp.status === "Completed" || isDisbClaimed
+            const isDisbClaimed = matchDisb ? isDisbursementManuallyReleased(matchDisb) : false
+            const isClaimed = isApprovedDecision && (selectedApp.status === "Released" || selectedApp.status === "Completed" || isDisbClaimed)
             const isGLIssued = isApprovedDecision || (isApprovedDecision && selectedApp.status === "For Release") || isClaimed
             const isAssessmentDone = isApprovedDecision || selectedApp.status === "Under Review" || selectedApp.status === "For Assessment" || cachedAppt?.decision === "referred"
             const isMedicineApp =
@@ -4009,58 +3981,63 @@ export default function MyApplications() {
 
             const rawGL = typeof window !== "undefined" ? localStorage.getItem("printed_gl_applications") : null
             const glMap = rawGL ? JSON.parse(rawGL) : {}
+            const savedDisbs = getSavedDisbursements()
             const cleanRef = String(app.applicationNo || app.id || app.referenceNumber || "").toLowerCase().trim()
-            const isGLPrinted = !!(cleanRef && (glMap[cleanRef] || (app.id && glMap[String(app.id).toLowerCase().trim()])))
+            const unhyphenated = cleanRef.replace(/[^a-zA-Z0-9]/g, "")
+            const appName = String(app.applicantName || "").toLowerCase().trim()
+            const isSolo = String(app.assistanceCategory || "").toLowerCase().includes("solo") || String(app.assistance || "").toLowerCase().includes("solo")
 
-            const isNewIntake =
-              app.status === "Pending" ||
-              app.status === "Submit Pending" ||
-              app.status === "Waiting to Approve" ||
-              (app.status as any) === "submit_pending" ||
-              (app.status as any) === "waiting_approval" ||
-              (app.status as any) === "pending"
+            const matchDisb = savedDisbs.find((d) => {
+              const dRef = String(d.applicationRef || "").toLowerCase().trim()
+              const dDisbId = String(d.disbursementId || "").toLowerCase().trim()
+              const dRefClean = dRef.replace(/[^a-zA-Z0-9]/g, "")
+              const dName = String(d.applicantName || "").toLowerCase().trim()
+              const dIsSolo = String(d.assistanceType || "").toLowerCase().includes("solo")
+              return (
+                (dRef && (dRef === cleanRef || cleanRef.includes(dRef) || dRef.includes(cleanRef) || dRefClean === unhyphenated)) ||
+                (dDisbId && (dDisbId === cleanRef || cleanRef.includes(dDisbId))) ||
+                (isSolo && dIsSolo) ||
+                (appName && dName && (appName === dName || appName.includes(dName) || dName.includes(appName)))
+              )
+            })
 
-            const isApptApproved = cachedAppt?.status === "approved" || cachedAppt?.decision === "approved"
-            const isApptRejected = cachedAppt?.status === "rejected" || cachedAppt?.decision === "rejected"
+            const isDisbClaimed = matchDisb ? isDisbursementManuallyReleased(matchDisb) : false
+            const isDisbReleased = isDisbClaimed || matchDisb?.status === "RELEASED" || matchDisb?.status === "released"
+
+            const isAppExplicitlyReleased =
+              isDisbReleased ||
+              app.status === "Released" ||
+              app.status === "Completed" ||
+              app.status === "Assistance Released"
+
+            const isAppExplicitlyApproved =
+              isAppExplicitlyReleased ||
+              isGLPrinted ||
+              app.status === "Approved" ||
+              app.status === "For Release" ||
+              app.status === "For Distribution" ||
+              isApptApproved ||
+              (matchDisb && (matchDisb.status === "PENDING" || matchDisb.status === "RELEASED"))
+
             const isApptScheduled = Boolean(
+              !isAppExplicitlyReleased &&
+              !isAppExplicitlyApproved &&
               (cachedAppt?.scheduledDate || cachedAppt?.status === "scheduled" || cachedAppt?.status === "under_review" || app.status === "Scheduled") &&
               !isApptApproved &&
               !isApptRejected
             )
 
-            const isAppApproved =
-              !isApptScheduled &&
-              (isGLPrinted ||
-                (!isNewIntake &&
-                  (app.status === "Approved" ||
-                    app.status === "Completed" ||
-                    app.status === "Released" ||
-                    app.status === "For Release" ||
-                    isApptApproved)))
-
             const isAppReferred =
               !isApptScheduled &&
-              !isNewIntake &&
+              !isAppExplicitlyApproved &&
               (app.status === "Referred" ||
                 app.status === "For Referral" ||
                 cachedAppt?.decision === "referred" ||
                 cachedAppt?.status === "referred")
 
-            const isAppRejected =
-              isApptRejected ||
-              app.status === "Rejected"
-
-            const isReleasedApp =
-              app.status === "Assistance Released" ||
-              app.status === "Released" ||
-              app.status === "Completed" ||
-              (app.status as string) === "assistance_released" ||
-              (app.status as string) === "released" ||
-              (app.status as string) === "completed"
-
-            const effectiveAppStatus: ApplicationStatus = isReleasedApp
-              ? "Assistance Released"
-              : isAppApproved
+            const effectiveAppStatus: ApplicationStatus = isAppExplicitlyReleased
+              ? "Released"
+              : isAppExplicitlyApproved
               ? "Approved"
               : isApptScheduled
               ? "Scheduled"
@@ -4142,17 +4119,15 @@ export default function MyApplications() {
                     const matchDisb = savedDisbs.find(
                       (d) =>
                         (d.applicationRef && (d.applicationRef.toLowerCase().trim() === appRefNo || appRefNo.includes(d.applicationRef.toLowerCase().trim()) || d.applicationRef.toLowerCase().includes(appRefNo))) ||
-                        (d.disbursementId && (d.disbursementId.toLowerCase().trim() === appRefNo || appRefNo.includes(d.disbursementId.toLowerCase().trim()))) ||
-                        (appRefNo.length >= 4 && String(d.applicationRef || d.disbursementId || "").toLowerCase().includes(appRefNo.slice(-4))) ||
-                        (d.applicantName && String(app.applicantName || "").toUpperCase().includes(d.applicantName.toUpperCase()))
+                        (d.disbursementId && (d.disbursementId.toLowerCase().trim() === appRefNo || appRefNo.includes(d.disbursementId.toLowerCase().trim())))
                     )
 
-                    const isDisbClaimed = matchDisb ? (matchDisb.status === "RELEASED" || isDisbursementManuallyReleased(matchDisb)) : false
+                    const isDisbClaimed = matchDisb ? isDisbursementManuallyReleased(matchDisb) : false
                     const isExplicitlyReleased =
-                      app.status === "Assistance Released" ||
-                      app.status === "Released" ||
-                      app.status === "Completed" ||
-                      isDisbClaimed
+                      isApprovedDecision &&
+                      (app.status === "Released" ||
+                        app.status === "Completed" ||
+                        isDisbClaimed)
 
 
                     const partnerHospital =
@@ -4272,7 +4247,7 @@ export default function MyApplications() {
                     )
                   }
 
-                  if (effectiveAppStatus === "Scheduled" || (cachedAppt?.scheduledDate && !isAppApproved)) {
+                  if (effectiveAppStatus === "Scheduled" || (cachedAppt?.scheduledDate && !isAppExplicitlyApproved && !isAppExplicitlyReleased)) {
                     const appDateStr = cachedAppt?.scheduledDate || app.appointmentDate || "Sep 23, 2026"
                     const appTimeStr = cachedAppt?.scheduledTime || app.appointmentTime || "10:00 AM"
                     const venueStr = cachedAppt?.officeLocation || cachedAppt?.venue || "Quezon City Hall PDAO Room 102"
@@ -4548,14 +4523,12 @@ export default function MyApplications() {
                     )
                   }
 
-                  const fixedAmt = resolveFixedAmount(app.assistance)
+                  const isSoloParent =
+                    app.assistanceCategory === "Solo Parent" ||
+                    app.assistance.toLowerCase().includes("solo")
 
-                  const savedDisbursements = getSavedDisbursements()
-                  const matchDisb = savedDisbursements.find(
-                    (d) =>
-                      d.applicationRef === app.applicationNo ||
-                      (d.applicantName && d.applicantName.toLowerCase().trim() === app.applicantName.toLowerCase().trim())
-                  )
+                  const fixedAmt = isSoloParent ? 3000 : resolveFixedAmount(app.assistance)
+                  const isReleased = effectiveAppStatus === "Released" || isDisbReleased
 
                   const payoutVenue = matchDisb?.venue || "Quezon City Hall"
 
@@ -4566,20 +4539,27 @@ export default function MyApplications() {
                           <Banknote className="w-5 h-5" />
                         </div>
                         <div className="space-y-0.5 text-xs">
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
                             <span className="text-[10px] font-extrabold uppercase text-emerald-700 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded border border-emerald-300 dark:border-emerald-700/80">
-                              Financial Aid Record
+                              {isSoloParent ? "Solo Parent Financial Subsidy" : "Financial Aid Record"}
                             </span>
                             <span className="text-[11px] font-mono text-blue-700 dark:text-blue-300 font-bold">
                               {matchDisb?.disbursementId || `DISB-${app.applicationNo.slice(-4)}`}
                             </span>
+                            {isSoloParent && (
+                              <span className="text-[10px] font-semibold text-emerald-800 dark:text-emerald-300 bg-emerald-100 dark:bg-emerald-950/80 px-2 py-0.5 rounded-full border border-emerald-300 dark:border-emerald-800">
+                                ₱1,000 / Buwan (Quarterly)
+                              </span>
+                            )}
                           </div>
                           <p className="font-bold text-gray-900 dark:text-white">
-                            Approved Fixed Amount: <span className="text-emerald-600 dark:text-emerald-400 font-black text-sm">₱{fixedAmt.toLocaleString()}</span>
+                            {isSoloParent ? "Consolidated 3-Month Subsidy:" : "Approved Fixed Amount:"} <span className="text-emerald-600 dark:text-emerald-400 font-black text-sm">₱{fixedAmt.toLocaleString()}</span>
                           </p>
                           <p className="text-[11px] text-gray-600 dark:text-slate-300 flex items-center gap-1">
-                            <Clock className="w-3 h-3 text-blue-600 dark:text-blue-400" />
-                            {matchDisb?.appointmentDate ? (
+                            <Clock className="w-3 h-3 text-blue-600 dark:text-blue-400 shrink-0" />
+                            {isReleased ? (
+                              <span className="text-emerald-700 dark:text-emerald-400 font-bold">✓ Matagumpay na na-claim ang ₱{fixedAmt.toLocaleString()} {isSoloParent ? "Cash Subsidy (Month 3 of 3)" : "Financial Aid"} sa {payoutVenue}.</span>
+                            ) : matchDisb?.appointmentDate ? (
                               <span>Payout Appointment: <strong className="text-gray-900 dark:text-white">{matchDisb.appointmentDate} – {matchDisb.appointmentTime || "10:00 AM"}</strong> ({payoutVenue})</span>
                             ) : (
                               <span>Payout Appointment: <strong className="text-amber-700 dark:text-amber-400">Hinihintay ang Iskedyul mula sa Admin</strong> ({payoutVenue})</span>
@@ -4588,9 +4568,18 @@ export default function MyApplications() {
                         </div>
                       </div>
 
-                      <div className="sm:text-right shrink-0">
-                        <span className="text-[10px] text-gray-400 dark:text-slate-400 font-bold uppercase block">Fixed Amount</span>
-                        <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">₱{fixedAmt.toLocaleString()}</span>
+                      <div className="flex items-center gap-2 sm:justify-end shrink-0 pt-1 sm:pt-0">
+                        <a
+                          href="/portal/financial-aid"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                          }}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
+                          title="Tingnan ang Ayuda sa Financial Aid Disbursement"
+                        >
+                          <Banknote className="w-3.5 h-3.5" />
+                          <span>Tingnan sa Financial Aid ➔</span>
+                        </a>
                       </div>
                     </div>
                   )

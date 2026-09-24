@@ -219,8 +219,8 @@ export default function ApplyFinancialAid() {
           if (appRef && userRefNumbers.has(appRef)) return true
           if (!applicantName) return false
           const name = applicantName.toLowerCase().trim()
-          if (userFull && name === userFull) return true
-          if (userFirst && userLast && name.startsWith(userFirst + " ") && name.endsWith(" " + userLast)) return true
+          if (userFull && (name === userFull || name.includes(userFull) || userFull.includes(name))) return true
+          if (userFirst && userLast && name.includes(userFirst) && name.includes(userLast)) return true
           return false
         }
 

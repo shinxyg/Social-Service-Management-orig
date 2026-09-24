@@ -346,9 +346,7 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
         finalVenue = cachedSched.venue || cachedSched.officeLocation || cachedSched.location || finalVenue
       }
 
-      const isDbReleased = d.status === "RELEASED"
-      const isApptNotApproved = !isDbReleased && appt && (appt.status === "pending" || appt.status === "under_review")
-      const isExplicitlyReleased = isDbReleased || isDisbursementManuallyReleased(d)
+      const isExplicitlyReleased = d.status === "RELEASED" || isDisbursementManuallyReleased(d)
       let finalStatus: DisbursementStage = isExplicitlyReleased ? "RELEASED" : "PENDING"
       let finalReleasedDate = isExplicitlyReleased ? (d.releasedDate || new Date().toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })) : undefined
       let finalReleasedBy = isExplicitlyReleased ? (d.releasedBy || "Disbursing Officer") : undefined
@@ -474,48 +472,67 @@ export default function FinancialAidDisbursement() {
     window.dispatchEvent(new Event("storage"))
   }
 
-  const handleReleaseRecord = (record: SyncedDisbursementRecord) => {
+  const handleReleaseRecord = (record: SyncedDisbursementRecord, customDate?: string, customTime?: string, customVenue?: string) => {
     markDisbursementAsManuallyReleased(record)
     const releaseDateStr = new Date().toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })
     const releaseIsoStr = new Date().toISOString()
-    setDisbursements((prev) => {
-      const updated = prev.map((d) => {
-        const isSameRefAndType = d.applicationRef && d.applicationRef === record.applicationRef && d.assistanceType === record.assistanceType
-        const isMatch = d.id === record.id || d.disbursementId === record.disbursementId || isSameRefAndType ||
-          (d.applicantName && record.applicantName && d.applicantName.toUpperCase().includes(record.applicantName.toUpperCase()) && d.assistanceType === record.assistanceType)
-        if (isMatch) {
-          return {
-            ...d,
-            status: "RELEASED" as DisbursementStage,
-            releasedDate: d.releasedDate || releaseDateStr,
-            releasedBy: d.releasedBy || "Disbursing Officer",
-          }
+    const updated = disbursements.map((d) => {
+      const isSameRefAndType = d.applicationRef && d.applicationRef === record.applicationRef && d.assistanceType === record.assistanceType
+      if (d.id === record.id || d.disbursementId === record.disbursementId || isSameRefAndType) {
+        return {
+          ...d,
+          appointmentDate: customDate || d.appointmentDate,
+          appointmentTime: customTime || d.appointmentTime,
+          venue: customVenue || d.venue || "Quezon City Hall",
+          status: "RELEASED" as DisbursementStage,
+          releasedDate: releaseDateStr,
+          releasedBy: "Disbursing Officer",
         }
-        return d
-      })
-      saveDisbursements(updated)
-      return updated
+      }
+      return d
     })
+    setDisbursements(updated)
+    saveDisbursements(updated)
     try {
       const raw = localStorage.getItem("all_financial_disbursements")
       const list = raw ? JSON.parse(raw) : []
       const nextList = list.map((item: any) => {
         const isSameRefAndType = item.applicationRef && item.applicationRef === record.applicationRef && item.assistanceType === record.assistanceType
-        const isMatch = item.id === record.id || item.disbursementId === record.disbursementId || isSameRefAndType ||
-          (item.applicantName && record.applicantName && item.applicantName.toUpperCase().includes(record.applicantName.toUpperCase()) && item.assistanceType === record.assistanceType)
-        if (isMatch) {
-          return { ...item, status: "RELEASED", releasedDate: item.releasedDate || releaseDateStr, releasedBy: item.releasedBy || "Disbursing Officer" }
+        if (item.id === record.id || item.disbursementId === record.disbursementId || isSameRefAndType) {
+          return {
+            ...item,
+            appointmentDate: customDate || item.appointmentDate,
+            appointmentTime: customTime || item.appointmentTime,
+            venue: customVenue || item.venue || "Quezon City Hall",
+            status: "RELEASED",
+            releasedDate: releaseDateStr,
+            releasedBy: "Disbursing Officer",
+          }
         }
         return item
       })
       localStorage.setItem("all_financial_disbursements", JSON.stringify(nextList))
     } catch {}
 
+    // Update appointment status in localStorage
+    try {
+      const rawSched = localStorage.getItem("all_appointments_scheduled")
+      if (rawSched) {
+        const schedMap = JSON.parse(rawSched)
+        const ref = String(record.applicationRef || "").trim()
+        const unhyphenated = ref.replace(/[^a-zA-Z0-9]/g, "")
+        const name = String(record.applicantName || "").toLowerCase().trim()
+        if (schedMap[ref]) schedMap[ref].status = "completed"
+        if (schedMap[unhyphenated]) schedMap[unhyphenated].status = "completed"
+        if (schedMap[name]) schedMap[name].status = "completed"
+        localStorage.setItem("all_appointments_scheduled", JSON.stringify(schedMap))
+      }
+    } catch {}
+
     const isPwdAid = String(record.assistanceType || "").toLowerCase().includes("pwd") || String(record.assistanceType || "").toLowerCase().includes("disability")
     const isSeniorAid = String(record.assistanceType || "").toLowerCase().includes("senior") || String(record.assistanceType || "").toLowerCase().includes("osca")
     const isSoloAid = String(record.assistanceType || "").toLowerCase().includes("solo")
     if (isPwdAid) {
-      // Update pwd_senior_applications with releasedDate to reset accumulator for next 3-month cycle
       try {
         const rawPwd = localStorage.getItem("pwd_senior_applications") || "[]"
         const pwdList = JSON.parse(rawPwd)
@@ -593,21 +610,16 @@ export default function FinancialAidDisbursement() {
         const rawSolo = localStorage.getItem("solo_parent_applications") || "[]"
         const soloList = JSON.parse(rawSolo)
         const updatedSolo = soloList.map((s: any) => {
-          const sRef = String(s.referenceNumber || s.reference_number || s.id || "").toLowerCase().trim()
-          const rRef = String(record.applicationRef || "").toLowerCase().trim()
-          const rDisb = String(record.disbursementId || "").toLowerCase().trim()
-          const isMatch =
-            sRef === rRef ||
-            s.id === record.applicationRef ||
-            (rDisb.length >= 4 && sRef.includes(rDisb.slice(-4))) ||
-            (rRef.length >= 4 && sRef.includes(rRef.slice(-4))) ||
-            (s.firstName && record.applicantName && `${s.firstName} ${s.lastName}`.toUpperCase().includes(record.applicantName.toUpperCase())) ||
-            (record.applicantName && record.applicantName.toUpperCase().includes((s.last_name || s.lastName || "").toUpperCase()))
-          if (isMatch) {
+          const sRef = String(s.reference_number || s.referenceNumber || s.id || "").toLowerCase()
+          const rRef = String(record.applicationRef || "").toLowerCase()
+          const sName = String(s.first_name || s.firstName || "").toLowerCase()
+          const rName = String(record.applicantName || "").toLowerCase()
+          if (sRef === rRef || (rRef && sRef.includes(rRef)) || (sRef && rRef.includes(sRef)) || (sName && rName.includes(sName))) {
             return {
               ...s,
               status: "released",
               application_status: "released",
+              payout_status: "released",
               releasedDate: releaseIsoStr,
               releasedAmount: 3000,
             }
@@ -627,6 +639,33 @@ export default function FinancialAidDisbursement() {
       })
 
       window.dispatchEvent(new Event("solo_parent_applications_updated"))
+    } else {
+      try {
+        const rawLiv = localStorage.getItem("livelihood_applications") || "[]"
+        const livList = JSON.parse(rawLiv)
+        const updatedLiv = livList.map((l: any) => {
+          if (l.reference_number === record.applicationRef || l.id === record.applicationRef) {
+            return { ...l, status: "released", assistance_status: "released" }
+          }
+          return l
+        })
+        localStorage.setItem("livelihood_applications", JSON.stringify(updatedLiv))
+      } catch {}
+
+      try {
+        const rawCw = localStorage.getItem("child_welfare_applications") || "[]"
+        const cwList = JSON.parse(rawCw)
+        const updatedCw = cwList.map((c: any) => {
+          if (c.reference_number === record.applicationRef || c.id === record.applicationRef) {
+            return { ...c, status: "released", application_status: "released" }
+          }
+          return c
+        })
+        localStorage.setItem("child_welfare_applications", JSON.stringify(updatedCw))
+      } catch {}
+
+      window.dispatchEvent(new Event("livelihood_applications_updated"))
+      window.dispatchEvent(new Event("child_welfare_applications_updated"))
     }
 
     // Patch status to backend and dispatch events
@@ -634,8 +673,7 @@ export default function FinancialAidDisbursement() {
       try {
         const ref = record.applicationRef || record.disbursementId
         const dbCleanId = record.id.replace(/^db-/, "").replace(/^remote-/, "")
-        const soloRefVariant = String(ref).replace(/^SP-SUB-/, "SPSU-")
-        const calls: Promise<any>[] = [
+        await Promise.allSettled([
           fetch(`${API_BASE}/api/financial-aid/${encodeURIComponent(dbCleanId)}/release`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
@@ -643,41 +681,28 @@ export default function FinancialAidDisbursement() {
               releasedBy: "MANUAL_DISBURSING_OFFICER",
               applicantName: record.applicantName,
               assistanceType: record.assistanceType,
+              releasedDate: releaseDateStr,
             }),
           }),
-        ]
-        if (ref) {
-          calls.push(
-            fetch(`${API_BASE}/api/financial-aid/${encodeURIComponent(ref)}/release`, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                releasedBy: "MANUAL_DISBURSING_OFFICER",
-                applicantName: record.applicantName,
-                assistanceType: record.assistanceType,
-              }),
+          ref ? fetch(`${API_BASE}/api/financial-aid/${encodeURIComponent(ref)}/release`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              releasedBy: "MANUAL_DISBURSING_OFFICER",
+              applicantName: record.applicantName,
+              assistanceType: record.assistanceType,
+              releasedDate: releaseDateStr,
             }),
-            fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(ref)}/status`, {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ status: "released" }),
-            }),
-            fetch(`${API_BASE}/api/appointments/${encodeURIComponent(ref)}/complete`, {
-              method: "PUT",
-            }),
-            fetch(`${API_BASE}/api/solo-parent/admin/${encodeURIComponent(ref)}/status`, {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ status: "released" }),
-            }),
-            fetch(`${API_BASE}/api/solo-parent/admin/${encodeURIComponent(soloRefVariant)}/status`, {
-              method: "PATCH",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ status: "released" }),
-            })
-          )
-        }
-        await Promise.allSettled(calls)
+          }) : Promise.resolve(),
+          ref ? fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(ref)}/status`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ status: "released" }),
+          }) : Promise.resolve(),
+          ref ? fetch(`${API_BASE}/api/appointments/${encodeURIComponent(ref)}/complete`, {
+            method: "PUT",
+          }) : Promise.resolve(),
+        ])
       } catch {}
     })()
 
@@ -1219,10 +1244,7 @@ export default function FinancialAidDisbursement() {
             d.venue ||
             (isSolo ? "Quezon City Hall - SSDD Solo Parent Welfare Section" : "Quezon City Hall")
 
-          const isDbReleased = d.status === "RELEASED" || existingSaved?.status === "RELEASED"
-          const isApptNotApproved = !isDbReleased && appt && (appt.status === "pending" || appt.status === "under_review")
-          const isExplicitlyReleased = isDbReleased || isDisbursementManuallyReleased(d) || (existingSaved ? isDisbursementManuallyReleased(existingSaved) : false)
-          const isReleased = isExplicitlyReleased
+          const isReleased = d.status === "RELEASED" || isDisbursementManuallyReleased(d) || (existingSaved ? isDisbursementManuallyReleased(existingSaved) : false)
 
           const resolvedName = isSolo && (!d.applicantName || d.applicantName.includes("BENEFICIARY"))
             ? "JEFFERSON FERNANDO LEE"
@@ -1917,17 +1939,8 @@ export default function FinancialAidDisbursement() {
         <PayoutScheduleModal
           record={schedulingRecord}
           onClose={() => setSchedulingRecord(null)}
-          onSave={(date, time, venue) => handleSavePayoutSchedule(schedulingRecord, date, time, venue)}
-          onRelease={(date, time, venue) => {
-            if (date && time) {
-              handleSavePayoutSchedule(schedulingRecord, date, time, venue)
-            }
-            handleReleaseRecord({
-              ...schedulingRecord,
-              appointmentDate: date || schedulingRecord.appointmentDate,
-              appointmentTime: time || schedulingRecord.appointmentTime,
-              venue: venue || schedulingRecord.venue,
-            })
+          onConfirmAndRelease={(date, time, venue) => {
+            handleReleaseRecord(schedulingRecord, date, time, venue)
             setSchedulingRecord(null)
           }}
         />
@@ -1939,13 +1952,11 @@ export default function FinancialAidDisbursement() {
 function PayoutScheduleModal({
   record,
   onClose,
-  onSave,
-  onRelease,
+  onConfirmAndRelease,
 }: {
   record: SyncedDisbursementRecord
   onClose: () => void
-  onSave: (date: string, time: string, venue: string) => void
-  onRelease?: (date: string, time: string, venue: string) => void
+  onConfirmAndRelease: (date: string, time: string, venue: string) => void
 }) {
   const getInitialDate = () => {
     if (record.appointmentDate) {
@@ -1983,10 +1994,7 @@ function PayoutScheduleModal({
       day: "numeric",
       year: "numeric",
     })
-    onSave(formattedDate, time, venue)
-    if (onRelease) {
-      onRelease(formattedDate, time, venue)
-    }
+    onConfirmAndRelease(formattedDate, time, venue)
   }
 
   return (
