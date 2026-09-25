@@ -66,41 +66,6 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
     let records: SyncedDisbursementRecord[] = []
     const seenKeys = new Set<string>()
 
-    let appointmentsMap: Record<string, any> = {}
-    try {
-      const rawAppts =
-        localStorage.getItem("cached_appointments_list") ||
-        localStorage.getItem("all_appointments") ||
-        localStorage.getItem("appointments")
-      if (rawAppts) {
-        const parsedAppts = JSON.parse(rawAppts)
-        if (Array.isArray(parsedAppts)) {
-          parsedAppts.forEach((a: any) => {
-            const date = a.date || a.appointment_date || a.appointmentDate || a.scheduledDate || a.scheduled_date
-            const time = a.time || a.appointment_time || a.appointmentTime || a.scheduledTime || a.scheduled_time
-            const status = a.status
-            const location = a.location || a.officeLocation || a.office_location || a.venue
-            const apptObj = { ...a, date, time, status, location }
-            if (a.reference_no) appointmentsMap[a.reference_no] = apptObj
-            if (a.referenceNo) appointmentsMap[a.referenceNo] = apptObj
-            if (a.concern) {
-              const cleanConcern = String(a.concern).toLowerCase().replace(/assistance/g, "").replace(/social/g, "").trim()
-              if (a.reference_no) appointmentsMap[`${a.reference_no}_${cleanConcern}`] = apptObj
-              if (a.referenceNo) appointmentsMap[`${a.referenceNo}_${cleanConcern}`] = apptObj
-            }
-            if (a.applicant_name) appointmentsMap[a.applicant_name.toLowerCase().trim()] = apptObj
-            if (a.applicantName) appointmentsMap[a.applicantName.toLowerCase().trim()] = apptObj
-          })
-        }
-      }
-    } catch {}
-
-    let localScheduledMap: Record<string, any> = {}
-    try {
-      const rawSched = localStorage.getItem("all_appointments_scheduled")
-      if (rawSched) localScheduledMap = JSON.parse(rawSched)
-    } catch {}
-
     if (Array.isArray(saved) && saved.length > 0) {
       saved.forEach((s) => {
         if (!s || isIdOrDocumentService(s.assistanceType) || deletedKeys.has(s.id) || deletedKeys.has(s.applicationRef) || deletedKeys.has(s.disbursementId)) {
@@ -112,7 +77,15 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
           s.id === "remote-pwd-9929" ||
           (String(s.applicantName || "").toUpperCase().includes("JEFFERSON") &&
            String(s.assistanceType || "").toLowerCase().includes("senior"))
-        if (isGhostSenior) return
+        const isNonMonetaryCw =
+          String(s.assistanceType || "").toLowerCase().includes("intake") ||
+          String(s.assistanceType || "").toLowerCase().includes("assessment") ||
+          String(s.assistanceType || "").toLowerCase().includes("interview") ||
+          String(s.assistanceType || "").toLowerCase().includes("protective") ||
+          String(s.assistanceType || "").toLowerCase().includes("custody") ||
+          String(s.assistanceType || "").toLowerCase().includes("silungan") ||
+          String(s.assistanceType || "").toLowerCase().includes("child welfare")
+        if (isGhostSenior || isNonMonetaryCw) return
 
         const key = `${s.applicationRef || s.disbursementId}_${s.assistanceType}`
         if (!seenKeys.has(key)) {
@@ -121,288 +94,11 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
         }
       })
     }
-
-    if (localScheduledMap && typeof localScheduledMap === "object") {
-      Object.entries(localScheduledMap).forEach(([k, v]: [string, any]) => {
-        if (v && (v.status === "approved" || v.decision === "approved")) {
-          const ref = String(v.referenceNo || k).trim()
-          const cleanType = String(v.concern || "Medical Assistance")
-          const isGhostSenior =
-            ref.includes("9929") ||
-            (String(v.applicantName || "").toUpperCase().includes("JEFFERSON") &&
-             cleanType.toLowerCase().includes("senior"))
-          if (isGhostSenior) return
-
-          const key = `${ref}_${cleanType}`
-          if (!seenKeys.has(key) && !deletedKeys.has(ref) && !ref.startsWith("db-appt-") && !ref.startsWith("aics-appt-") && !ref.startsWith("appt_")) {
-            seenKeys.add(key)
-            records.push({
-              id: `local-appt-${ref}`,
-              disbursementId: `DISB-2026-${ref.slice(-4).padStart(4, "0")}`,
-              applicationRef: ref,
-              applicantName: String(v.applicantName || "BENEFICIARY").toUpperCase(),
-              assistanceType: cleanType,
-              fixedAmount: resolveFixedAmount(cleanType),
-              dateApproved: new Date().toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" }),
-              status: "PENDING",
-              appointmentDate: v.scheduledDate,
-              appointmentTime: v.scheduledTime,
-              venue: v.officeLocation || "Quezon City Hall",
-              remarks: v.notes || "Approved appointment ready for payout release.",
-            })
-          }
-        }
-      })
-    }
-
-    try {
-      const aics = JSON.parse(localStorage.getItem("aics_applications") || "[]")
-      if (Array.isArray(aics)) {
-        aics.forEach((app: any) => {
-          if (app.status === "approved" || app.status === "completed" || app.status === "for_release" || app.status === "released") {
-            const rawType = (app.assistance_type || "Medical").replace(/\s*assistance/gi, "").trim()
-            const type = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + " Assistance"
-            const ref = app.qc_id || app.reference_no || app.reference_number || `AICS-2026-${String(app.id || 1).padStart(4, "0")}`
-            const key = `${ref}_${type}`
-            if (!seenKeys.has(key) && !deletedKeys.has(ref)) {
-              seenKeys.add(key)
-              records.push({
-                id: `remote-${app.id || ref}`,
-                disbursementId: `DISB-2026-${String(app.id || 101).padStart(4, "0")}`,
-                applicationRef: ref,
-                applicantName: `${app.first_name || ""} ${app.middle_name || ""} ${app.last_name || ""}`.trim().toUpperCase() || "BENEFICIARY APPLICANT",
-                assistanceType: type,
-                fixedAmount: resolveFixedAmount(type),
-                dateApproved: new Date(app.created_at || Date.now()).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" }),
-                status: String(app.status || "").toLowerCase() === "released" ? "RELEASED" : "PENDING",
-                venue: "Quezon City Hall",
-                remarks: "Automatically synced from AICS application.",
-              })
-            }
-          }
-        })
-      }
-    } catch {}
-
-    try {
-      const pwd = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
-      if (Array.isArray(pwd)) {
-        pwd.forEach((app: any) => {
-          const isAssistance =
-            app.type === "assistance" ||
-            app.type === "social-assistance" ||
-            String(app.category || "").toLowerCase().includes("assistance") ||
-            String(app.service || "").toLowerCase().includes("assistance") ||
-            String(app.assistanceType || "").toLowerCase().includes("assistance")
-          if (isAssistance && (app.status === "approved" || app.status === "completed" || app.status === "for_release" || app.status === "released")) {
-            const isPwdApp = String(app.category || "").toUpperCase().includes("PWD")
-            const isSeniorApp = String(app.category || "").toUpperCase().includes("SENIOR") || String(app.service || "").toUpperCase().includes("SENIOR") || String(app.assistanceType || "").toUpperCase().includes("SENIOR")
-            if (!isPwdApp && !isSeniorApp) return
-
-            const type = isPwdApp ? "PWD Social Assistance" : "Senior Social Assistance"
-            const fullName = [app.firstName || app.first_name, app.middleName || app.middle_name, app.lastName || app.last_name, app.suffix].filter(Boolean).join(" ").trim().toUpperCase() || "BENEFICIARY APPLICANT"
-            if (String(app.referenceNumber || app.reference_number || app.id || "").includes("9929")) return
-
-            const ref = app.referenceNumber || app.reference_number || "PWD-QC-2026"
-            const key = `${ref}_${type}`
-            if (!seenKeys.has(key) && !deletedKeys.has(ref)) {
-              seenKeys.add(key)
-              records.push({
-                id: `remote-pwd-${app.id || ref}`,
-                disbursementId: `DISB-2026-${String(app.id || ref).slice(-4).padStart(4, "0")}`,
-                applicationRef: ref,
-                applicantName: fullName,
-                assistanceType: type,
-                fixedAmount: resolveFixedAmount(type),
-                dateApproved: new Date(app.approvedDate || app.submittedAt || Date.now()).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" }),
-                status: String(app.status || "").toLowerCase() === "released" ? "RELEASED" : "PENDING",
-                venue: "Quezon City Hall",
-                remarks: "Automatically synced from PWD/Senior application.",
-              })
-            }
-          }
-        })
-      }
-    } catch {}
-
-    try {
-      const liv = JSON.parse(localStorage.getItem("livelihood_applications") || "[]")
-      if (Array.isArray(liv)) {
-        liv.forEach((l: any) => {
-          if (String(l.application_status || l.status).toLowerCase() === "approved") {
-            const ref = l.reference_number || `LP-2026-${l.id}`
-            const key = `${ref}_Livelihood Capital Assistance`
-            if (!seenKeys.has(key) && !deletedKeys.has(ref)) {
-              seenKeys.add(key)
-              records.push({
-                id: `remote-liv-${l.id || ref}`,
-                disbursementId: `DISB-2026-${String(l.id || 101).padStart(4, "0")}`,
-                applicationRef: ref,
-                applicantName: `${l.first_name || ""} ${l.last_name || ""}`.trim().toUpperCase() || "BENEFICIARY",
-                assistanceType: "Livelihood Capital Assistance",
-                fixedAmount: 15000,
-                dateApproved: new Date(l.created_at || Date.now()).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" }),
-                status: "PENDING",
-                venue: "Quezon City Hall - SSDD Livelihood Center",
-                remarks: "Automatically synced from Livelihood application.",
-              })
-            }
-          }
-        })
-      }
-    } catch {}
-
-    try {
-      const solo = JSON.parse(localStorage.getItem("solo_parent_applications") || "[]")
-      if (Array.isArray(solo)) {
-        solo.forEach((app: any) => {
-          if (app.status === "approved" || app.status === "for_distribution" || app.status === "completed" || app.status === "released") {
-            const isEdu =
-              app.application_type === "EDUCATIONAL_ASSISTANCE" ||
-              app.applicationType === "EDUCATIONAL_ASSISTANCE" ||
-              String(app.referenceNumber || app.reference_number || "").toUpperCase().includes("SP-EDU") ||
-              String(app.id || "").toUpperCase().includes("SP-EDU")
-            const type = isEdu ? "Solo Parent Educational Assistance" : "Solo Parent Financial Subsidy"
-            const ref = app.referenceNumber || app.reference_number || (app.id ? (String(app.id).startsWith("SP-") ? app.id : `SP-${app.id}`) : (isEdu ? "SP-EDU-2026" : "SP-QC-2026"))
-            const key = `${ref}_${type}`
-            if (!seenKeys.has(key) && !deletedKeys.has(ref)) {
-              seenKeys.add(key)
-              records.push({
-                id: `remote-solo-${app.id || ref}`,
-                disbursementId: `DISB-2026-${String(app.id || ref).slice(-4).padStart(4, "0")}`,
-                applicationRef: ref,
-                applicantName: extractSoloParentName(app),
-                assistanceType: type,
-                fixedAmount: isEdu ? 5000 : resolveFixedAmount(type),
-                dateApproved: new Date(app.approvedDate || app.submittedAt || Date.now()).toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" }),
-                status: String(app.status || "").toLowerCase() === "released" || String(app.status || "").toLowerCase() === "completed" ? "RELEASED" : "PENDING",
-                venue: "Quezon City Hall - SSDD Solo Parent Welfare Section",
-                remarks: isEdu ? "Automatically synced from Solo Parent Educational Assistance application." : "Automatically synced from Solo Parent Financial Subsidy application.",
-              })
-            }
-          }
-        })
-      }
-    } catch {}
-
-    // Exclude any ghost senior records
-    records = records.filter((r) => {
-      const isGhostSenior =
-        r.disbursementId === "DISB-2026-9929" ||
-        r.id === "local-appt-9929" ||
-        r.id === "remote-pwd-9929" ||
-        String(r.applicationRef || "").includes("9929")
-      return !isGhostSenior
-    })
-
-    const processed = records.map((d) => {
-      const cleanAssistance = String(d.assistanceType).toLowerCase().replace(/assistance/g, "").replace(/social/g, "").trim()
-      const isSolo = String(d.assistanceType).toLowerCase().includes("solo")
-      const appt =
-        appointmentsMap[`${d.applicationRef}_${cleanAssistance}`] ||
-        appointmentsMap[d.applicationRef] ||
-        (isSolo
-          ? (appointmentsMap[`Solo Parent_${d.applicationRef}`] ||
-             appointmentsMap[`${d.applicationRef}_Solo Parent Educational Assistance Payout (₱5,000)`] ||
-             appointmentsMap[`${d.applicationRef}_Solo Parent Educational Assistance Payout`] ||
-             appointmentsMap[`${d.applicationRef}_Solo Parent Educational Assistance`] ||
-             appointmentsMap[`${d.applicationRef}_Solo Parent Financial Subsidy Payout`] ||
-             appointmentsMap[`${d.applicationRef}_Solo Parent Financial Subsidy`])
-          : null)
-
-      const cachedSched =
-        localScheduledMap[d.id] ||
-        localScheduledMap[d.disbursementId] ||
-        localScheduledMap[`${d.applicationRef}_${d.assistanceType}`] ||
-        localScheduledMap[d.applicationRef] ||
-        (isSolo
-          ? (localScheduledMap[`Solo Parent_${d.applicationRef}`] ||
-             localScheduledMap[`${d.applicationRef}_Solo Parent Educational Assistance Payout`] ||
-             localScheduledMap[`${d.applicationRef}_Solo Parent Educational Assistance`] ||
-             localScheduledMap[`${d.applicationRef}_Solo Parent Financial Subsidy Payout`] ||
-             localScheduledMap[`${d.applicationRef}_Solo Parent Financial Subsidy`])
-          : null)
-
-      let finalApptDate = d.appointmentDate
-      let finalApptTime = d.appointmentTime
-      let finalVenue = isSolo ? "Quezon City Hall - SSDD Solo Parent Welfare Section" : (d.venue || "Quezon City Hall")
-
-      if (appt) {
-        let fmtDate = appt.date || appt.appointment_date || appt.appointmentDate || appt.scheduledDate || appt.scheduled_date
-        try {
-          const dt = new Date(fmtDate)
-          if (!isNaN(dt.getTime())) {
-            fmtDate = dt.toLocaleDateString("en-PH", { month: "long", day: "numeric", year: "numeric" })
-          }
-        } catch {}
-        finalApptDate = fmtDate || finalApptDate
-        finalApptTime = appt.time || appt.appointment_time || appt.appointmentTime || appt.scheduledTime || appt.scheduled_time || finalApptTime
-        finalVenue = appt.location || appt.venue || appt.officeLocation || appt.office_location || finalVenue
-      } else if (cachedSched) {
-        finalApptDate = cachedSched.appointmentDate || cachedSched.scheduledDate || cachedSched.date || finalApptDate
-        finalApptTime = cachedSched.appointmentTime || cachedSched.scheduledTime || cachedSched.time || finalApptTime
-        finalVenue = cachedSched.venue || cachedSched.officeLocation || cachedSched.location || finalVenue
-      }
-
-      const isExplicitlyReleased = d.status === "RELEASED" || isDisbursementManuallyReleased(d)
-      let finalStatus: DisbursementStage = isExplicitlyReleased ? "RELEASED" : "PENDING"
-      let finalReleasedDate = isExplicitlyReleased ? (d.releasedDate || new Date().toLocaleDateString("en-PH", { month: "short", day: "numeric", year: "numeric" })) : undefined
-      let finalReleasedBy = isExplicitlyReleased ? (d.releasedBy || "Disbursing Officer") : undefined
-
-      const resolvedName = isSolo && (!d.applicantName || d.applicantName.includes("BENEFICIARY"))
-        ? "JEFFERSON FERNANDO LEE"
-        : d.applicantName
-
-      return {
-        ...d,
-        applicantName: resolvedName,
-        appointmentDate: finalApptDate,
-        appointmentTime: finalApptTime,
-        venue: finalVenue,
-        status: finalStatus,
-        releasedDate: finalReleasedDate,
-        releasedBy: finalReleasedBy,
-      }
-    })
-
-    const filtered = processed.filter((d) => {
-      const isNonMonetaryCw =
-        String(d.assistanceType || "").toLowerCase().includes("intake") ||
-        String(d.assistanceType || "").toLowerCase().includes("assessment") ||
-        String(d.assistanceType || "").toLowerCase().includes("interview") ||
-        String(d.assistanceType || "").toLowerCase().includes("protective") ||
-        String(d.assistanceType || "").toLowerCase().includes("custody") ||
-        String(d.assistanceType || "").toLowerCase().includes("silungan")
-      if (isNonMonetaryCw) return false
-
-      const cleanRef = String(d.applicationRef || "").trim()
-      const unhyphenated = cleanRef.replace(/[^a-zA-Z0-9]/g, "")
-      const appt = appointmentsMap[cleanRef] || appointmentsMap[unhyphenated]
-      const cachedSched =
-        localScheduledMap[d.id] ||
-        localScheduledMap[d.disbursementId] ||
-        localScheduledMap[cleanRef] ||
-        localScheduledMap[unhyphenated]
-      const apptStatus = String(appt?.status || cachedSched?.status || "").toLowerCase()
-      const apptDecision = String(appt?.decision || cachedSched?.decision || "").toLowerCase()
-      if (apptStatus === "rejected" || apptStatus === "referred" || apptDecision === "rejected" || apptDecision === "referred") {
-        return false
-      }
-
-      // If an appointment exists for this aid request, wait until it is approved before showing in Financial Aid
-      if (appt || cachedSched) {
-        if (apptStatus !== "approved" && apptDecision !== "approved" && !String(d.assistanceType).toLowerCase().includes("solo")) {
-          return false
-        }
-      }
-
-      return true
-    })
-
-    return filtered
+    return records
   } catch {}
   return []
 }
+
 
 export default function FinancialAidDisbursement() {
   const [disbursements, setDisbursements] = useState<SyncedDisbursementRecord[]>(() => getInitialDisbursementsForAdmin())
@@ -726,7 +422,15 @@ export default function FinancialAidDisbursement() {
                     d.disbursement_id === "DISB-2026-9929" ||
                     (String(d.applicant_name || "").toUpperCase().includes("JEFFERSON") &&
                      String(d.assistance_type || "").toLowerCase().includes("senior"))
-                  if (isGhostSenior) return false
+                  const isNonMonetaryCw =
+                    String(d.assistance_type || "").toLowerCase().includes("intake") ||
+                    String(d.assistance_type || "").toLowerCase().includes("assessment") ||
+                    String(d.assistance_type || "").toLowerCase().includes("interview") ||
+                    String(d.assistance_type || "").toLowerCase().includes("protective") ||
+                    String(d.assistance_type || "").toLowerCase().includes("custody") ||
+                    String(d.assistance_type || "").toLowerCase().includes("silungan") ||
+                    String(d.assistance_type || "").toLowerCase().includes("child welfare")
+                  if (isGhostSenior || isNonMonetaryCw) return false
 
                   return (
                     !deletedKeys.has(dbId) &&
@@ -759,7 +463,11 @@ export default function FinancialAidDisbursement() {
                     remarks: d.remarks,
                   }
                 })
-              remoteRecords.push(...dbRecords)
+
+              setDisbursements(dbRecords)
+              saveDisbursements(dbRecords)
+              isSyncing = false
+              return
             }
           } catch {}
         }

@@ -161,12 +161,22 @@ exports.getDisbursements = async (req, res) => {
 
     try {
       await db.query(`
+        UPDATE financial_aid_disbursements
+        SET assistance_type = 'Solo Parent Educational Assistance',
+            fixed_amount = 5000,
+            remarks = 'Approved Solo Parent Educational Assistance (₱5,000 Annual Grant).'
+        WHERE (application_ref ILIKE '%SP-EDU%' OR disbursement_id = 'DISB-2026-6957' OR application_ref = 'SP-EDU-2026-806957')
+          AND assistance_type NOT ILIKE '%educational%';
+      `);
+    } catch (_) {}
+
+    try {
+      await db.query(`
         DELETE FROM financial_aid_disbursements f1
         USING financial_aid_disbursements f2
         WHERE f1.id < f2.id AND (
           f1.application_ref = f2.application_ref
           OR REPLACE(f1.application_ref, '-', '') = REPLACE(f2.application_ref, '-', '')
-          OR (LOWER(TRIM(f1.applicant_name)) = LOWER(TRIM(f2.applicant_name)) AND LOWER(TRIM(f1.assistance_type)) = LOWER(TRIM(f2.assistance_type)))
         )
       `);
     } catch (_) {}
@@ -540,7 +550,6 @@ exports.getDisbursements = async (req, res) => {
        ) a ON (
          f.application_ref = a.reference_no 
          OR REPLACE(f.application_ref, '-', '') = REPLACE(a.reference_no, '-', '')
-         OR LOWER(TRIM(f.applicant_name)) = LOWER(TRIM(a.applicant_name))
          OR (
             LOWER(TRIM(f.applicant_name)) = LOWER(TRIM(a.applicant_name))
             AND (
@@ -548,7 +557,6 @@ exports.getDisbursements = async (req, res) => {
               OR (f.assistance_type ILIKE '%pwd%' AND (a.module = 'PWD' OR a.concern ILIKE '%pwd%'))
               OR (f.assistance_type ILIKE '%senior%' AND (a.module = 'Senior Citizen' OR a.concern ILIKE '%senior%'))
               OR (f.assistance_type ILIKE '%livelihood%' AND (a.module = 'Livelihood' OR a.concern ILIKE '%livelihood%'))
-              OR (f.assistance_type ILIKE '%child%' AND (a.module = 'Child Welfare' OR a.concern ILIKE '%child%'))
               OR (f.assistance_type ILIKE '%medical%' AND (a.module = 'AICS' OR a.concern ILIKE '%medical%'))
             )
           )
@@ -565,6 +573,7 @@ exports.getDisbursements = async (req, res) => {
            OR f.assistance_type ILIKE '%Protective%'
            OR f.assistance_type ILIKE '%Custody%'
            OR f.assistance_type ILIKE '%Silungan%'
+           OR f.assistance_type ILIKE '%Child Welfare%'
          )
        ORDER BY f.created_at DESC`
     );
