@@ -112,44 +112,45 @@ function parseDateTime(dateStr, timeStr) {
 async function autoReleaseScheduledLivelihood() {
   try {
     const result = await db.query(
-      `SELECT * FROM livelihood_assistance WHERE LOWER(assistance_status) = 'for_release'`
+      `SELECT id, reference_number, assistance, monitoring FROM livelihood_applications 
+       WHERE LOWER(COALESCE(assistance->>'assistance_status', '')) = 'for_release'`
     );
 
     const now = new Date();
-    for (const row of result.rows) {
-      if (!row.release_date) continue;
-      const scheduledDt = parseDateTime(row.release_date, row.release_time);
+    for (const app of result.rows) {
+      const assist = typeof app.assistance === 'string' ? JSON.parse(app.assistance) : (app.assistance || {});
+      if (!assist.release_date) continue;
+      const scheduledDt = parseDateTime(assist.release_date, assist.release_time);
       if (scheduledDt && now.getTime() >= scheduledDt.getTime()) {
-        await db.query(
-          `UPDATE livelihood_assistance SET
-            assistance_status = 'released',
-            released_at = NOW(),
-            released_by = COALESCE(released_by, 'Automated Scheduled Release System'),
-            updated_at = NOW()
-          WHERE id = $1`,
-          [row.id]
-        );
+        assist.assistance_status = 'released';
+        assist.released_at = now.toISOString();
+        assist.released_by = assist.released_by || 'Automated Scheduled Release System';
+        assist.updated_at = now.toISOString();
 
-        const monCheck = await db.query(
-          'SELECT id FROM livelihood_monitoring WHERE application_id = $1',
-          [row.application_id]
-        );
-        if (monCheck.rows.length === 0) {
-          await db.query(
-            `INSERT INTO livelihood_monitoring (
-              application_id, reference_number, monitoring_status, log_type,
-              title, notes, officer_name, inspection_date
-            ) VALUES ($1, $2, 'active', 'inspection', $3, $4, $5, $6)`,
-            [
-              row.application_id,
-              row.reference_number,
-              'Initial Assistance Release & Monitoring Setup',
-              `Capital / Materials assistance automatically released at scheduled date and time (${row.release_date} ${row.release_time || ''}). Active monitoring initiated.`,
-              'Automated Scheduled Release System',
-              now.toISOString().split('T')[0],
-            ]
-          );
+        let monitoring = Array.isArray(app.monitoring) ? app.monitoring : (typeof app.monitoring === 'string' ? JSON.parse(app.monitoring) : []);
+        if (monitoring.length === 0) {
+          monitoring.unshift({
+            id: `MON-${Date.now()}`,
+            application_id: app.id,
+            reference_number: app.reference_number,
+            monitoring_status: 'active',
+            log_type: 'inspection',
+            title: 'Initial Assistance Release & Monitoring Setup',
+            notes: `Capital / Materials assistance automatically released at scheduled date and time (${assist.release_date} ${assist.release_time || ''}). Active monitoring initiated.`,
+            officer_name: 'Automated Scheduled Release System',
+            inspection_date: now.toISOString().split('T')[0],
+            created_at: now.toISOString(),
+          });
         }
+
+        await db.query(
+          `UPDATE livelihood_applications SET
+            assistance = $1::jsonb,
+            monitoring = $2::jsonb,
+            updated_at = NOW()
+          WHERE id = $3`,
+          [JSON.stringify(assist), JSON.stringify(monitoring), app.id]
+        );
       }
     }
   } catch (err) {}
@@ -344,20 +345,19 @@ exports.getApplications = async (req, res) => {
       const apps = result.rows;
 
       for (const app of apps) {
-        const assistRes = await db.query('SELECT * FROM livelihood_assistance WHERE application_id = $1 LIMIT 1', [app.id]);
-        app.assistance = assistRes.rows[0] || null;
-
-        if (app.assistance) {
-          if (typeof app.assistance.approved_materials === 'string') {
-            try { app.assistance.approved_materials = JSON.parse(app.assistance.approved_materials); } catch (_) {}
-          }
-          if (typeof app.assistance.approved_equipment === 'string') {
-            try { app.assistance.approved_equipment = JSON.parse(app.assistance.approved_equipment); } catch (_) {}
-          }
+        if (app.assistance && typeof app.assistance === 'string') {
+          try { app.assistance = JSON.parse(app.assistance); } catch (_) {}
+        }
+        if (!app.assistance || Object.keys(app.assistance).length === 0) {
+          app.assistance = null;
         }
 
-        const monRes = await db.query('SELECT * FROM livelihood_monitoring WHERE application_id = $1 ORDER BY created_at DESC', [app.id]);
-        app.monitoring = monRes.rows || [];
+        if (app.monitoring && typeof app.monitoring === 'string') {
+          try { app.monitoring = JSON.parse(app.monitoring); } catch (_) {}
+        }
+        if (!Array.isArray(app.monitoring)) {
+          app.monitoring = [];
+        }
 
         const disbCheck = await db.query(
           `SELECT f.*, a.scheduled_date, a.scheduled_time, a.office_location, a.status as appointment_status
@@ -413,20 +413,19 @@ exports.getApplicationByReference = async (req, res) => {
       }
 
       const app = result.rows[0];
-      const assistRes = await db.query('SELECT * FROM livelihood_assistance WHERE application_id = $1 LIMIT 1', [app.id]);
-      app.assistance = assistRes.rows[0] || null;
-
-      if (app.assistance) {
-        if (typeof app.assistance.approved_materials === 'string') {
-          try { app.assistance.approved_materials = JSON.parse(app.assistance.approved_materials); } catch (_) {}
-        }
-        if (typeof app.assistance.approved_equipment === 'string') {
-          try { app.assistance.approved_equipment = JSON.parse(app.assistance.approved_equipment); } catch (_) {}
-        }
+      if (app.assistance && typeof app.assistance === 'string') {
+        try { app.assistance = JSON.parse(app.assistance); } catch (_) {}
+      }
+      if (!app.assistance || Object.keys(app.assistance).length === 0) {
+        app.assistance = null;
       }
 
-      const monRes = await db.query('SELECT * FROM livelihood_monitoring WHERE application_id = $1 ORDER BY created_at DESC', [app.id]);
-      app.monitoring = monRes.rows || [];
+      if (app.monitoring && typeof app.monitoring === 'string') {
+        try { app.monitoring = JSON.parse(app.monitoring); } catch (_) {}
+      }
+      if (!Array.isArray(app.monitoring)) {
+        app.monitoring = [];
+      }
 
       const disbCheck = await db.query(
         `SELECT f.*, a.scheduled_date, a.scheduled_time, a.office_location, a.status as appointment_status
@@ -638,8 +637,12 @@ exports.updateStatus = async (req, res) => {
       const updated = result.rows[0];
 
       if (isApproved) {
-        const assistCheck = await db.query('SELECT * FROM livelihood_assistance WHERE application_id = $1', [updated.id]);
-        if (assistCheck.rows.length === 0) {
+        let currentAssistance = updated.assistance;
+        if (typeof currentAssistance === 'string') {
+          try { currentAssistance = JSON.parse(currentAssistance); } catch (_) {}
+        }
+
+        if (!currentAssistance || Object.keys(currentAssistance).length === 0) {
           let startMaterials = [
             { item: 'Starter Livelihood Supply Pack', quantity: '1 set', remarks: 'Standard initial allocation' },
           ];
@@ -665,28 +668,27 @@ exports.updateStatus = async (req, res) => {
             } catch (_) {}
           }
 
+          const defaultAssistance = {
+            id: `ASST-${updated.id}`,
+            application_id: updated.id,
+            reference_number: updated.reference_number,
+            assistance_status: 'for_processing',
+            approved_financial_amount: Number(updated.estimated_amount) > 0 ? Number(updated.estimated_amount) : 15000,
+            approved_materials: startMaterials,
+            approved_equipment: startEquipment,
+            release_date: 'To be announced',
+            release_time: '8:00 AM - 4:00 PM',
+            release_location: 'Quezon City Hall - SSDD Livelihood Center',
+            instructions: 'Magdala ng valid QCID at copy ng approved application summary.',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          };
+
           await db.query(
-            `INSERT INTO livelihood_assistance (
-              application_id, reference_number, assistance_status,
-              approved_financial_amount, approved_materials, approved_equipment,
-              release_date, release_time, release_location, instructions
-            ) VALUES (
-              $1, $2, 'for_processing',
-              $3, $4, $5,
-              $6, $7, $8, $9
-            )`,
-            [
-              updated.id,
-              updated.reference_number,
-              Number(updated.estimated_amount) > 0 ? Number(updated.estimated_amount) : 15000,
-              JSON.stringify(startMaterials),
-              JSON.stringify(startEquipment),
-              'To be announced',
-              '8:00 AM - 4:00 PM',
-              'Quezon City Hall - SSDD Livelihood Center',
-              'Magdala ng valid QCID at copy ng approved application summary.',
-            ]
-          );
+            `UPDATE livelihood_applications SET assistance = $1::jsonb WHERE id = $2`,
+            [JSON.stringify(defaultAssistance), updated.id]
+          ).catch(() => {});
+          updated.assistance = defaultAssistance;
         }
 
         const disbCheck = await db.query('SELECT id FROM financial_aid_disbursements WHERE application_ref = $1', [updated.reference_number]);
@@ -792,71 +794,60 @@ exports.saveAssistance = async (req, res) => {
     const releasedAt = finalAssistanceStatus === 'released' ? new Date() : null;
 
     try {
-      const appRes = await db.query('SELECT id, reference_number FROM livelihood_applications WHERE id::text = $1::text OR reference_number = $1::text', [id]);
+      const appRes = await db.query('SELECT id, reference_number, assistance, monitoring FROM livelihood_applications WHERE id::text = $1::text OR reference_number = $1::text', [id]);
       if (appRes.rows.length === 0) {
         return res.status(404).json({ success: false, message: 'Application not found' });
       }
       const app = appRes.rows[0];
 
-      const check = await db.query('SELECT id FROM livelihood_assistance WHERE application_id = $1', [app.id]);
-      let savedAssist;
-
-      if (check.rows.length > 0) {
-        const updateRes = await db.query(
-          `UPDATE livelihood_assistance SET
-            assistance_status = $1::text,
-            approved_financial_amount = $2::numeric,
-            approved_materials = $3::jsonb,
-            approved_equipment = $4::jsonb,
-            release_date = $5::text,
-            release_time = $6::text,
-            release_location = $7::text,
-            instructions = $8::text,
-            released_at = CASE WHEN $1::text = 'released' THEN NOW() ELSE released_at END,
-            released_by = CASE WHEN $1::text = 'released' THEN $9::text ELSE released_by END,
-            updated_at = NOW()
-          WHERE application_id = $10
-          RETURNING *`,
-          [
-            finalAssistanceStatus,
-            parsedAmount,
-            JSON.stringify(approvedMaterials),
-            JSON.stringify(approvedEquipment),
-            releaseDate || null,
-            releaseTime || null,
-            releaseLocation || null,
-            instructions || null,
-            releasedBy || 'SSDD Admin',
-            app.id,
-          ]
-        );
-        savedAssist = updateRes.rows[0];
-      } else {
-        const insertRes = await db.query(
-          `INSERT INTO livelihood_assistance (
-            application_id, reference_number, assistance_status,
-            approved_financial_amount, approved_materials, approved_equipment,
-            release_date, release_time, release_location, instructions,
-            released_at, released_by
-          ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-          RETURNING *`,
-          [
-            app.id,
-            app.reference_number,
-            finalAssistanceStatus,
-            parsedAmount,
-            JSON.stringify(approvedMaterials),
-            JSON.stringify(approvedEquipment),
-            releaseDate || null,
-            releaseTime || null,
-            releaseLocation || null,
-            instructions || null,
-            releasedAt,
-            releasedBy || null,
-          ]
-        );
-        savedAssist = insertRes.rows[0];
+      let currentAssist = app.assistance || {};
+      if (typeof currentAssist === 'string') {
+        try { currentAssist = JSON.parse(currentAssist); } catch (_) {}
       }
+      let currentMonitoring = Array.isArray(app.monitoring) ? app.monitoring : (typeof app.monitoring === 'string' ? JSON.parse(app.monitoring) : []);
+
+      const savedAssist = {
+        ...currentAssist,
+        id: currentAssist.id || `ASST-${app.id}`,
+        application_id: app.id,
+        reference_number: app.reference_number,
+        assistance_status: finalAssistanceStatus,
+        release_status: finalAssistanceStatus === 'released' ? 'RELEASED' : 'NOT RELEASED',
+        approved_financial_amount: parsedAmount,
+        approved_materials: approvedMaterials || currentAssist.approved_materials || [],
+        approved_equipment: approvedEquipment || currentAssist.approved_equipment || [],
+        release_date: releaseDate || currentAssist.release_date || null,
+        release_time: releaseTime || currentAssist.release_time || null,
+        release_location: releaseLocation || currentAssist.release_location || 'Quezon City Hall - SSDD Livelihood Center',
+        instructions: instructions || currentAssist.instructions || null,
+        released_at: finalAssistanceStatus === 'released' ? (releasedAt ? releasedAt.toISOString() : new Date().toISOString()) : currentAssist.released_at,
+        released_by: finalAssistanceStatus === 'released' ? (releasedBy || 'SSDD Admin') : currentAssist.released_by,
+        updated_at: new Date().toISOString(),
+      };
+
+      if (finalAssistanceStatus === 'released' && currentMonitoring.length === 0) {
+        currentMonitoring.unshift({
+          id: `MON-${Date.now()}`,
+          application_id: app.id,
+          reference_number: app.reference_number,
+          monitoring_status: 'active',
+          log_type: 'inspection',
+          title: 'Initial Assistance Release & Monitoring Setup',
+          notes: 'Capital / Materials assistance has been officially released to beneficiary. Active livelihood monitoring is now initiated.',
+          officer_name: releasedBy || 'SSDD Admin',
+          inspection_date: new Date().toISOString().split('T')[0],
+          created_at: new Date().toISOString(),
+        });
+      }
+
+      await db.query(
+        `UPDATE livelihood_applications SET
+          assistance = $1::jsonb,
+          monitoring = $2::jsonb,
+          updated_at = NOW()
+        WHERE id = $3`,
+        [JSON.stringify(savedAssist), JSON.stringify(currentMonitoring), app.id]
+      );
 
       try {
         await db.query(
@@ -867,26 +858,6 @@ exports.saveAssistance = async (req, res) => {
           [parsedAmount, app.reference_number]
         );
       } catch (_) {}
-
-      if (finalAssistanceStatus === 'released') {
-        const monCheck = await db.query('SELECT id FROM livelihood_monitoring WHERE application_id = $1', [app.id]);
-        if (monCheck.rows.length === 0) {
-          await db.query(
-            `INSERT INTO livelihood_monitoring (
-              application_id, reference_number, monitoring_status, log_type,
-              title, notes, officer_name, inspection_date
-            ) VALUES ($1, $2, 'active', 'inspection', $3, $4, $5, $6)`,
-            [
-              app.id,
-              app.reference_number,
-              'Initial Assistance Release & Monitoring Setup',
-              'Capital / Materials assistance has been officially released to beneficiary. Active livelihood monitoring is now initiated.',
-              releasedBy || 'SSDD Admin',
-              new Date().toISOString().split('T')[0],
-            ]
-          );
-        }
-      }
 
       return res.json({
         success: true,
@@ -986,43 +957,48 @@ exports.addMonitoringLog = async (req, res) => {
       : (notes || '');
 
     try {
-      const appRes = await db.query('SELECT id, reference_number, user_id, qcid FROM livelihood_applications WHERE id::text = $1::text OR reference_number = $1::text', [id]);
+      const appRes = await db.query('SELECT id, reference_number, user_id, qcid, monitoring FROM livelihood_applications WHERE id::text = $1::text OR reference_number = $1::text', [id]);
       if (appRes.rows.length === 0) {
         return res.status(404).json({ success: false, message: 'Application not found' });
       }
       const app = appRes.rows[0];
 
-      const result = await db.query(
-        `INSERT INTO livelihood_monitoring (
-          application_id, reference_number, monitoring_status, log_type,
-          title, notes, monthly_sales_range, challenges_needs, officer_name,
-          photos, inspection_date
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-        RETURNING *`,
-        [
-          app.id,
-          app.reference_number,
-          finalStatus,
-          logType,
-          finalTitle,
-          finalNotes,
-          monthlySalesRange || '',
-          challengesNeeds || '',
-          officerName || 'SSDD Monitoring Officer',
-          JSON.stringify(photos),
-          finalDate,
-        ]
+      let currentMonitoring = Array.isArray(app.monitoring) ? app.monitoring : (typeof app.monitoring === 'string' ? JSON.parse(app.monitoring) : []);
+
+      const newLog = {
+        id: `MON-${Date.now()}`,
+        application_id: app.id,
+        reference_number: app.reference_number,
+        monitoring_status: finalStatus,
+        status: finalStatus,
+        log_type: logType,
+        title: finalTitle,
+        notes: finalNotes,
+        progress_update: progressUpdate || finalTitle,
+        remarks: remarks || finalNotes,
+        next_follow_up_date: nextFollowUpDate,
+        monthly_sales_range: monthlySalesRange || '',
+        challenges_needs: challengesNeeds || '',
+        officer_name: officerName || 'SSDD Monitoring Officer',
+        photos: photos || [],
+        inspection_date: finalDate,
+        created_at: new Date().toISOString(),
+      };
+
+      currentMonitoring.unshift(newLog);
+
+      await db.query(
+        `UPDATE livelihood_applications
+         SET monitoring = $1::jsonb,
+             updated_at = NOW()
+         WHERE id = $2`,
+        [JSON.stringify(currentMonitoring), app.id]
       );
 
       return res.status(201).json({
         success: true,
         message: 'Monitoring progress update recorded successfully.',
-        monitoringLog: {
-          ...result.rows[0],
-          progress_update: progressUpdate,
-          remarks: remarks,
-          next_follow_up_date: nextFollowUpDate,
-        },
+        monitoringLog: newLog,
       });
     } catch (dbErr) {
       const target = memoryApplications.find(
@@ -1107,8 +1083,6 @@ exports.uploadDocuments = async (req, res) => {
 exports.resetApplications = async (req, res) => {
   try {
     try {
-      await db.query('DELETE FROM livelihood_monitoring');
-      await db.query('DELETE FROM livelihood_assistance');
       await db.query('DELETE FROM livelihood_applications');
       await db.query(`DELETE FROM appointments WHERE reference_no LIKE 'LP-%' OR module = 'Livelihood'`);
       await db.query(`DELETE FROM financial_aid_disbursements WHERE application_ref LIKE 'LP-%' OR assistance_type LIKE '%Livelihood%'`);
@@ -1123,5 +1097,79 @@ exports.resetApplications = async (req, res) => {
     });
   } catch (err) {
     return res.status(500).json({ success: false, message: 'Reset error', details: err.message });
+  }
+};
+
+exports.runLivelihoodConsolidationMigration = async (req, res) => {
+  try {
+    await db.query(`
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS requested_materials JSONB DEFAULT '[]'::jsonb;
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS requested_equipment JSONB DEFAULT '[]'::jsonb;
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS assistance JSONB DEFAULT '{}'::jsonb;
+      ALTER TABLE livelihood_applications ADD COLUMN IF NOT EXISTS monitoring JSONB DEFAULT '[]'::jsonb;
+
+      DO $$
+      BEGIN
+        IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'livelihood_assistance') THEN
+          UPDATE livelihood_applications la
+          SET assistance = jsonb_build_object(
+            'id', COALESCE(las.id::text, 'ASST-' || la.id::text),
+            'application_id', la.id,
+            'reference_number', la.reference_number,
+            'assistance_status', COALESCE(las.assistance_status, 'for_processing'),
+            'approved_financial_amount', COALESCE(las.approved_financial_amount, 0),
+            'approved_materials', CASE WHEN las.approved_materials IS NOT NULL THEN las.approved_materials ELSE '[]'::jsonb END,
+            'approved_equipment', CASE WHEN las.approved_equipment IS NOT NULL THEN las.approved_equipment ELSE '[]'::jsonb END,
+            'release_date', las.release_date,
+            'release_time', las.release_time,
+            'release_location', COALESCE(las.release_location, 'Quezon City Hall - SSDD Livelihood Center'),
+            'instructions', las.instructions,
+            'released_at', las.released_at,
+            'released_by', las.released_by,
+            'created_at', las.created_at,
+            'updated_at', las.updated_at
+          )
+          FROM livelihood_assistance las
+          WHERE las.application_id = la.id OR las.reference_number = la.reference_number;
+
+          DROP TABLE IF EXISTS livelihood_assistance CASCADE;
+        END IF;
+
+        IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'livelihood_monitoring') THEN
+          UPDATE livelihood_applications la
+          SET monitoring = COALESCE((
+            SELECT jsonb_agg(
+              jsonb_build_object(
+                'id', lm.id,
+                'application_id', la.id,
+                'reference_number', la.reference_number,
+                'monitoring_status', COALESCE(lm.monitoring_status, 'active'),
+                'log_type', COALESCE(lm.log_type, 'inspection'),
+                'title', lm.title,
+                'notes', lm.notes,
+                'monthly_sales_range', lm.monthly_sales_range,
+                'challenges_needs', lm.challenges_needs,
+                'officer_name', lm.officer_name,
+                'photos', CASE WHEN lm.photos IS NOT NULL THEN lm.photos ELSE '[]'::jsonb END,
+                'inspection_date', lm.inspection_date,
+                'created_at', lm.created_at
+              ) ORDER BY lm.created_at DESC
+            )
+            FROM livelihood_monitoring lm
+            WHERE lm.application_id = la.id OR lm.reference_number = la.reference_number
+          ), '[]'::jsonb);
+
+          DROP TABLE IF EXISTS livelihood_monitoring CASCADE;
+        END IF;
+      END $$;
+    `);
+
+    return res.json({
+      success: true,
+      message: 'Livelihood assistance and monitoring consolidated into livelihood_applications, and legacy tables dropped successfully!'
+    });
+  } catch (err) {
+    console.error('Livelihood consolidation migration error:', err);
+    return res.status(500).json({ error: 'Migration failed', details: err.message });
   }
 };

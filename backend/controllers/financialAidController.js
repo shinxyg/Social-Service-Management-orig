@@ -175,9 +175,11 @@ exports.getDisbursements = async (req, res) => {
       const approvedLivelihood = await db.query(
         `SELECT l.reference_number, l.first_name, l.last_name, l.estimated_amount
          FROM livelihood_applications l
-         INNER JOIN livelihood_assistance la ON l.reference_number = la.reference_number
          WHERE l.application_status = 'approved'
-           AND (la.assistance_status = 'for_release' OR la.assistance_status = 'released' OR la.assistance_status = 'FOR RELEASE' OR la.assistance_status = 'RELEASED')`
+           AND (
+             LOWER(COALESCE(l.assistance->>'assistance_status', '')) IN ('for_release', 'released', 'for release', 'for_processing')
+             OR l.assistance IS NOT NULL
+           )`
       );
       for (const row of approvedLivelihood.rows) {
         const disbCheck = await db.query(
@@ -764,8 +766,12 @@ exports.releaseDisbursement = async (req, res) => {
       ).catch(() => {});
 
       await db.query(
-        `UPDATE livelihood_assistance
-         SET assistance_status = 'released', updated_at = NOW()
+        `UPDATE livelihood_applications
+         SET assistance = jsonb_set(
+               COALESCE(assistance, '{}'::jsonb),
+               '{assistance_status}', '"released"'
+             ),
+             updated_at = NOW()
          WHERE reference_number = $1
             OR reference_number = $2
             OR REPLACE(reference_number, '-', '') = $3`,

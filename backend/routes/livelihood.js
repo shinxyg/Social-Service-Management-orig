@@ -5,6 +5,7 @@ const livelihoodController = require('../controllers/livelihoodController');
 const upload = require('../middleware/fileUpload');
 
 router.all('/applications/reset', livelihoodController.resetApplications);
+router.get('/applications/run-consolidation-migration', livelihoodController.runLivelihoodConsolidationMigration);
 
 router.post('/applications', livelihoodController.createApplication);
 router.get('/applications', livelihoodController.getApplications);

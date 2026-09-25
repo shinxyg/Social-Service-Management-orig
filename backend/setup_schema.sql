@@ -361,7 +361,11 @@ CREATE TABLE IF NOT EXISTS livelihood_applications (
   assistance_needed JSONB DEFAULT '[]'::jsonb,
   estimated_amount NUMERIC(12, 2) DEFAULT 0,
   reason_purpose TEXT NOT NULL,
+  requested_materials JSONB DEFAULT '[]'::jsonb,
+  requested_equipment JSONB DEFAULT '[]'::jsonb,
   uploaded_documents JSONB DEFAULT '[]'::jsonb,
+  assistance JSONB DEFAULT '{}'::jsonb,
+  monitoring JSONB DEFAULT '[]'::jsonb,
   rejection_reason TEXT,
   revision_notes TEXT,
   admin_notes TEXT,
@@ -376,48 +380,6 @@ CREATE TABLE IF NOT EXISTS livelihood_applications (
 CREATE INDEX IF NOT EXISTS idx_livelihood_ref ON livelihood_applications(reference_number);
 CREATE INDEX IF NOT EXISTS idx_livelihood_user ON livelihood_applications(user_id);
 CREATE INDEX IF NOT EXISTS idx_livelihood_status ON livelihood_applications(application_status);
-
--- 12. Livelihood Assistance / Capital Table
-CREATE TABLE IF NOT EXISTS livelihood_assistance (
-  id SERIAL PRIMARY KEY,
-  application_id INTEGER REFERENCES livelihood_applications(id) ON DELETE CASCADE,
-  reference_number VARCHAR(100) NOT NULL,
-  assistance_status VARCHAR(50) DEFAULT 'for_processing',
-  approved_financial_amount NUMERIC(12, 2) DEFAULT 0,
-  approved_materials JSONB DEFAULT '[]'::jsonb,
-  approved_equipment JSONB DEFAULT '[]'::jsonb,
-  release_date VARCHAR(100),
-  release_time VARCHAR(100),
-  release_location VARCHAR(255) DEFAULT 'Quezon City Hall - SSDD Livelihood Center',
-  instructions TEXT,
-  released_at TIMESTAMP WITH TIME ZONE,
-  released_by VARCHAR(150),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_livelihood_assist_app ON livelihood_assistance(application_id);
-CREATE INDEX IF NOT EXISTS idx_livelihood_assist_ref ON livelihood_assistance(reference_number);
-
--- 13. Livelihood Monitoring Table
-CREATE TABLE IF NOT EXISTS livelihood_monitoring (
-  id SERIAL PRIMARY KEY,
-  application_id INTEGER REFERENCES livelihood_applications(id) ON DELETE CASCADE,
-  reference_number VARCHAR(100) NOT NULL,
-  monitoring_status VARCHAR(50) DEFAULT 'active',
-  log_type VARCHAR(50) DEFAULT 'inspection',
-  title VARCHAR(255),
-  notes TEXT,
-  monthly_sales_range VARCHAR(100),
-  challenges_needs TEXT,
-  officer_name VARCHAR(150),
-  photos JSONB DEFAULT '[]'::jsonb,
-  inspection_date VARCHAR(100),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_livelihood_mon_app ON livelihood_monitoring(application_id);
-CREATE INDEX IF NOT EXISTS idx_livelihood_mon_ref ON livelihood_monitoring(reference_number);
 
 -- 14. Training Applications Table
 CREATE TABLE IF NOT EXISTS training_applications (

@@ -2072,8 +2072,6 @@ exports.resetTestCitizenAccount = async (req, res) => {
     ).catch(() => ({ rows: [] }));
     if (lhApps.rows.length > 0) {
       const lhIds = lhApps.rows.map(r => r.id);
-      await db.query(`DELETE FROM livelihood_monitoring WHERE application_id = ANY($1::int[])`, [lhIds]).catch(() => {});
-      await db.query(`DELETE FROM livelihood_assistance WHERE application_id = ANY($1::int[])`, [lhIds]).catch(() => {});
       await db.query(`DELETE FROM livelihood_applications WHERE id = ANY($1::int[])`, [lhIds]).catch(() => {});
     }
 

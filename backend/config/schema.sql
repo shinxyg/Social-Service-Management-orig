@@ -237,7 +237,7 @@ CREATE INDEX IF NOT EXISTS idx_user_notifs_notif_id ON user_notifications(notif_
 CREATE INDEX IF NOT EXISTS idx_user_notifs_read ON user_notifications(is_read);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_user_notifs_user_notif ON user_notifications(user_id, notif_id) WHERE notif_id IS NOT NULL;
 
--- 9. Livelihood Applications Table
+-- 9. Livelihood Applications Table (Consolidated with Assistance & Monitoring)
 CREATE TABLE IF NOT EXISTS livelihood_applications (
   id SERIAL PRIMARY KEY,
   reference_number VARCHAR(100) UNIQUE NOT NULL,
@@ -272,7 +272,15 @@ CREATE TABLE IF NOT EXISTS livelihood_applications (
   assistance_needed JSONB DEFAULT '[]'::jsonb,
   estimated_amount NUMERIC(12, 2) DEFAULT 0,
   reason_purpose TEXT NOT NULL,
+  requested_materials JSONB DEFAULT '[]'::jsonb,
+  requested_equipment JSONB DEFAULT '[]'::jsonb,
   uploaded_documents JSONB DEFAULT '[]'::jsonb,
+  
+  -- Consolidated Assistance & Grant Package Details
+  assistance JSONB DEFAULT '{}'::jsonb,
+  
+  -- Consolidated Monitoring & Inspection Logs
+  monitoring JSONB DEFAULT '[]'::jsonb,
   
   -- Workflow / Review
   rejection_reason TEXT,
@@ -287,48 +295,6 @@ CREATE TABLE IF NOT EXISTS livelihood_applications (
 CREATE INDEX IF NOT EXISTS idx_livelihood_ref ON livelihood_applications(reference_number);
 CREATE INDEX IF NOT EXISTS idx_livelihood_user ON livelihood_applications(user_id);
 CREATE INDEX IF NOT EXISTS idx_livelihood_status ON livelihood_applications(application_status);
-
--- 10. Capital / Materials Assistance Table
-CREATE TABLE IF NOT EXISTS livelihood_assistance (
-  id SERIAL PRIMARY KEY,
-  application_id INTEGER REFERENCES livelihood_applications(id) ON DELETE CASCADE,
-  reference_number VARCHAR(100) NOT NULL,
-  assistance_status VARCHAR(50) DEFAULT 'for_processing', -- 'for_processing', 'for_release', 'released'
-  approved_financial_amount NUMERIC(12, 2) DEFAULT 0,
-  approved_materials JSONB DEFAULT '[]'::jsonb,
-  approved_equipment JSONB DEFAULT '[]'::jsonb,
-  release_date VARCHAR(100),
-  release_time VARCHAR(100),
-  release_location VARCHAR(255) DEFAULT 'Quezon City Hall - SSDD Livelihood Center',
-  instructions TEXT,
-  released_at TIMESTAMP WITH TIME ZONE,
-  released_by VARCHAR(150),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_livelihood_assist_app ON livelihood_assistance(application_id);
-CREATE INDEX IF NOT EXISTS idx_livelihood_assist_ref ON livelihood_assistance(reference_number);
-
--- 11. Livelihood Monitoring Table
-CREATE TABLE IF NOT EXISTS livelihood_monitoring (
-  id SERIAL PRIMARY KEY,
-  application_id INTEGER REFERENCES livelihood_applications(id) ON DELETE CASCADE,
-  reference_number VARCHAR(100) NOT NULL,
-  monitoring_status VARCHAR(50) DEFAULT 'active', -- 'active', 'ongoing', 'needs_follow_up', 'completed'
-  log_type VARCHAR(50) DEFAULT 'inspection', -- 'resident_update', 'inspection', 'follow_up'
-  title VARCHAR(255),
-  notes TEXT,
-  monthly_sales_range VARCHAR(100),
-  challenges_needs TEXT,
-  officer_name VARCHAR(150),
-  photos JSONB DEFAULT '[]'::jsonb,
-  inspection_date VARCHAR(100),
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_livelihood_mon_app ON livelihood_monitoring(application_id);
-CREATE INDEX IF NOT EXISTS idx_livelihood_mon_ref ON livelihood_monitoring(reference_number);
 
 -- 12. Users Table
 CREATE TABLE IF NOT EXISTS users (

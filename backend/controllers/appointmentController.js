@@ -189,9 +189,11 @@ async function syncAndCleanAppointments() {
     const approvedLivelihood = await db.query(
       `SELECT l.reference_number, l.first_name, l.last_name
        FROM livelihood_applications l
-       INNER JOIN livelihood_assistance la ON l.reference_number = la.reference_number
        WHERE l.application_status = 'approved'
-         AND (la.assistance_status = 'for_release' OR la.assistance_status = 'released' OR la.assistance_status = 'FOR RELEASE' OR la.assistance_status = 'RELEASED')`
+         AND (
+           LOWER(COALESCE(l.assistance->>'assistance_status', '')) IN ('for_release', 'released', 'for release', 'for_processing')
+           OR l.assistance IS NOT NULL
+         )`
     ).catch(() => ({ rows: [] }));
 
     for (const row of approvedLivelihood.rows) {
@@ -545,15 +547,22 @@ async function syncAppointmentWithDisbursement(appt) {
 
     if (appt.reference_no && appt.reference_no.startsWith('LP-')) {
       await db.query(
-        `UPDATE livelihood_assistance
-         SET release_date = $1,
-             release_time = $2,
-             release_location = $3,
-             assistance_status = 'for_release',
+        `UPDATE livelihood_applications
+         SET assistance = jsonb_set(
+               jsonb_set(
+                 jsonb_set(
+                   COALESCE(assistance, '{}'::jsonb),
+                   '{release_date}', to_jsonb($1::text)
+                 ),
+                 '{release_time}', to_jsonb($2::text)
+               ),
+               '{release_location}', to_jsonb($3::text)
+             ),
              updated_at = NOW()
-         WHERE reference_number = $4 AND assistance_status != 'released'`,
+         WHERE reference_number = $4
+            OR reference_number LIKE $4 || '-%'`,
         [appt.scheduled_date, appt.scheduled_time, appt.office_location || 'Quezon City Hall - SSDD Livelihood Center', appt.reference_no]
-      );
+      ).catch(() => {});
     }
 
     await db.query(
