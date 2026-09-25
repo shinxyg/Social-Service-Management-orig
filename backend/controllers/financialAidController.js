@@ -468,6 +468,42 @@ exports.getDisbursements = async (req, res) => {
       }
     } catch (_) {}
 
+    try {
+      const approvedSolo = await db.query(
+        `SELECT reference_number, application_type, service_name, first_name, middle_name, last_name, suffix, approved_amount, updated_at, created_at
+         FROM solo_parent_child_welfare_applications
+         WHERE application_status IN ('approved', 'completed', 'for_release', 'released')
+           AND (reference_number ILIKE '%SP-EDU%' OR application_type ILIKE '%educational%' OR service_name ILIKE '%educational%')`
+      );
+      for (const row of approvedSolo.rows) {
+        const ref = row.reference_number;
+        if (!ref) continue;
+        const disbCheck = await db.query(
+          'SELECT id FROM financial_aid_disbursements WHERE application_ref = $1',
+          [ref]
+        );
+        if (disbCheck.rows.length === 0) {
+          const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+          const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'SOLO PARENT BENEFICIARY';
+          await db.query(
+            `INSERT INTO financial_aid_disbursements (
+              disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
+              date_approved, status, venue, remarks
+            ) VALUES ($1, $2, $3, 'Solo Parent Educational Assistance', 5000, $4, 'PENDING', $5, $6)
+            ON CONFLICT DO NOTHING`,
+            [
+              disbId,
+              ref,
+              fullName,
+              new Date(row.updated_at || row.created_at || Date.now()).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
+              'Quezon City Hall - SSDD Solo Parent Welfare Section',
+              'Approved Solo Parent Educational Assistance (₱5,000.00 Annual Grant). Ready for Payout Scheduling.',
+            ]
+          );
+        }
+      }
+    } catch (_) {}
+
     const result = await db.query(
       `SELECT
          f.id,

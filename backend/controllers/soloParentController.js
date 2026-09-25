@@ -1069,6 +1069,18 @@ exports.updateApplicationStatus = async (req, res) => {
              WHERE NOT EXISTS (SELECT 1 FROM appointments WHERE reference_no = $1 AND concern = $3)`,
             [apptRef, apptFullName, apptConcern, apptNotes]
           );
+
+          if (isEduApp) {
+            const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+            await db.query(
+              `INSERT INTO financial_aid_disbursements (
+                disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
+                date_approved, status, venue, remarks
+              ) VALUES ($1, $2, $3, 'Solo Parent Educational Assistance', 5000, NOW(), 'PENDING', 'Quezon City Hall - SSDD Solo Parent Welfare Section', 'Approved Solo Parent Educational Assistance (₱5,000.00 Annual Grant). Ready for Payout Scheduling.')
+              ON CONFLICT DO NOTHING`,
+              [disbId, apptRef, apptFullName]
+            ).catch(() => {});
+          }
         } catch (apptErr) {
           console.warn('[Solo Parent Appt Insert Error]:', apptErr.message);
         }

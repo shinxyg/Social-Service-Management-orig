@@ -392,6 +392,7 @@ function AppointmentCard({
   onPrintGL?: (a: AppointmentRequest) => void
   onPrintReferral?: (a: AppointmentRequest) => void
 }) {
+  const [isProcessing, setIsProcessing] = useState(false)
   const effectiveStatus: AppointmentStatus = getApptEffectiveStatus(appt)
   const st = getAppointmentStatusTheme(effectiveStatus)
   const isChildWelfareAppt = appt.module === "Child Welfare" || String(appt.referenceNo || "").startsWith("CW-") || String(appt.concern || "").toLowerCase().includes("child welfare") || String(appt.concern || "").toLowerCase().includes("child protection")
@@ -507,26 +508,42 @@ function AppointmentCard({
                   </button>
                 </div>
               ) : isSoloParentAppt ? (
-                <div className="flex flex-wrap items-center gap-1.5 justify-end">
-                  <button
-                    type="button"
-                    onClick={() => onApprove?.(appt)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${(String(appt.concern || "").toLowerCase().includes("educational") || String(appt.referenceNo || "").toUpperCase().includes("SP-EDU")) ? "bg-blue-600 hover:bg-blue-700" : "bg-violet-600 hover:bg-violet-700"} text-white text-xs font-bold transition-colors cursor-pointer shadow-2xs`}
-                    title={(String(appt.concern || "").toLowerCase().includes("educational") || String(appt.referenceNo || "").toUpperCase().includes("SP-EDU")) ? "Approve Solo Parent Educational Assistance" : "Approve Solo Parent Financial Subsidy"}
-                  >
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                    <span>{(String(appt.concern || "").toLowerCase().includes("educational") || String(appt.referenceNo || "").toUpperCase().includes("SP-EDU")) ? "Approve Grant (₱5,000 / yr)" : "Approve Subsidy (₱1,000/mo)"}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => onReject?.(appt)}
-                    className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200 text-xs font-bold transition-colors cursor-pointer"
-                    title="Reject Solo Parent Application"
-                  >
-                    <XCircle className="h-3.5 w-3.5" />
-                    <span>Reject</span>
-                  </button>
-                </div>
+                (() => {
+                  const isEdu =
+                    String(appt.concern || "").toLowerCase().includes("educational") ||
+                    String(appt.referenceNo || "").toUpperCase().includes("SP-EDU")
+                  return (
+                    <div className="flex flex-wrap items-center gap-1.5 justify-end">
+                      <button
+                        type="button"
+                        disabled={isProcessing}
+                        onClick={async () => {
+                          if (isProcessing) return
+                          setIsProcessing(true)
+                          try {
+                            await onApprove?.(appt)
+                          } finally {
+                            setIsProcessing(false)
+                          }
+                        }}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg ${isEdu ? "bg-blue-600 hover:bg-blue-700" : "bg-violet-600 hover:bg-violet-700"} text-white text-xs font-bold transition-colors cursor-pointer shadow-2xs disabled:opacity-50 disabled:cursor-not-allowed`}
+                        title={isEdu ? "Approve Solo Parent Educational Assistance" : "Approve Solo Parent Financial Subsidy"}
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        <span>{isEdu ? "Approve Grant (₱5,000 / yr)" : "Approve Subsidy (₱1,000/mo)"}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => onReject?.(appt)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-red-50 text-red-700 hover:bg-red-600 hover:text-white border border-red-200 text-xs font-bold transition-colors cursor-pointer"
+                        title="Reject Solo Parent Application"
+                      >
+                        <XCircle className="h-3.5 w-3.5" />
+                        <span>Reject</span>
+                      </button>
+                    </div>
+                  )
+                })()
               ) : isChildWelfareAppt ? (
                 <div className="flex flex-wrap items-center gap-1.5 justify-end">
                   <button
@@ -1562,7 +1579,7 @@ function to12HourTime(timeStr?: string): string {
     const isSoloParent = (appt.module === "Solo Parent" || String(appt.referenceNo || "").startsWith("SP-") || String(appt.concern || "").toLowerCase().includes("solo parent")) && !isChildWelfare
     const isPwd = (appt.module === "PWD" || String(appt.concern || "").toLowerCase().includes("pwd") || String(appt.concern || "").toLowerCase().includes("disability")) && !isSoloParent && !isChildWelfare
     const isSenior = (appt.module === "Senior Citizen" || String(appt.concern || "").toLowerCase().includes("senior") || String(appt.concern || "").toLowerCase().includes("osca")) && !isSoloParent && !isChildWelfare
-    if (isPwd || isSenior) {
+    if (isPwd || isSenior || isSoloParent) {
       executeApproveAid(appt)
       return
     }
