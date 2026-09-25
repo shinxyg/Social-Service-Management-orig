@@ -184,349 +184,68 @@ exports.getDisbursements = async (req, res) => {
     } catch (_) {}
 
     try {
-      const approvedLivelihood = await db.query(
-        `SELECT l.reference_number, l.first_name, l.last_name, l.estimated_amount
-         FROM livelihood_applications l
-         WHERE l.application_status = 'approved'
-           AND (
-             LOWER(COALESCE(l.assistance->>'assistance_status', '')) IN ('for_release', 'released', 'for release', 'for_processing')
-             OR l.assistance IS NOT NULL
-           )`
-      );
-      for (const row of approvedLivelihood.rows) {
-        const disbCheck = await db.query(
-          'SELECT id FROM financial_aid_disbursements WHERE application_ref = $1',
-          [row.reference_number]
-        );
-        if (disbCheck.rows.length === 0) {
-          const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-          const fullName = `${row.first_name || ''} ${row.last_name || ''}`.trim().toUpperCase() || 'BENEFICIARY';
-          await db.query(
-            `INSERT INTO financial_aid_disbursements (
-              disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
-              date_approved, status, venue, remarks
-            ) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8)
-            ON CONFLICT DO NOTHING`,
-            [
-              disbId,
-              row.reference_number,
-              fullName,
-              'Livelihood Capital Assistance',
-              Number(row.estimated_amount) > 0 ? Number(row.estimated_amount) : 15000,
-              new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
-              'Quezon City Hall - SSDD Livelihood Center',
-              'Approved Livelihood Seed Capital Assistance. Ready for Appointment scheduling and payout.',
-            ]
-          );
-        }
-      }
-
-      await db.query(
-        `UPDATE financial_aid_disbursements
-         SET fixed_amount = 15000
-         WHERE (fixed_amount::numeric = 0 OR fixed_amount IS NULL) AND assistance_type LIKE '%Livelihood%'`
-      );
-    } catch (_) {}
-
-    try {
       await db.query(`
-        UPDATE financial_aid_disbursements
-        SET fixed_amount = 500
-        WHERE assistance_type ILIKE '%PWD%' AND (fixed_amount = 2000 OR fixed_amount = 1500 OR fixed_amount IS NULL)
+        INSERT INTO financial_aid_disbursements (disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount, date_approved, status, venue, remarks)
+        SELECT 
+          'DISB-2026-' || LPAD(CAST(id AS text), 4, '0'),
+          reference_number,
+          COALESCE(NULLIF(UPPER(TRIM(CONCAT_WS(' ', first_name, middle_name, last_name, suffix))), ''), 'JEFFERSON FERNANDO LEE'),
+          CASE 
+            WHEN LOWER(COALESCE(application_type, category_title, '')) LIKE '%educational%' OR reference_number ILIKE '%SP-EDU%' THEN 'Solo Parent Educational Assistance'
+            ELSE 'Solo Parent Financial Subsidy'
+          END,
+          CASE 
+            WHEN LOWER(COALESCE(application_type, category_title, '')) LIKE '%educational%' OR reference_number ILIKE '%SP-EDU%' THEN 5000
+            ELSE 3000
+          END,
+          TO_CHAR(COALESCE(updated_at, created_at, NOW()), 'Month DD, YYYY'),
+          'PENDING',
+          'Quezon City Hall - SSDD Solo Parent Welfare Section',
+          'Approved Solo Parent Assistance'
+        FROM solo_parent_child_welfare_applications
+        WHERE (module_type = 'SOLO_PARENT' OR module_type IS NULL)
+          AND application_status IN ('approved', 'completed', 'for_release', 'for_distribution', 'released')
+          AND reference_number IS NOT NULL
+        ON CONFLICT (disbursement_id) DO NOTHING;
       `);
     } catch (_) {}
 
     try {
-      const approvedPwdAssistance = await db.query(
-        `SELECT reference_number, category, type, first_name, middle_name, last_name, suffix, approved_date
-         FROM pwd_senior_applications
-         WHERE status IN ('approved', 'completed', 'for_release')
-           AND (type ILIKE '%assist%' OR category ILIKE '%assist%' OR disability_class ILIKE '%assist%')`
-      );
-      for (const row of approvedPwdAssistance.rows) {
-        const isPwd = String(row.category || '').toUpperCase().includes('PWD');
-        const isSenior = String(row.category || '').toUpperCase().includes('SENIOR');
-        if (!isPwd && !isSenior) continue;
-        const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
-        const assistanceType = isPwd ? 'PWD Social Assistance' : 'Senior Social Assistance';
-
-        const disbCheck = await db.query(
-          'SELECT id FROM financial_aid_disbursements WHERE application_ref = $1',
-          [row.reference_number]
-        );
-        if (disbCheck.rows.length === 0) {
-          const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-          await db.query(
-            `INSERT INTO financial_aid_disbursements (
-              disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
-              date_approved, status, venue, remarks
-            ) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8)
-            ON CONFLICT DO NOTHING`,
-            [
-              disbId,
-              row.reference_number,
-              fullName,
-              assistanceType,
-              resolveFixedAmount(assistanceType),
-              row.approved_date || new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
-              'Quezon City Hall',
-              'Approved PWD/Senior Social Assistance. Ready for Appointment scheduling and payout.',
-            ]
-          );
-        }
-      }
+      await db.query(`
+        INSERT INTO financial_aid_disbursements (disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount, date_approved, status, venue, remarks)
+        SELECT 
+          'DISB-2026-' || LPAD(CAST(id AS text), 4, '0'),
+          COALESCE(reference_no, qc_id, 'AICS-' || id),
+          COALESCE(NULLIF(UPPER(TRIM(CONCAT_WS(' ', first_name, middle_name, last_name, suffix))), ''), 'BENEFICIARY'),
+          CASE 
+            WHEN assistance_type ILIKE '%medical%' THEN 'Medical Assistance'
+            WHEN assistance_type ILIKE '%funeral%' OR assistance_type ILIKE '%burial%' THEN 'Funeral Assistance'
+            ELSE 'Medical Assistance'
+          END,
+          CASE WHEN approved_amount::numeric > 0 THEN approved_amount::numeric ELSE 5000 END,
+          TO_CHAR(COALESCE(updated_at, created_at, NOW()), 'Month DD, YYYY'),
+          'PENDING',
+          'Quezon City Hall',
+          'Approved AICS financial grant.'
+        FROM aics_applications
+        WHERE status IN ('approved', 'completed', 'for_release', 'released')
+        ON CONFLICT (disbursement_id) DO NOTHING;
+      `);
     } catch (_) {}
 
     try {
-      const approvedSoloParent = await db.query(
-        `SELECT reference_number, application_type, category_title, first_name, middle_name, last_name, suffix, child_name, approved_amount, updated_at, created_at
-         FROM solo_parent_child_welfare_applications
-         WHERE (module_type = 'SOLO_PARENT' OR module_type IS NULL)
-           AND application_status IN ('approved', 'completed', 'for_release', 'for_distribution', 'released')`
-      );
-      for (const row of approvedSoloParent.rows) {
-        const ref = row.reference_number || 'SP-QC-2026';
-        const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'JEFFERSON FERNANDO LEE';
-        const isEdu = String(row.application_type || '').toUpperCase().includes('EDUCATIONAL') || String(row.category_title || '').toLowerCase().includes('educational') || String(row.category_title || '').toLowerCase().includes('edukasyon');
-        const assistanceTitle = isEdu ? 'Solo Parent Educational Assistance' : 'Solo Parent Financial Subsidy';
-        const targetAmount = isEdu ? (Number(row.approved_amount) > 0 ? Number(row.approved_amount) : 5000) : 3000;
-        const remarksText = isEdu 
-          ? `Approved Solo Parent Educational Assistance (₱5,000 Annual Grant) for student: ${row.child_name || 'Dependent Child'}.`
-          : 'Approved Solo Parent Monthly Statutory Cash Subsidy (₱1,000/month).';
-
-        const disbCheck = await db.query(
-          `SELECT id, applicant_name FROM financial_aid_disbursements 
-           WHERE (application_ref = $1 OR REPLACE(application_ref, '-', '') = REPLACE($1, '-', ''))
-             AND assistance_type = $2`,
-          [ref, assistanceTitle]
-        );
-        if (disbCheck.rows.length === 0) {
-          const disbId = `DISB-${new Date().getFullYear()}-${String(ref.slice(-4) || '0004').padStart(4, '0')}`;
-          await db.query(
-            `INSERT INTO financial_aid_disbursements (
-              disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
-              date_approved, status, venue, remarks
-            ) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8)
-            ON CONFLICT DO NOTHING`,
-            [
-              disbId,
-              ref,
-              fullName,
-              assistanceTitle,
-              targetAmount,
-              new Date(row.updated_at || row.created_at || Date.now()).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
-              'Quezon City Hall - SSDD Solo Parent Welfare Section',
-              remarksText,
-            ]
-          );
-        } else {
-          const currentName = String(disbCheck.rows[0].applicant_name || '');
-          if (fullName && (currentName.includes('BENEFICIARY') || !currentName)) {
-            await db.query(
-              `UPDATE financial_aid_disbursements
-               SET applicant_name = $1, application_ref = COALESCE(NULLIF(application_ref, ''), $2)
-               WHERE id = $3`,
-              [fullName, ref, disbCheck.rows[0].id]
-            ).catch(() => {});
-          }
-        }
-      }
-    } catch (_) {}
-
-    try {
-      // Unconditionally remove any legacy Child Welfare / Child Protection records from financial aid (non-monetary protective service)
       await db.query(`
         DELETE FROM financial_aid_disbursements 
         WHERE application_ref LIKE 'CW-%' 
            OR assistance_type ILIKE '%child%' 
            OR assistance_type ILIKE '%protective%' 
            OR assistance_type ILIKE '%welfare%'
-      `).catch(() => {});
-    } catch (_) {}
-
-    try {
-      const approvedAics = await db.query(
-        `SELECT id, reference_no, qc_id, assistance_type, first_name, middle_name, last_name, suffix, created_at, updated_at
-         FROM aics_applications
-         WHERE status IN ('approved', 'completed', 'for_release', 'released')`
-      );
-      for (const row of approvedAics.rows) {
-        const ref = row.reference_no || row.qc_id || `AICS-2026-${row.id}`;
-        const cleanRef = String(ref).trim();
-        const unhyphenated = cleanRef.replace(/[^a-zA-Z0-9]/g, '');
-        const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
-        const rawType = (row.assistance_type || 'Medical').replace(/\s*assistance/gi, '').trim();
-        const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + ' Assistance';
-
-        const disbCheck = await db.query(
-          `SELECT id FROM financial_aid_disbursements 
-           WHERE application_ref = $1 
-              OR application_ref = $2 
-              OR (application_ref = $3 AND $3 <> '')
-              OR REPLACE(application_ref, '-', '') = $4
-              OR (LOWER(TRIM(applicant_name)) = LOWER(TRIM($5)) AND LOWER(TRIM(assistance_type)) = LOWER(TRIM($6)))`,
-          [cleanRef, row.reference_no || '', row.qc_id || '', unhyphenated, fullName, cleanType]
-        );
-        if (disbCheck.rows.length === 0) {
-          const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-          const fixedAmount = resolveFixedAmount(cleanType);
-          await db.query(
-            `INSERT INTO financial_aid_disbursements (
-              disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
-              date_approved, status, venue, remarks
-            ) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', 'Quezon City Hall', 'Approved AICS assistance ready for release.')
-            ON CONFLICT DO NOTHING`,
-            [
-              disbId,
-              cleanRef,
-              fullName,
-              cleanType,
-              fixedAmount,
-              new Date(row.updated_at || row.created_at || Date.now()).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
-            ]
-          );
-        }
-      }
-    } catch (_) {}
-
-    try {
-      const approvedAppts = await db.query(
-        `SELECT id, reference_no, module, applicant_name, concern, scheduled_date, scheduled_time, office_location, notes, created_at, updated_at
-         FROM appointments
-         WHERE status = 'approved'
-           AND module != 'Child Welfare'
-           AND concern NOT ILIKE '%intake%'
-           AND concern NOT ILIKE '%assessment%'
-           AND concern NOT ILIKE '%interview%'
-           AND concern NOT ILIKE '%protective%'
-           AND concern NOT ILIKE '%custody%'
-           AND concern NOT ILIKE '%silungan%'`
-      );
-      for (const appt of approvedAppts.rows) {
-        const ref = String(appt.reference_no || '').trim();
-        if (!ref) continue;
-        const unhyphenated = ref.replace(/[^a-zA-Z0-9]/g, '');
-        const fullName = String(appt.applicant_name || '').trim().toUpperCase();
-        const cleanType = String(appt.concern || 'Medical Assistance').trim();
-
-        const disbCheck = await db.query(
-          `SELECT id FROM financial_aid_disbursements 
-           WHERE application_ref = $1 
-              OR REPLACE(application_ref, '-', '') = $2
-              OR (LOWER(TRIM(applicant_name)) = LOWER(TRIM($3)) AND LOWER(TRIM(assistance_type)) = LOWER(TRIM($4)))`,
-          [ref, unhyphenated, fullName, cleanType]
-        );
-        if (disbCheck.rows.length === 0) {
-          const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-          const fixedAmount = resolveFixedAmount(appt.concern);
-          const isPwdConcern = cleanType.toLowerCase().includes('pwd') || cleanType.toLowerCase().includes('disability') || cleanType.toLowerCase().includes('pension');
-          await db.query(
-            `INSERT INTO financial_aid_disbursements (
-              disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
-              date_approved, status, appointment_date, appointment_time, venue, remarks
-            ) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8, $9, $10)
-            ON CONFLICT DO NOTHING`,
-            [
-              disbId,
-              ref,
-              fullName,
-              cleanType,
-              fixedAmount,
-              new Date(appt.updated_at || appt.created_at || Date.now()).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
-              isPwdConcern ? null : (appt.scheduled_date || null),
-              isPwdConcern ? null : (appt.scheduled_time || null),
-              appt.office_location || 'Quezon City Hall',
-              isPwdConcern ? 'Approved PWD Social Pension (₱500/month). Accumulating for 3-month consolidated payout.' : (appt.notes || 'Approved appointment payout.'),
-            ]
-          );
-        } else {
-          // If already exists, update appointment schedule if available (only for non-PWD)
-          const isPwdConcern = cleanType.toLowerCase().includes('pwd') || cleanType.toLowerCase().includes('disability') || cleanType.toLowerCase().includes('pension');
-          if (appt.scheduled_date && !isPwdConcern) {
-            await db.query(
-              `UPDATE financial_aid_disbursements
-               SET appointment_date = COALESCE(appointment_date, $1),
-                   appointment_time = COALESCE(appointment_time, $2),
-                   venue = COALESCE(venue, $3)
-               WHERE id = $4`,
-              [appt.scheduled_date, appt.scheduled_time, appt.office_location || 'Quezon City Hall', disbCheck.rows[0].id]
-            ).catch(() => {});
-          }
-        }
-      }
-    } catch (_) {}
-
-    try {
-      const approvedAics = await db.query(
-        `SELECT reference_no, assistance_type, first_name, middle_name, last_name, suffix, approved_amount, updated_at, created_at
-         FROM aics_applications
-         WHERE status IN ('approved', 'completed', 'for_release', 'released')`
-      );
-      for (const row of approvedAics.rows) {
-        const disbCheck = await db.query(
-          'SELECT id FROM financial_aid_disbursements WHERE application_ref = $1',
-          [row.reference_no]
-        );
-        if (disbCheck.rows.length === 0) {
-          const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-          const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
-          const type = row.assistance_type || 'Medical Assistance';
-          const amount = Number(row.approved_amount) > 0 ? Number(row.approved_amount) : resolveFixedAmount(type);
-          await db.query(
-            `INSERT INTO financial_aid_disbursements (
-              disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
-              date_approved, status, venue, remarks
-            ) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8)
-            ON CONFLICT DO NOTHING`,
-            [
-              disbId,
-              row.reference_no,
-              fullName,
-              type,
-              amount,
-              new Date(row.updated_at || row.created_at || Date.now()).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
-              'Quezon City Hall',
-              'Approved AICS financial grant. Ready for Appointment scheduling and payout.',
-            ]
-          );
-        }
-      }
-    } catch (_) {}
-
-    try {
-      const approvedSolo = await db.query(
-        `SELECT reference_number, application_type, service_name, first_name, middle_name, last_name, suffix, approved_amount, updated_at, created_at
-         FROM solo_parent_child_welfare_applications
-         WHERE application_status IN ('approved', 'completed', 'for_release', 'released')
-           AND (reference_number ILIKE '%SP-EDU%' OR application_type ILIKE '%educational%' OR service_name ILIKE '%educational%')`
-      );
-      for (const row of approvedSolo.rows) {
-        const ref = row.reference_number;
-        if (!ref) continue;
-        const disbCheck = await db.query(
-          'SELECT id FROM financial_aid_disbursements WHERE application_ref = $1',
-          [ref]
-        );
-        if (disbCheck.rows.length === 0) {
-          const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-          const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'SOLO PARENT BENEFICIARY';
-          await db.query(
-            `INSERT INTO financial_aid_disbursements (
-              disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
-              date_approved, status, venue, remarks
-            ) VALUES ($1, $2, $3, 'Solo Parent Educational Assistance', 5000, $4, 'PENDING', $5, $6)
-            ON CONFLICT DO NOTHING`,
-            [
-              disbId,
-              ref,
-              fullName,
-              new Date(row.updated_at || row.created_at || Date.now()).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
-              'Quezon City Hall - SSDD Solo Parent Welfare Section',
-              'Approved Solo Parent Educational Assistance (₱5,000.00 Annual Grant). Ready for Payout Scheduling.',
-            ]
-          );
-        }
-      }
+           OR assistance_type ILIKE '%intake%'
+           OR assistance_type ILIKE '%assessment%'
+           OR assistance_type ILIKE '%interview%'
+           OR assistance_type ILIKE '%custody%'
+           OR assistance_type ILIKE '%silungan%'
+      `);
     } catch (_) {}
 
     const result = await db.query(

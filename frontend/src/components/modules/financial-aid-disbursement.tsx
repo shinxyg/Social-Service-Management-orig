@@ -383,37 +383,10 @@ export default function FinancialAidDisbursement() {
         let remoteRecords: SyncedDisbursementRecord[] = []
         let appointmentsMap: Record<string, any> = {}
 
-        const [
-          resDbSettled,
-          resAicsSettled,
-          resPwdSettled,
-          resLivSettled,
-          resCwSettled,
-          resApptsSettled,
-          resSoloSettled,
-        ] = await Promise.allSettled([
-          fetch(`${API_BASE}/api/financial-aid`),
-          fetch(`${API_BASE}/api/aics/applications`),
-          fetch(`${API_BASE}/api/pwd-senior/applications`),
-          fetch(`${API_BASE}/api/livelihood/applications`),
-          fetch(`${API_BASE}/api/child-welfare/admin/all?limit=100`, {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-            },
-          }),
-          fetch(`${API_BASE}/api/appointments`),
-          fetch(`${API_BASE}/api/solo-parent/admin/all?limit=100`, {
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-            },
-          }),
-        ])
-
-        if (resDbSettled.status === "fulfilled" && resDbSettled.value.ok) {
+        const resDb = await fetch(`${API_BASE}/api/financial-aid`)
+        if (resDb.ok) {
           try {
-            const dataDb = await resDbSettled.value.json()
+            const dataDb = await resDb.json()
             if (dataDb.disbursements && Array.isArray(dataDb.disbursements)) {
               const dbRecords: SyncedDisbursementRecord[] = dataDb.disbursements
                 .filter((d: any) => {
