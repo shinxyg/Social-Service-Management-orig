@@ -49,7 +49,11 @@ async function syncAndCleanAppointments() {
     const deletedRes = await db.query('SELECT reference_no FROM deleted_appointments').catch(() => ({ rows: [] }));
     const deletedSet = new Set((deletedRes.rows || []).map((r) => String(r.reference_no).toLowerCase().trim()));
 
-    // 1. Clean up rejected or cancelled AICS appointments
+    // Clean up erroneous AICS appointments that belong to Child Welfare or Solo Parent
+    await db.query(`
+      DELETE FROM appointments
+      WHERE (module = 'AICS' OR module IS NULL) AND (reference_no LIKE 'CW-%' OR reference_no LIKE 'SP-%')
+    `).catch(() => {});
     await db.query(`
       DELETE FROM appointments
       WHERE module = 'AICS' AND (
@@ -244,14 +248,14 @@ async function syncAndCleanAppointments() {
     const activeSoloParent = await db.query(
       `SELECT reference_number, application_type, application_status, first_name, middle_name, last_name, suffix, created_at, updated_at
        FROM solo_parent_child_welfare_applications
-       WHERE (module_type = 'SOLO_PARENT' OR module_type IS NULL)
+       WHERE (module_type = 'SOLO_PARENT' OR reference_number ILIKE 'SP-%')
          AND application_status NOT IN ('rejected', 'denied', 'disapproved', 'cancelled', 'draft')`
     ).catch(() => ({ rows: [] }));
 
     for (const row of activeSoloParent.rows) {
       const refNo = String(row.reference_number || '').trim();
       if (!refNo || deletedSet.has(refNo.toLowerCase())) continue;
-      const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'JEFFERSON FERNANDO LEE';
+      const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'APPLICANT';
       const isEdu = String(row.application_type || row.reference_number || '').toUpperCase().includes('SP-EDU') ||
                     String(row.application_type || '').toUpperCase() === 'EDUCATIONAL_ASSISTANCE';
       const concern = isEdu ? 'Solo Parent Educational Assistance' : 'Solo Parent Financial Subsidy';
@@ -285,25 +289,39 @@ async function syncAndCleanAppointments() {
       }
     }
 
-    const approvedCw = await db.query(
-      `SELECT reference_number, category_title, guardian_first_name, guardian_last_name, child_name
+    const activeCw = await db.query(
+      `SELECT reference_number, category_title, guardian_first_name, guardian_last_name, child_name, application_status, created_at
        FROM solo_parent_child_welfare_applications
-       WHERE module_type = 'CHILD_WELFARE'
-         AND application_status IN ('approved', 'completed', 'for_release', 'released')`
+       WHERE (module_type = 'CHILD_WELFARE' OR reference_number ILIKE 'CW-%')
+         AND application_status NOT IN ('rejected', 'denied', 'disapproved', 'cancelled', 'draft')`
     ).catch(() => ({ rows: [] }));
 
-    for (const row of approvedCw.rows) {
+    for (const row of activeCw.rows) {
       const refNo = String(row.reference_number || '').trim();
       if (!refNo || deletedSet.has(refNo.toLowerCase())) continue;
       const fullName = [row.guardian_first_name, row.guardian_last_name].filter(Boolean).join(' ').trim().toUpperCase() || (row.child_name || '').toUpperCase() || 'BENEFICIARY';
       const concern = row.category_title ? `${row.category_title} (Child Welfare)` : 'Child Welfare Support';
-      await db.query(
-        `INSERT INTO appointments
-          (reference_no, module, applicant_name, concern, status, office_location, notes)
-         SELECT $1, 'Child Welfare', $2, $3, 'pending', 'Quezon City Hall - SSDD Child Welfare Section', 'Awtomatikong pumasok mula sa na-aprubahang Child Welfare aplikasyon para sa scheduling.'
-         WHERE NOT EXISTS (SELECT 1 FROM appointments WHERE reference_no = $1 AND concern = $3)`,
-        [refNo, fullName, concern]
-      ).catch(() => {});
+      const isApproved = ['approved', 'completed', 'for_release', 'released', 'interview_scheduled'].includes(String(row.application_status || '').toLowerCase());
+      const initialStatus = isApproved ? 'approved' : 'pending';
+
+      const checkExists = await db.query(
+        `SELECT id, status FROM appointments WHERE reference_no = $1`,
+        [refNo]
+      ).catch(() => ({ rows: [] }));
+
+      if (checkExists.rows.length === 0) {
+        await db.query(
+          `INSERT INTO appointments
+            (reference_no, module, applicant_name, concern, status, office_location, notes)
+           VALUES ($1, 'Child Welfare', $2, $3, $4, 'SSDD Child Protection & Counseling Center (Room 205)', 'Awtomatikong pumasok mula sa Child Welfare aplikasyon para sa scheduling.')`,
+          [refNo, fullName, concern, initialStatus]
+        ).catch(() => {});
+      } else if (isApproved && checkExists.rows[0].status === 'pending') {
+        await db.query(
+          `UPDATE appointments SET status = 'approved', module = 'Child Welfare', updated_at = NOW() WHERE id = $1`,
+          [checkExists.rows[0].id]
+        ).catch(() => {});
+      }
     }
   } catch (err) {
     console.warn('⚠️ Background appointment sync error:', err.message);
@@ -691,26 +709,38 @@ exports.updateAppointmentStatus = async (req, res) => {
     const targetModule = String(apptModule || '').trim();
     const targetConcern = String(apptConcern || '').trim();
 
-    // 1. Update appointments table STRICTLY for this appointment (by id or by reference_no + module/concern)
+    const inferredModule = cleanId.startsWith('CW') ? 'Child Welfare'
+      : cleanId.startsWith('SP') ? 'Solo Parent'
+      : cleanId.startsWith('PWD') ? 'PWD'
+      : cleanId.startsWith('SENIOR') ? 'Senior Citizen'
+      : targetModule || 'AICS';
+
+    // 1. Update appointments table STRICTLY for this appointment (by id or by reference_no)
     const apptUpdate = await db.query(
       `UPDATE appointments
        SET status = $1,
-           notes = COALESCE($2, notes),
+           module = $2,
+           notes = COALESCE($3, notes),
            updated_at = NOW()
-       WHERE id::text = $3
-          OR id::text = $4
-          OR (
-            (reference_no = $3 OR reference_no = $4 OR REPLACE(reference_no, '-', '') = $5)
-            AND ($6 = '' OR module ILIKE $6)
-            AND ($7 = '' OR concern ILIKE $7)
-          )
+       WHERE id::text = $4
+          OR id::text = $5
+          OR reference_no = $4
+          OR reference_no = $5
+          OR REPLACE(reference_no, '-', '') = $6
        RETURNING *`,
-      [newStatus, notes || null, rawId, cleanId, unhyphenated, targetModule, targetConcern ? `%${targetConcern}%` : '']
+      [newStatus, inferredModule, notes || null, rawId, cleanId, unhyphenated]
     );
 
     let apptRow = apptUpdate.rows[0];
     if (!apptRow) {
-      const defaultConcern = targetModule === 'PWD' ? 'PWD Social Assistance' : 'Medical Assistance';
+      const defaultConcern = inferredModule === 'Child Welfare'
+        ? 'Child Protection & Welfare Support'
+        : inferredModule === 'Solo Parent'
+        ? 'Solo Parent Educational Assistance'
+        : inferredModule === 'PWD'
+        ? 'PWD Social Assistance'
+        : 'Medical Assistance';
+
       const insertRes = await db.query(
         `INSERT INTO appointments
           (reference_no, module, applicant_name, concern, status, office_location, notes)
@@ -718,7 +748,7 @@ exports.updateAppointmentStatus = async (req, res) => {
          RETURNING *`,
         [
           cleanId,
-          targetModule || 'AICS',
+          inferredModule,
           applicantName || 'BENEFICIARY',
           targetConcern || defaultConcern,
           newStatus,

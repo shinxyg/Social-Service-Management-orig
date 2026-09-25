@@ -394,9 +394,10 @@ function AppointmentCard({
 }) {
   const effectiveStatus: AppointmentStatus = getApptEffectiveStatus(appt)
   const st = getAppointmentStatusTheme(effectiveStatus)
-  const isPwdAppt = appt.module === "PWD" || String(appt.concern || "").toLowerCase().includes("pwd") || String(appt.concern || "").toLowerCase().includes("disability")
-  const isSeniorAppt = appt.module === "Senior Citizen" || String(appt.concern || "").toLowerCase().includes("senior") || String(appt.concern || "").toLowerCase().includes("osca")
-  const isSoloParentAppt = appt.module === "Solo Parent" || String(appt.concern || "").toLowerCase().includes("solo parent")
+  const isChildWelfareAppt = appt.module === "Child Welfare" || String(appt.referenceNo || "").startsWith("CW-") || String(appt.concern || "").toLowerCase().includes("child welfare") || String(appt.concern || "").toLowerCase().includes("child protection")
+  const isPwdAppt = (appt.module === "PWD" || String(appt.concern || "").toLowerCase().includes("pwd") || String(appt.concern || "").toLowerCase().includes("disability")) && !isChildWelfareAppt
+  const isSeniorAppt = (appt.module === "Senior Citizen" || String(appt.concern || "").toLowerCase().includes("senior") || String(appt.concern || "").toLowerCase().includes("osca")) && !isChildWelfareAppt
+  const isSoloParentAppt = (appt.module === "Solo Parent" || String(appt.concern || "").toLowerCase().includes("solo parent")) && !isChildWelfareAppt
 
   return (
     <div className={`border rounded-xl p-4 ${st?.card || 'bg-slate-50/60 border-slate-200'}`}>
@@ -595,6 +596,13 @@ function AppointmentCard({
                     </div>
                   )
                 })()
+              ) : isChildWelfareAppt ? (
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800/60 text-xs font-bold shadow-2xs">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-rose-600" />
+                    <span>✓ Child Protective Service Scheduled</span>
+                  </span>
+                </div>
               ) : (() => {
                 const isHospital =
                   String(appt.concern || '').toLowerCase().includes('hospital bill') ||
@@ -646,6 +654,10 @@ function AppointmentCard({
 }
 
 function getAppointmentDeduplicationKey(a: { id?: string; referenceNo?: string; applicantName?: string; concern?: string; module?: string }): string {
+  const ref = String(a.referenceNo || "").toLowerCase().trim()
+  if (ref && ref.includes("-")) {
+    return `ref_${ref}`
+  }
   const mod = String(a.module || "AICS").toUpperCase().trim()
   const c = String(a.concern || "").toLowerCase()
   const refUpper = String(a.referenceNo || "").toUpperCase()
@@ -665,11 +677,7 @@ function getAppointmentDeduplicationKey(a: { id?: string; referenceNo?: string; 
   else if (c.includes("solo")) cleanConcern = "solo_parent"
   else cleanConcern = c.replace(/[^a-z0-9]/g, "")
 
-  const ref = String(a.referenceNo || "").toLowerCase().trim()
   const id = String(a.id || "").toLowerCase().trim()
-  if (ref) {
-    return `${mod}_${cleanConcern}_ref_${ref}`
-  }
   if (id) {
     return `${mod}_${cleanConcern}_id_${id}`
   }
@@ -1229,6 +1237,9 @@ export default function Appointments() {
             const exPrio = statusPriority[existing.status] || 1
 
             const merged: AppointmentRequest = { ...existing }
+            if (a.module && a.module !== "AICS") {
+              merged.module = a.module
+            }
             if (a.decision) {
               merged.decision = a.decision
             }
