@@ -1733,10 +1733,10 @@ export function isApptConcernMatch(app: any, record: any): boolean {
     return isAppMedical === isRecMedical
   }
 
-  const isAppSenior = appConcern.includes("senior")
-  const isRecSenior = recConcern.includes("senior")
-  if (isAppSenior || isRecSenior) {
-    return isAppSenior === isRecSenior
+  const isAppCw = appConcern.includes("child") || appConcern.includes("welfare") || appConcern.includes("protection")
+  const isRecCw = recConcern.includes("child") || recConcern.includes("welfare") || recConcern.includes("protection")
+  if (isAppCw || isRecCw) {
+    return isAppCw === isRecCw
   }
 
   return true
@@ -2636,6 +2636,9 @@ export default function MyApplications() {
                   `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
                 contactNumber: app.guardian_contact_no || app.parentContactNo || app.contact_number || userProfile.mobileNumber,
                 email: app.guardian_email || app.email || userProfile.email,
+                appointmentDate: app.appointment_date || app.appointmentDate || app.service_schedule_date,
+                appointmentTime: app.appointment_time || app.appointmentTime,
+                officeLocation: app.office_location || app.officeLocation || app.service_venue,
                 remarks: remarksText,
               }
             })
@@ -4416,10 +4419,20 @@ export default function MyApplications() {
                     )
                   }
 
-                  if (effectiveAppStatus === "Scheduled" || (cachedAppt?.scheduledDate && !isAppExplicitlyApproved && !isAppExplicitlyReleased)) {
-                    const appDateStr = cachedAppt?.scheduledDate || app.appointmentDate || "Sep 23, 2026"
-                    const appTimeStr = cachedAppt?.scheduledTime || app.appointmentTime || "10:00 AM"
-                    const venueStr = cachedAppt?.officeLocation || cachedAppt?.venue || "Quezon City Hall PDAO Room 102"
+                  const isCwApp = app.assistanceCategory === "Child Welfare" || String(app.applicationNo || "").startsWith("CW-")
+                  if (
+                    effectiveAppStatus === "Scheduled" ||
+                    effectiveAppStatus === "Interview Scheduled" ||
+                    app.status === "Interview Scheduled" ||
+                    (cachedAppt?.scheduledDate && !isAppExplicitlyApproved && !isAppExplicitlyReleased)
+                  ) {
+                    const appDateStr = cachedAppt?.scheduledDate || app.appointmentDate || app.appointment_date || "Sep 25, 2026"
+                    const appTimeStr = cachedAppt?.scheduledTime || app.appointmentTime || app.appointment_time || "11:38 AM"
+                    const venueStr = cachedAppt?.officeLocation || cachedAppt?.venue || app.officeLocation || app.office_location || (
+                      isCwApp
+                        ? "Quezon City Hall - SSDD Child Protection & Counseling Center (Room 205)"
+                        : "Quezon City Hall PDAO Room 102"
+                    )
 
                     return (
                       <div className="bg-blue-50/80 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/60 rounded-xl p-3.5 space-y-3 shadow-2xs">
@@ -4437,7 +4450,9 @@ export default function MyApplications() {
                         </div>
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-2 pt-0.5">
                           <p className="text-[11px] text-gray-600 dark:text-slate-300">
-                            * Dalhin ang opisyal na Appointment Slip, Valid ID, at Medical Certificate sa araw ng inyong interbyu sa Quezon City Hall.
+                            {isCwApp
+                              ? "* Dalhin ang opisyal na Appointment Slip, Birth Certificate ng Bata, at Valid ID ng Guardian sa araw ng inyong intake interview sa Quezon City Hall."
+                              : "* Dalhin ang opisyal na Appointment Slip, Valid ID, at Medical Certificate sa araw ng inyong interbyu sa Quezon City Hall."}
                           </p>
                           <button
                             type="button"

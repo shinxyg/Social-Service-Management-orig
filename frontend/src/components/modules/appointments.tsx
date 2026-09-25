@@ -1858,6 +1858,15 @@ function to12HourTime(timeStr?: string): string {
           type: 'solo_parent',
           link: '/portal/my-applications',
         })
+      } else if (isChildWelfare) {
+        pushUserNotification({
+          userId: appt.referenceNo || 'all',
+          title: 'Child Protection: Interview Scheduled',
+          desc: `Your Child Protection & Welfare intake interview and assessment is scheduled on ${finalDate} at ${finalTime} at ${finalLocation}.`,
+          applicationRef: appt.referenceNo,
+          type: 'child_welfare',
+          link: '/portal/my-applications',
+        })
       } else {
         pushUserNotification({
           userId: appt.referenceNo || 'all',
@@ -1878,24 +1887,27 @@ function to12HourTime(timeStr?: string): string {
         notes: finalNotes,
       } : a))
 
-      syncAppointmentToFinancialAid({
-        referenceNo: appt.referenceNo,
-        applicantName: appt.applicantName,
-        concern: isSoloParent ? "Solo Parent Financial Subsidy" : (isSenior ? "Senior Social Assistance" : (isPwd ? "PWD Social Assistance" : appt.concern)),
-        date: (isPwd || isSenior) ? undefined : finalDate,
-        time: (isPwd || isSenior) ? undefined : finalTime,
-        location: isSoloParent ? (finalLocation || "Quezon City Hall - SSDD Solo Parent Welfare Section") : finalLocation,
-        notes: isSoloParent
-          ? "Approved Solo Parent Monthly Statutory Cash Subsidy (₱1,000/month)."
-          : (isSenior
-              ? "Approved Senior Citizen Pension (₱500/month). Accumulating for 6-month consolidated payout (₱3,000)."
-              : (isPwd ? "Approved PWD Pension (₱500/month). Accumulating for 3-month consolidated payout." : (finalNotes || "Approved appointment for financial aid payout."))),
-      })
+      if (!isChildWelfare) {
+        syncAppointmentToFinancialAid({
+          referenceNo: appt.referenceNo,
+          applicantName: appt.applicantName,
+          concern: isSoloParent ? "Solo Parent Financial Subsidy" : (isSenior ? "Senior Social Assistance" : (isPwd ? "PWD Social Assistance" : appt.concern)),
+          date: (isPwd || isSenior) ? undefined : finalDate,
+          time: (isPwd || isSenior) ? undefined : finalTime,
+          location: isSoloParent ? (finalLocation || "Quezon City Hall - SSDD Solo Parent Welfare Section") : finalLocation,
+          notes: isSoloParent
+            ? "Approved Solo Parent Monthly Statutory Cash Subsidy (₱1,000/month)."
+            : (isSenior
+                ? "Approved Senior Citizen Pension (₱500/month). Accumulating for 6-month consolidated payout (₱3,000)."
+                : (isPwd ? "Approved PWD Pension (₱500/month). Accumulating for 3-month consolidated payout." : (finalNotes || "Approved appointment for financial aid payout."))),
+        })
+      }
 
-      notifyApplicationChange('APPLICATION_APPROVED', isPwd ? 'pwd_senior' : (isSenior ? 'pwd_senior' : (isSoloParent ? 'solo_parent' : 'aics')), appt.referenceNo)
+      notifyApplicationChange('APPLICATION_APPROVED', isPwd ? 'pwd_senior' : (isSenior ? 'pwd_senior' : (isSoloParent ? 'solo_parent' : (isChildWelfare ? 'child_welfare' : 'aics'))), appt.referenceNo)
       window.dispatchEvent(new Event("appointments_updated"))
       window.dispatchEvent(new Event("pwd_senior_applications_updated"))
       window.dispatchEvent(new Event("solo_parent_applications_updated"))
+      window.dispatchEvent(new Event("child_welfare_applications_updated"))
       window.dispatchEvent(new Event("aics_applications_updated"))
       window.dispatchEvent(new Event("applications_updated"))
       window.dispatchEvent(new Event("financial_disbursements_updated"))

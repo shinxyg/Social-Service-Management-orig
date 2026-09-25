@@ -632,6 +632,9 @@ export function syncAppointmentToFinancialAid(params: {
   resetManualDisbursementRelease(params.referenceNo)
 
   if (
+    String(params.referenceNo || "").startsWith("CW-") ||
+    String(params.concern || "").toLowerCase().includes("child welfare") ||
+    String(params.concern || "").toLowerCase().includes("child protection") ||
     isIdOrDocumentService(params.concern) || 
     isTrainingService(params.concern) || 
     isNonCashOrGLService(params.concern)
