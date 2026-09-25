@@ -264,7 +264,11 @@ interface SoloParentApplicationWizardProps {
 export default function SoloParentApplicationWizard({
   onBack,
   userProfile: propUserProfile,
+  initialCategoryId,
+  initialType,
   programType = "financial-subsidy",
+  isModalOpen,
+  onBlockedStatusChange,
   onStepChange,
   onSubmissionStageChange,
 }: SoloParentApplicationWizardProps) {
