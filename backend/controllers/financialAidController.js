@@ -185,56 +185,6 @@ exports.getDisbursements = async (req, res) => {
 
     try {
       await db.query(`
-        INSERT INTO financial_aid_disbursements (disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount, date_approved, status, venue, remarks)
-        SELECT 
-          'DISB-2026-' || LPAD(CAST(id AS text), 4, '0'),
-          reference_number,
-          COALESCE(NULLIF(UPPER(TRIM(CONCAT_WS(' ', first_name, middle_name, last_name, suffix))), ''), 'JEFFERSON FERNANDO LEE'),
-          CASE 
-            WHEN LOWER(COALESCE(application_type, category_title, '')) LIKE '%educational%' OR reference_number ILIKE '%SP-EDU%' THEN 'Solo Parent Educational Assistance'
-            ELSE 'Solo Parent Financial Subsidy'
-          END,
-          CASE 
-            WHEN LOWER(COALESCE(application_type, category_title, '')) LIKE '%educational%' OR reference_number ILIKE '%SP-EDU%' THEN 5000
-            ELSE 3000
-          END,
-          TO_CHAR(COALESCE(updated_at, created_at, NOW()), 'Month DD, YYYY'),
-          'PENDING',
-          'Quezon City Hall - SSDD Solo Parent Welfare Section',
-          'Approved Solo Parent Assistance'
-        FROM solo_parent_child_welfare_applications
-        WHERE (module_type = 'SOLO_PARENT' OR module_type IS NULL)
-          AND application_status IN ('approved', 'completed', 'for_release', 'for_distribution', 'released')
-          AND reference_number IS NOT NULL
-        ON CONFLICT (disbursement_id) DO NOTHING;
-      `);
-    } catch (_) {}
-
-    try {
-      await db.query(`
-        INSERT INTO financial_aid_disbursements (disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount, date_approved, status, venue, remarks)
-        SELECT 
-          'DISB-2026-' || LPAD(CAST(id AS text), 4, '0'),
-          COALESCE(reference_no, qc_id, 'AICS-' || id),
-          COALESCE(NULLIF(UPPER(TRIM(CONCAT_WS(' ', first_name, middle_name, last_name, suffix))), ''), 'BENEFICIARY'),
-          CASE 
-            WHEN assistance_type ILIKE '%medical%' THEN 'Medical Assistance'
-            WHEN assistance_type ILIKE '%funeral%' OR assistance_type ILIKE '%burial%' THEN 'Funeral Assistance'
-            ELSE 'Medical Assistance'
-          END,
-          CASE WHEN approved_amount::numeric > 0 THEN approved_amount::numeric ELSE 5000 END,
-          TO_CHAR(COALESCE(updated_at, created_at, NOW()), 'Month DD, YYYY'),
-          'PENDING',
-          'Quezon City Hall',
-          'Approved AICS financial grant.'
-        FROM aics_applications
-        WHERE status IN ('approved', 'completed', 'for_release', 'released')
-        ON CONFLICT (disbursement_id) DO NOTHING;
-      `);
-    } catch (_) {}
-
-    try {
-      await db.query(`
         DELETE FROM financial_aid_disbursements 
         WHERE application_ref LIKE 'CW-%' 
            OR assistance_type ILIKE '%child%' 
