@@ -301,19 +301,13 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
       const appt =
         appointmentsMap[`${d.applicationRef}_${cleanAssistance}`] ||
         appointmentsMap[d.applicationRef] ||
-        (d.applicantName ? appointmentsMap[`${d.applicantName.toLowerCase().trim()}_${cleanAssistance}`] : null) ||
         (isSolo
           ? (appointmentsMap[`Solo Parent_${d.applicationRef}`] ||
              appointmentsMap[`${d.applicationRef}_Solo Parent Educational Assistance Payout (₱5,000)`] ||
              appointmentsMap[`${d.applicationRef}_Solo Parent Educational Assistance Payout`] ||
              appointmentsMap[`${d.applicationRef}_Solo Parent Educational Assistance`] ||
              appointmentsMap[`${d.applicationRef}_Solo Parent Financial Subsidy Payout`] ||
-             appointmentsMap[`${d.applicationRef}_Solo Parent Financial Subsidy`] ||
-             appointmentsMap["jefferson fernando lee"] ||
-             Object.values(appointmentsMap).find((a: any) =>
-               (a.module === "Solo Parent" || String(a.concern || "").toLowerCase().includes("solo parent")) &&
-               (a.scheduled_date || a.scheduledDate || a.date)
-             ))
+             appointmentsMap[`${d.applicationRef}_Solo Parent Financial Subsidy`])
           : null)
 
       const cachedSched =
@@ -321,18 +315,12 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
         localScheduledMap[d.disbursementId] ||
         localScheduledMap[`${d.applicationRef}_${d.assistanceType}`] ||
         localScheduledMap[d.applicationRef] ||
-        (d.applicantName ? localScheduledMap[d.applicantName.toLowerCase().trim()] : null) ||
         (isSolo
           ? (localScheduledMap[`Solo Parent_${d.applicationRef}`] ||
              localScheduledMap[`${d.applicationRef}_Solo Parent Educational Assistance Payout`] ||
              localScheduledMap[`${d.applicationRef}_Solo Parent Educational Assistance`] ||
              localScheduledMap[`${d.applicationRef}_Solo Parent Financial Subsidy Payout`] ||
-             localScheduledMap[`${d.applicationRef}_Solo Parent Financial Subsidy`] ||
-             localScheduledMap["jefferson fernando lee"] ||
-             Object.values(localScheduledMap).find((s: any) =>
-               (s.module === "Solo Parent" || String(s.concern || "").toLowerCase().includes("solo parent")) &&
-               (s.scheduledDate || s.date)
-             ))
+             localScheduledMap[`${d.applicationRef}_Solo Parent Financial Subsidy`])
           : null)
 
       let finalApptDate = d.appointmentDate
@@ -378,15 +366,23 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
     })
 
     const filtered = processed.filter((d) => {
+      const isNonMonetaryCw =
+        String(d.assistanceType || "").toLowerCase().includes("intake") ||
+        String(d.assistanceType || "").toLowerCase().includes("assessment") ||
+        String(d.assistanceType || "").toLowerCase().includes("interview") ||
+        String(d.assistanceType || "").toLowerCase().includes("protective") ||
+        String(d.assistanceType || "").toLowerCase().includes("custody") ||
+        String(d.assistanceType || "").toLowerCase().includes("silungan")
+      if (isNonMonetaryCw) return false
+
       const cleanRef = String(d.applicationRef || "").trim()
       const unhyphenated = cleanRef.replace(/[^a-zA-Z0-9]/g, "")
-      const appt = appointmentsMap[cleanRef] || appointmentsMap[unhyphenated] || (d.applicantName ? appointmentsMap[d.applicantName.toLowerCase().trim()] : null)
+      const appt = appointmentsMap[cleanRef] || appointmentsMap[unhyphenated]
       const cachedSched =
         localScheduledMap[d.id] ||
         localScheduledMap[d.disbursementId] ||
         localScheduledMap[cleanRef] ||
-        localScheduledMap[unhyphenated] ||
-        (d.applicantName ? localScheduledMap[d.applicantName.toLowerCase().trim()] : null)
+        localScheduledMap[unhyphenated]
       const apptStatus = String(appt?.status || cachedSched?.status || "").toLowerCase()
       const apptDecision = String(appt?.decision || cachedSched?.decision || "").toLowerCase()
       if (apptStatus === "rejected" || apptStatus === "referred" || apptDecision === "rejected" || apptDecision === "referred") {
@@ -395,8 +391,7 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
 
       // If an appointment exists for this aid request, wait until it is approved before showing in Financial Aid
       if (appt || cachedSched) {
-        if (apptStatus !== "approved" && apptDecision !== "approved") {
-          // Still in interview scheduling/review phase
+        if (apptStatus !== "approved" && apptDecision !== "approved" && !String(d.assistanceType).toLowerCase().includes("solo")) {
           return false
         }
       }
@@ -1249,6 +1244,15 @@ export default function FinancialAidDisbursement() {
         })
 
         const approvedOnly = merged.filter((d) => {
+          const isNonMonetaryCw =
+            String(d.assistanceType || "").toLowerCase().includes("intake") ||
+            String(d.assistanceType || "").toLowerCase().includes("assessment") ||
+            String(d.assistanceType || "").toLowerCase().includes("interview") ||
+            String(d.assistanceType || "").toLowerCase().includes("protective") ||
+            String(d.assistanceType || "").toLowerCase().includes("custody") ||
+            String(d.assistanceType || "").toLowerCase().includes("silungan")
+          if (isNonMonetaryCw) return false
+
           const cleanRef = String(d.applicationRef || "").trim()
           const unhyphenated = cleanRef.replace(/[^a-zA-Z0-9]/g, "")
           const baseRef = cleanRef.split("-")[0].trim()
@@ -1259,8 +1263,7 @@ export default function FinancialAidDisbursement() {
             appointmentsMap[`${baseRef}_${cleanAssistance}`] ||
             appointmentsMap[cleanRef] ||
             appointmentsMap[unhyphenated] ||
-            appointmentsMap[baseRef] ||
-            (d.applicantName ? appointmentsMap[d.applicantName.toLowerCase().trim()] : null)
+            appointmentsMap[baseRef]
 
           const cachedSched =
             localScheduledMap[d.id] ||
@@ -1270,8 +1273,7 @@ export default function FinancialAidDisbursement() {
             localScheduledMap[`${baseRef}_${d.assistanceType}`] ||
             localScheduledMap[cleanRef] ||
             localScheduledMap[unhyphenated] ||
-            localScheduledMap[baseRef] ||
-            (d.applicantName ? localScheduledMap[d.applicantName.toLowerCase().trim()] : null)
+            localScheduledMap[baseRef]
 
           const apptStatus = String(appt?.status || cachedSched?.status || "").toLowerCase()
           const apptDecision = String(appt?.decision || cachedSched?.decision || "").toLowerCase()
