@@ -802,15 +802,13 @@ exports.updateAppointmentStatus = async (req, res) => {
       ).catch(() => {});
     }
 
-    // 3. Financial aid disbursement creation ONLY for approved non-GL cash assistance
+    // 3. Financial aid disbursement creation for approved assistance modules
     const isChildWelfare = resolvedModule.includes('CHILD') || resolvedConcern.toLowerCase().includes('child welfare') || resolvedConcern.toLowerCase().includes('child protection') || cleanId.startsWith('CW');
-    const isAicsMedical = resolvedModule === 'AICS' || resolvedConcern.toLowerCase().includes('medical');
 
     if (newStatus === 'approved' || newStatus === 'completed' || newStatus === 'for_release') {
       const isPwdApp = resolvedModule === 'PWD' || resolvedConcern.toLowerCase().includes('pwd') || resolvedConcern.toLowerCase().includes('disability');
 
-      // Note: AICS Medical uses Guarantee Letter (GL), and Child Welfare is non-monetary protective service — NEITHER use cash disbursement!
-      if (!isAicsMedical && !isChildWelfare) {
+      if (!isChildWelfare) {
         const targetRef = apptRow?.reference_no || cleanId;
         const targetName = (apptRow?.applicant_name || applicantName || 'BENEFICIARY').toUpperCase();
         const fixedAmount = resolveFixedAmount(resolvedConcern);

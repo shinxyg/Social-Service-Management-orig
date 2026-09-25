@@ -248,12 +248,8 @@ export function isNonCashOrGLService(serviceOrConcern?: string): boolean {
   if (!serviceOrConcern) return false
   const lower = serviceOrConcern.toLowerCase()
   return (
-    lower.includes("medical") ||
-    lower.includes("hospital") ||
-    lower.includes("guarantee letter") ||
-    lower.includes("gamot") ||
-    lower.includes("reseta") ||
-    lower.includes("health")
+    lower.includes("guarantee letter only") ||
+    lower.includes("pure gl")
   )
 }
 

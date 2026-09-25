@@ -772,11 +772,9 @@ exports.updateApplicationStatus = async (req, res) => {
 
       const existingDisb = await db.query(
         `SELECT id FROM financial_aid_disbursements
-         WHERE application_ref = $1
-            OR application_ref = $2
-            OR REPLACE(application_ref, '-', '') = $3
-            OR (applicant_name ILIKE $4 AND status != 'RELEASED')`,
-        [rawId, targetRef, unhyphenated, `%${targetName}%`]
+         WHERE (application_ref = $1 OR application_ref = $2 OR REPLACE(application_ref, '-', '') = $3)
+            AND (assistance_type = $4 OR assistance_type ILIKE $5)`,
+        [rawId, targetRef, unhyphenated, cleanType, `%${rawType}%`]
       );
 
       if (existingDisb.rows.length === 0) {
