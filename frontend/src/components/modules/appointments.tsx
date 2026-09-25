@@ -1597,33 +1597,7 @@ function to12HourTime(timeStr?: string): string {
   const [customRejectReason, setCustomRejectReason] = useState("")
 
   const handleApproveAid = (appt: AppointmentRequest) => {
-    const isChildWelfare = appt.module === "Child Welfare" || String(appt.referenceNo || "").startsWith("CW-") || String(appt.concern || "").toLowerCase().includes("child welfare") || String(appt.concern || "").toLowerCase().includes("child protection")
-    const isSoloParent = (appt.module === "Solo Parent" || String(appt.referenceNo || "").startsWith("SP-") || String(appt.concern || "").toLowerCase().includes("solo parent")) && !isChildWelfare
-    const isPwd = (appt.module === "PWD" || String(appt.concern || "").toLowerCase().includes("pwd") || String(appt.concern || "").toLowerCase().includes("disability")) && !isSoloParent && !isChildWelfare
-    const isSenior = (appt.module === "Senior Citizen" || String(appt.concern || "").toLowerCase().includes("senior") || String(appt.concern || "").toLowerCase().includes("osca")) && !isSoloParent && !isChildWelfare
-    if (isPwd || isSenior || isSoloParent) {
-      executeApproveAid(appt)
-      return
-    }
-
-    const defaultLoc = isChildWelfare
-      ? "SSDD Child Protection & Counseling Center (Room 205), Quezon City Hall"
-      : isSoloParent
-      ? "Quezon City Hall - SSDD Solo Parent Welfare Section"
-      : "SSDD Civic Center E, 2nd Floor, Quezon City Hall Compound, Mayaman St., Brgy. Central, Quezon City (Public Assistance Division - PAD)"
-    const today = new Date().toISOString().split("T")[0]
-    setApprovalDate(appt.scheduledDate && appt.scheduledDate.includes("-") ? appt.scheduledDate : today)
-    setApprovalTime(to24HourTime(appt.scheduledTime || "09:00 AM"))
-    setApprovalOfficeLocation(appt.officeLocation || defaultLoc)
-    setApprovalNotes(
-      appt.notes ||
-        (isChildWelfare
-          ? "Dalhin ang Valid ID, Birth Certificate ng Bata, at kaukulang Case Documents para sa Intake Interview, Safety Assessment, at Counseling Session."
-          : isSoloParent
-          ? "Dalhin ang Solo Parent ID at iba pang kaukulang dokumento para sa release ng Financial Subsidy."
-          : "Dalhin ang Valid ID, Original Medical Abstract/Prescription, at iba pang kaukulang dokumento sa 2nd Floor SSDD Civic Center E (PAD).")
-    )
-    setApprovingAppt(appt)
+    executeApproveAid(appt)
   }
 
   const handleConfirmApproveAid = () => {
