@@ -77,6 +77,11 @@ async function initPwdSeniorTable() {
       DELETE FROM pwd_senior_applications
       WHERE id IN ('APP-PWD-2026-001', 'APP-PWD-2026-002', 'APP-PWD-2026-003')
          OR reference_number IN ('PWD-QC-2026-4891', 'PWD-QC-2026-3109', 'PWD-QC-2026-5520')
+         OR category ILIKE '%solo%'
+         OR category ILIKE '%child%'
+         OR reference_number ILIKE 'SP%'
+         OR reference_number ILIKE 'SPED%'
+         OR reference_number ILIKE 'SPSU%'
     `);
   } catch (err) {
     console.warn('[DB] Could not initialize pwd_senior_applications table, using fallback memory store:', err.message);
@@ -231,7 +236,10 @@ exports.getAllApplications = async (req, res) => {
   }
   try {
     const result = await db.query(
-      'SELECT * FROM pwd_senior_applications ORDER BY created_at DESC'
+      `SELECT * FROM pwd_senior_applications
+       WHERE (category IS NULL OR (category NOT ILIKE '%solo%' AND category NOT ILIKE '%child%'))
+         AND (reference_number IS NULL OR (reference_number NOT ILIKE 'SP%' AND reference_number NOT ILIKE 'SPED%' AND reference_number NOT ILIKE 'SPSU%'))
+       ORDER BY created_at DESC`
     );
     if (result.rows.length === 0) {
       cachedApps = [];

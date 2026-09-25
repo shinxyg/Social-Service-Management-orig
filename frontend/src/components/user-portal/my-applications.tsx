@@ -2324,7 +2324,34 @@ export default function MyApplications() {
 
         let localPwdApps: any[] = []
         try {
-          localPwdApps = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
+          const rawLocalPwd = localStorage.getItem("pwd_senior_applications")
+          if (rawLocalPwd) {
+            const parsed = JSON.parse(rawLocalPwd)
+            if (Array.isArray(parsed)) {
+              const cleaned = parsed.filter((la: any) => {
+                if (!la) return false
+                const cat = String(la.category || la.module_type || la.moduleType || "").toLowerCase()
+                const srv = String(la.service || la.service_name || la.classification_title || "").toLowerCase()
+                const ref = String(la.reference_number || la.referenceNumber || la.id || "").toUpperCase()
+                return !(
+                  cat.includes("solo") ||
+                  cat.includes("child") ||
+                  srv.includes("solo") ||
+                  srv.includes("child welfare") ||
+                  ref.startsWith("SP") ||
+                  ref.startsWith("SPED") ||
+                  ref.startsWith("SPSU") ||
+                  ref.includes("SP-EDU") ||
+                  ref.includes("SP-SUB") ||
+                  ref.startsWith("CW-")
+                )
+              })
+              if (cleaned.length !== parsed.length) {
+                localStorage.setItem("pwd_senior_applications", JSON.stringify(cleaned))
+              }
+              localPwdApps = cleaned
+            }
+          }
         } catch {}
 
         let pwdApps: any[] = [...apiPwdApps]
@@ -2338,6 +2365,31 @@ export default function MyApplications() {
 
         const mappedPwd: ApplicationRecord[] = (pwdApps || [])
           .filter(isUserMatch)
+          .filter((p: any) => {
+            if (!p) return false
+            const cat = String(p.category || p.module_type || p.moduleType || "").toLowerCase()
+            const srv = String(p.service || p.service_name || p.classification_title || "").toLowerCase()
+            const ref = String(p.reference_number || p.referenceNumber || p.id || "").toUpperCase()
+            if (
+              cat.includes("solo") ||
+              cat.includes("child") ||
+              cat.includes("aics") ||
+              cat.includes("livelihood") ||
+              srv.includes("solo") ||
+              srv.includes("child welfare") ||
+              ref.startsWith("SP") ||
+              ref.startsWith("SPED") ||
+              ref.startsWith("SPSU") ||
+              ref.includes("SP-EDU") ||
+              ref.includes("SP-SUB") ||
+              ref.startsWith("CW-") ||
+              ref.startsWith("LIV-") ||
+              ref.startsWith("AICS-")
+            ) {
+              return false
+            }
+            return true
+          })
           .map((p: any) => {
             const isPwd =
               String(p.category || "").toUpperCase() === "PWD" ||
@@ -4526,14 +4578,23 @@ export default function MyApplications() {
                       app.assistanceCategory === "PWD" ||
                       app.assistance.toLowerCase().includes("pwd") ||
                       app.assistance.toLowerCase().includes("disability")
+                    const isSolo =
+                      app.assistanceCategory === "Solo Parent" ||
+                      app.assistance.toLowerCase().includes("solo") ||
+                      String(app.applicationNo || "").toUpperCase().includes("SP-") ||
+                      String(app.applicationNo || "").toUpperCase().includes("SPED") ||
+                      String(app.applicationNo || "").toUpperCase().includes("SPSU")
                     const isSenior =
-                      app.assistanceCategory === "Senior Citizen" ||
-                      app.assistance.toLowerCase().includes("senior")
+                      !isSolo &&
+                      (app.assistanceCategory === "Senior Citizen" ||
+                        app.assistance.toLowerCase().includes("senior"))
                     const officeName = isPwd
                       ? "Persons with Disability Affairs Division (PDAO)"
+                      : isSolo
+                      ? "Solo Parent Welfare Division"
                       : isSenior
                       ? "Office of Senior Citizens Affairs (OSCA)"
-                      : "Solo Parent Welfare Division"
+                      : "Quezon City Social Services Development Department (SSDD)"
 
                     return (
                       <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/80 rounded-xl p-3.5 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-2xs">
