@@ -679,13 +679,14 @@ function AppointmentCard({
 
 function getAppointmentDeduplicationKey(a: { id?: string; referenceNo?: string; applicantName?: string; concern?: string; module?: string }): string {
   const ref = String(a.referenceNo || "").toLowerCase().trim()
-  if (ref && ref.includes("-")) {
+  const c = String(a.concern || "").toLowerCase()
+  const mod = String(a.module || "AICS").toUpperCase().trim()
+  const isEdu = ref.includes("sp-edu") || (c.includes("solo") && c.includes("educational")) || (c.includes("educational") && mod.includes("SOLO"))
+
+  if (ref && ref.length >= 4) {
+    if (isEdu) return `ref_${ref}_edu`
     return `ref_${ref}`
   }
-  const mod = String(a.module || "AICS").toUpperCase().trim()
-  const c = String(a.concern || "").toLowerCase()
-  const refUpper = String(a.referenceNo || "").toUpperCase()
-  const isEdu = refUpper.includes("SP-EDU") || (c.includes("solo") && c.includes("education")) || (c.includes("education") && mod.includes("SOLO"))
 
   let cleanConcern = "general"
   if (c.includes("pwd") || c.includes("disability")) cleanConcern = "pwd"
@@ -975,13 +976,9 @@ export default function Appointments() {
 
                 // If already in dataDb.appointments for AICS, DO NOT synthesize a duplicate!
                 const existsInDb = dataDb.appointments && Array.isArray(dataDb.appointments) && dataDb.appointments.some((dba: any) => {
-                  const dbr = String(dba.reference_no || dba.qc_id || '').trim().toLowerCase()
+                  const dbr = String(dba.reference_no || dba.qc_id || dba.reference_number || '').trim().toLowerCase()
                   const dbid = String(dba.id || '').trim().toLowerCase()
-                  const dbMod = String(dba.module || '').trim().toUpperCase()
-                  const dbConcern = String(dba.concern || '').trim().toLowerCase()
-                  const sameRef = (ref && dbr === String(ref).trim().toLowerCase()) || (app.id && dbid === String(app.id).trim().toLowerCase())
-                  const sameMod = dbMod === 'AICS' || dbConcern.includes('medical') || dbConcern.includes('gamot') || dbConcern.includes('funeral') || dbConcern.includes('burial')
-                  return sameRef && sameMod
+                  return (ref && dbr === String(ref).trim().toLowerCase()) || (app.id && dbid === String(app.id).trim().toLowerCase())
                 })
                 if (existsInDb) return
 
@@ -1066,13 +1063,9 @@ export default function Appointments() {
 
               // If already in dataDb.appointments for PWD/Senior, DO NOT synthesize!
               const existsInDb = dataDb.appointments && Array.isArray(dataDb.appointments) && dataDb.appointments.some((dba: any) => {
-                const dbr = String(dba.reference_no || dba.qc_id || '').trim().toLowerCase()
+                const dbr = String(dba.reference_no || dba.qc_id || dba.reference_number || '').trim().toLowerCase()
                 const dbid = String(dba.id || '').trim().toLowerCase()
-                const dbMod = String(dba.module || '').trim().toUpperCase()
-                const dbConcern = String(dba.concern || '').trim().toLowerCase()
-                const sameRef = (ref && dbr === String(ref).trim().toLowerCase()) || (app.id && dbid === String(app.id).trim().toLowerCase())
-                const sameMod = dbMod === mod.toUpperCase() && dbConcern.includes(isPwd ? 'pwd' : 'senior')
-                return sameRef && sameMod
+                return (ref && dbr === String(ref).trim().toLowerCase()) || (app.id && dbid === String(app.id).trim().toLowerCase())
               })
               if (existsInDb) return
 
@@ -1223,7 +1216,7 @@ export default function Appointments() {
 
             const schedDate = cleanDate(cached?.scheduledDate || sp.scheduledDate || sp.scheduled_date || sp.appointmentDate)
             const schedTime = cached?.scheduledTime || sp.scheduledTime || sp.scheduled_time || sp.appointmentTime || null
-            const isApproved = st === "approved" || st === "for_distribution" || st === "completed" || cached?.decision === "approved" || cached?.status === "approved"
+            const isApproved = st === "approved" || st === "for_distribution" || st === "completed" || st === "released" || st === "assistance_released" || st === "for_release" || cached?.decision === "approved" || cached?.status === "approved"
             const isReferred = st === "referred" || cached?.decision === "referred" || cached?.status === "referred"
             const isRejected = st === "rejected" || cached?.decision === "rejected" || cached?.status === "rejected"
 
