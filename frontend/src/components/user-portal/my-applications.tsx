@@ -2598,20 +2598,37 @@ export default function MyApplications() {
                 app.updated_at
               const appDate = extractAnyDateFromApp(app)
 
+              const st = String(app.application_status || app.status || "pending").toLowerCase()
+              let statusLabel = "Pending (SSDD Validation)"
+              let remarksText = "Sinusuri ng SSDD Intake Officer ang Child Birth Certificate, Guardian ID, at Certificate of Enrollment / Indigency. Hintayin ang iskedyul."
+
+              if (st === "approved") {
+                statusLabel = "Approved"
+                remarksText = `Aprubado para sa ₱${(Number(app.approved_amount) || 5000).toLocaleString()}.00 Grant. Tingnan ang Payout Schedule sa Financial Aid.`
+              } else if (st === "released" || st === "completed") {
+                statusLabel = "Released"
+                remarksText = `Natanggap na ang ₱${(Number(app.approved_amount) || 5000).toLocaleString()}.00 Assistance (Official Certificate / Payout Voucher Ready)`
+              } else if (st === "rejected") {
+                statusLabel = "Rejected"
+                remarksText = app.rejection_reason || app.admin_notes ? `Dahilan: ${app.rejection_reason || app.admin_notes}` : "Dahilan: Ineligible / Lampas sa edad."
+              } else if (st === "interview_scheduled") {
+                statusLabel = "Interview Scheduled"
+                remarksText = "Nakatakda ang interview sa Quezon City Hall SSDD Child Welfare Desk."
+              } else if (st === "under_assessment") {
+                statusLabel = "Under Assessment"
+                remarksText = "Naisagawa na ang panayam. Kasalukuyang inihahanda ang case evaluation report."
+              } else if (st === "payout_scheduled" || st === "for_distribution") {
+                statusLabel = "Payout Scheduled"
+                remarksText = "Payout Scheduled: Quezon City Hall SSDD Payout Hall!"
+              }
+
               return {
                 applicationNo: app.reference_number || app.referenceNumber || qcId,
-                assistance: app.category_title || app.classification_title || "Child Welfare Assistance",
+                assistance: app.category_title || app.classification_title || "Child Welfare Services",
                 assistanceCategory: "Child Welfare",
                 rawTimestamp: appDate.getTime(),
                 dateApplied: formatAppDate(rawDate, app),
-                status:
-                  app.application_status === "approved" || app.status === "approved"
-                    ? "Approved"
-                    : app.application_status === "released" || app.status === "released" || app.application_status === "completed" || app.status === "completed"
-                    ? "Released"
-                    : app.application_status === "rejected" || app.status === "rejected"
-                    ? "Rejected"
-                    : "Under Review",
+                status: statusLabel,
                 applicantName: app.child_name || app.childName || [app.guardian_first_name, app.guardian_last_name].filter(Boolean).join(" ") || "Beneficiary Child",
                 dateOfBirth: userProfile.birthDateDisplay,
                 address:
@@ -2619,14 +2636,7 @@ export default function MyApplications() {
                   `${userProfile.houseNo} ${userProfile.street}, ${userProfile.barangay}, ${userProfile.city}`,
                 contactNumber: app.guardian_contact_no || app.parentContactNo || app.contact_number || userProfile.mobileNumber,
                 email: app.guardian_email || app.email || userProfile.email,
-                remarks:
-                  app.application_status === "approved" || app.status === "approved"
-                    ? `Aprubado para sa Ayuda (₱${(Number(app.approved_amount) || 5000).toLocaleString()}) - Nakatala sa Financial Aid & Appointments`
-                    : app.application_status === "released" || app.status === "released"
-                    ? `Na-release na ang Ayuda (₱${(Number(app.approved_amount) || 5000).toLocaleString()})`
-                    : app.application_status === "rejected" || app.status === "rejected"
-                    ? (app.rejection_reason ? `Tinanggihan: ${app.rejection_reason}` : "Tinanggihan")
-                    : "Kasalukuyang sinusuri (Under review)",
+                remarks: remarksText,
               }
             })
           allFoundApps.push(...mappedCw)

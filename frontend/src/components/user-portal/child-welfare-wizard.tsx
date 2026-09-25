@@ -24,8 +24,9 @@ import { readFileAsDataUrl } from "../../utils/fileUpload"
 import DocumentCameraModal from "../ui/document-camera-modal"
 
 function generateReference(qcid?: string) {
-  if (qcid && qcid.trim()) return qcid.trim()
-  return "110000116932100"
+  if (qcid && qcid.trim() && qcid.startsWith("CW-")) return qcid.trim()
+  const randomDigits = Math.floor(1000 + Math.random() * 9000)
+  return `CW-2026-${randomDigits}`
 }
 
 export interface ChildWelfareProgram {

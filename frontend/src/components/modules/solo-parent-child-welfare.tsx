@@ -2273,7 +2273,7 @@ function DetailedView({ app, onClose, onApprove, onReject, allSubmissions }: Det
 
           {}
            <DocumentPreviewModal doc={previewDoc} app={app} onClose={() => setPreviewDoc(null)} />
-          {app.status === "pending" && (
+          {(app.status === "pending" || app.status === "ssdd_validation" || app.status === "interview_scheduled" || app.status === "under_assessment" || (app as any).application_status === "pending") && (
             <div className="pt-6" style={{ borderTop: "1px solid var(--line)" }}>
               {actionMode === "view" && (
                 <div className="flex gap-3">
@@ -2282,7 +2282,7 @@ function DetailedView({ app, onClose, onApprove, onReject, allSubmissions }: Det
                     className="gw-btn-approve flex-1 inline-flex items-center justify-center gap-2 px-4 py-2.5"
                   >
                     <Check className="h-4 w-4" />
-                    Approve application
+                    {!isSolo && app.status === "pending" ? "Validate & Endorse for Scheduling" : "Approve application"}
                   </button>
                   <button
                     onClick={() => setActionMode("reject")}

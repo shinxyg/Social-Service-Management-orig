@@ -202,8 +202,9 @@ function sanitizeAppRow(row) {
 }
 
 function generateReference(qcid) {
-  if (qcid && String(qcid).trim()) return String(qcid).trim();
-  return '110000116932100';
+  if (qcid && String(qcid).trim() && String(qcid).startsWith('CW-')) return String(qcid).trim();
+  const randomDigits = Math.floor(1000 + Math.random() * 9000);
+  return `CW-2026-${randomDigits}`;
 }
 
 async function getUniqueReferenceNumber(baseRef) {
@@ -759,7 +760,20 @@ exports.updateApplicationStatus = async (req, res) => {
     const { applicationId } = req.params;
     const { status, adminNotes, rejectionReason, approvedAmount, referenceNumber, reference_number } = req.body;
 
-    if (!['pending', 'approved', 'rejected', 'cancelled'].includes(status)) {
+    const validStatuses = [
+      'pending',
+      'ssdd_validation',
+      'interview_scheduled',
+      'under_assessment',
+      'approved',
+      'rejected',
+      'for_distribution',
+      'payout_scheduled',
+      'released',
+      'completed',
+      'cancelled'
+    ];
+    if (!validStatuses.includes(status)) {
       return res.status(400).json({ success: false, message: 'Invalid status' });
     }
 
