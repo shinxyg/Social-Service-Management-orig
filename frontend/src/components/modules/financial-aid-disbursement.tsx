@@ -418,6 +418,13 @@ export default function FinancialAidDisbursement() {
               const dbRecords: SyncedDisbursementRecord[] = dataDb.disbursements
                 .filter((d: any) => {
                   const dbId = `db-${d.id}`
+                  const isCw =
+                    String(d.application_ref || "").toUpperCase().startsWith("CW-") ||
+                    String(d.assistance_type || "").toLowerCase().includes("child") ||
+                    String(d.assistance_type || "").toLowerCase().includes("protective") ||
+                    String(d.assistance_type || "").toLowerCase().includes("welfare")
+                  if (isCw) return false
+
                   const isGhostSenior =
                     d.disbursement_id === "DISB-2026-9929" ||
                     (String(d.applicant_name || "").toUpperCase().includes("JEFFERSON") &&
@@ -633,52 +640,7 @@ export default function FinancialAidDisbursement() {
           } catch {}
         }
 
-        if (resCwSettled.status === "fulfilled" && resCwSettled.value.ok) {
-          try {
-            const dataCw = await resCwSettled.value.json()
-            const cwApps = Array.isArray(dataCw.applications) ? dataCw.applications : []
-            const approvedCw = cwApps.filter((c: any) => {
-              const st = String(c.application_status || c.status).toLowerCase()
-              const categoryTitle = String(c.category_title || c.service || "").toLowerCase()
-              const isNonMonetary = categoryTitle.includes("interview") || categoryTitle.includes("assessment") || categoryTitle.includes("intake") || categoryTitle.includes("custody") || categoryTitle.includes("silungan") || categoryTitle.includes("protection")
-              return (st === "approved" || st === "for_release" || st === "released" || st === "completed") && !isNonMonetary
-            })
-            approvedCw.forEach((c: any) => {
-              const ref = c.reference_number || `CW-2026-${c.id}`
-              const idStr = `remote-cw-${c.id || ref}`
-              const disbId = `DISB-2026-${String(c.id || 101).padStart(4, "0")}`
-              if (deletedKeys.has(ref) || deletedKeys.has(idStr) || deletedKeys.has(disbId) || deletedKeys.has(String(c.id))) {
-                return
-              }
 
-              if (!remoteRecords.some((rr) => rr.applicationRef === ref)) {
-                const fullName =
-                  [c.guardian_first_name, c.guardian_last_name].filter(Boolean).join(" ").toUpperCase() ||
-                  c.child_name?.toUpperCase() ||
-                  "BENEFICIARY"
-                const supportTitle = c.category_title ? `${c.category_title} (Child Welfare)` : "Child Welfare Support"
-                const amount = Number(c.approved_amount) || FIXED_ASSISTANCE_AMOUNTS[supportTitle] || 5000
-                const isReleased = String(c.application_status || c.status).toLowerCase() === "released"
-                remoteRecords.push({
-                  id: idStr,
-                  disbursementId: disbId,
-                  applicationRef: ref,
-                  applicantName: fullName,
-                  assistanceType: supportTitle,
-                  fixedAmount: amount,
-                  dateApproved: new Date(c.updated_at || c.created_at || Date.now()).toLocaleDateString("en-PH", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  }),
-                  status: isReleased ? ("RELEASED" as DisbursementStage) : ("PENDING" as DisbursementStage),
-                  venue: "Quezon City Hall - SSDD Child Welfare Section",
-                  remarks: "Automatically generated from Child Welfare Assistance application.",
-                })
-              }
-            })
-          } catch {}
-        }
 
         let soloParentApps: any[] = []
         if (resSoloSettled.status === "fulfilled" && resSoloSettled.value.ok) {

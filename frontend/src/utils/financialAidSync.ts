@@ -468,6 +468,10 @@ export function getSavedDisbursements(): SyncedDisbursementRecord[] {
           (p) =>
             p &&
             !["d1", "d2", "d3", "d4", "d5", "d6", "d7", "d8"].includes(p.id) &&
+            !String(p.applicationRef || "").toUpperCase().startsWith("CW-") &&
+            !String(p.assistanceType || "").toLowerCase().includes("child") &&
+            !String(p.assistanceType || "").toLowerCase().includes("protective") &&
+            !String(p.assistanceType || "").toLowerCase().includes("welfare") &&
             !isIdOrDocumentService(p.assistanceType) &&
             !isTrainingService(p.assistanceType) &&
             !isNonCashOrGLService(p.assistanceType) &&
@@ -504,7 +508,11 @@ export function getSavedDisbursements(): SyncedDisbursementRecord[] {
           }
         })
 
-        return Array.from(recordMap.values())
+        const cleanedList = Array.from(recordMap.values())
+        try {
+          localStorage.setItem("all_financial_disbursements", JSON.stringify(cleanedList))
+        } catch {}
+        return cleanedList
       }
     }
   } catch (e) {

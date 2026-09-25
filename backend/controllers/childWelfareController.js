@@ -272,7 +272,13 @@ async function initChildWelfareColumns() {
   try {
     await db.query(columnDefs.join(';\n'));
     // Clean up any old financial disbursement records created under child welfare (non-monetary service)
-    await db.query(`DELETE FROM financial_aid_disbursements WHERE application_ref LIKE 'CW-%' OR assistance_type ILIKE '%child welfare%'`).catch(() => {});
+    await db.query(`
+      DELETE FROM financial_aid_disbursements 
+      WHERE application_ref LIKE 'CW-%' 
+         OR assistance_type ILIKE '%child%' 
+         OR assistance_type ILIKE '%protective%' 
+         OR assistance_type ILIKE '%welfare%'
+    `).catch(() => {});
   } catch {}
   childColsInitialized = true;
 }
@@ -926,11 +932,16 @@ exports.updateApplicationStatus = async (req, res) => {
     }
 
     // Always ensure Child Welfare does NOT have entries in financial_aid_disbursements (non-monetary service)
-    if (app && app.reference_number) {
-      try {
-        await db.query('DELETE FROM financial_aid_disbursements WHERE application_ref = $1', [app.reference_number]).catch(() => {});
-      } catch (_) {}
-    }
+    try {
+      await db.query(`
+        DELETE FROM financial_aid_disbursements 
+        WHERE application_ref LIKE 'CW-%' 
+           OR application_ref = $1 
+           OR assistance_type ILIKE '%child%' 
+           OR assistance_type ILIKE '%protective%' 
+           OR assistance_type ILIKE '%welfare%'
+      `, [app ? app.reference_number : '']).catch(() => {});
+    } catch (_) {}
 
     // Connect to appointments if an interview or service provision session is scheduled
     if (app && (status === 'interview_scheduled' || status === 'approved' || status === 'for_service_provision')) {

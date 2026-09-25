@@ -332,8 +332,14 @@ exports.getDisbursements = async (req, res) => {
     } catch (_) {}
 
     try {
-      // Unconditionally remove any legacy Child Welfare records from financial aid (non-monetary protective service)
-      await db.query(`DELETE FROM financial_aid_disbursements WHERE application_ref LIKE 'CW-%' OR assistance_type ILIKE '%child welfare%'`).catch(() => {});
+      // Unconditionally remove any legacy Child Welfare / Child Protection records from financial aid (non-monetary protective service)
+      await db.query(`
+        DELETE FROM financial_aid_disbursements 
+        WHERE application_ref LIKE 'CW-%' 
+           OR assistance_type ILIKE '%child%' 
+           OR assistance_type ILIKE '%protective%' 
+           OR assistance_type ILIKE '%welfare%'
+      `).catch(() => {});
     } catch (_) {}
 
     try {
@@ -562,6 +568,9 @@ exports.getDisbursements = async (req, res) => {
           )
        )
        WHERE f.disbursement_id != 'DISB-2026-9929'
+         AND f.application_ref NOT LIKE 'CW-%'
+         AND f.assistance_type NOT ILIKE '%child%'
+         AND f.assistance_type NOT ILIKE '%welfare%'
          AND NOT (
            f.assistance_type ILIKE '%Senior%' 
            AND f.application_ref NOT IN (SELECT reference_number FROM pwd_senior_applications WHERE category ILIKE '%senior%' AND reference_number IS NOT NULL)
@@ -589,6 +598,14 @@ exports.getUserDisbursements = async (req, res) => {
   try {
     autoReleaseScheduledDisbursements().catch(() => {});
     const { refOrQcId } = req.params;
+
+    await db.query(`
+      DELETE FROM financial_aid_disbursements 
+      WHERE application_ref LIKE 'CW-%' 
+         OR assistance_type ILIKE '%child%' 
+         OR assistance_type ILIKE '%protective%' 
+         OR assistance_type ILIKE '%welfare%'
+    `).catch(() => {});
 
     const result = await db.query(
       `SELECT
@@ -619,6 +636,10 @@ exports.getUserDisbursements = async (req, res) => {
        ) a ON f.application_ref = a.reference_no
        WHERE (f.application_ref = $1 OR f.applicant_name ILIKE $2)
          AND f.disbursement_id != 'DISB-2026-9929'
+         AND f.application_ref NOT LIKE 'CW-%'
+         AND f.assistance_type NOT ILIKE '%child%'
+         AND f.assistance_type NOT ILIKE '%protective%'
+         AND f.assistance_type NOT ILIKE '%welfare%'
          AND NOT (f.applicant_name ILIKE '%JEFFERSON%' AND (f.assistance_type ILIKE '%Senior%' OR f.assistance_type ILIKE '%OSCA%'))
        ORDER BY f.created_at DESC`,
       [refOrQcId, `%${refOrQcId}%`]
