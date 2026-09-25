@@ -127,7 +127,8 @@ async function syncAndCleanAppointments() {
     await db.query(`
       DELETE FROM appointments a
       USING appointments b
-      WHERE a.id < b.id AND a.reference_no = b.reference_no AND a.module = b.module AND a.concern = b.concern
+      WHERE (a.status = 'pending' AND b.status IN ('approved', 'completed', 'scheduled', 'referred') AND LOWER(a.reference_no) = LOWER(b.reference_no) AND a.id <> b.id)
+         OR (a.id < b.id AND LOWER(a.reference_no) = LOWER(b.reference_no) AND a.module = b.module AND LOWER(COALESCE(a.concern, '')) = LOWER(COALESCE(b.concern, '')));
     `).catch(() => {});
 
     await db.query(`
@@ -173,8 +174,7 @@ async function syncAndCleanAppointments() {
         )
         AND NOT EXISTS (
           SELECT 1 FROM appointments app 
-          WHERE app.reference_no = COALESCE(NULLIF(TRIM(a.reference_no), ''), a.qc_id) 
-            AND app.module = 'AICS'
+          WHERE LOWER(app.reference_no) = LOWER(COALESCE(NULLIF(TRIM(a.reference_no), ''), a.qc_id))
         );
     `).catch(() => {});
 
@@ -279,8 +279,7 @@ async function syncAndCleanAppointments() {
       FROM solo_parent_child_welfare_applications s
       WHERE (a.reference_no = s.reference_number OR LOWER(a.reference_no) = LOWER(s.reference_number))
         AND s.application_status IN ('approved', 'completed', 'for_release', 'released', 'assistance_released')
-        AND a.status = 'pending'
-        AND a.scheduled_date IS NULL;
+        AND a.status = 'pending';
     `).catch(() => {});
 
     await db.query(`
@@ -293,8 +292,7 @@ async function syncAndCleanAppointments() {
       FROM pwd_senior_applications p
       WHERE (a.reference_no = p.reference_number OR LOWER(a.reference_no) = LOWER(p.reference_number))
         AND p.status IN ('approved', 'completed', 'for_release', 'released')
-        AND a.status = 'pending'
-        AND a.scheduled_date IS NULL;
+        AND a.status = 'pending';
     `).catch(() => {});
 
     await db.query(`
@@ -307,8 +305,7 @@ async function syncAndCleanAppointments() {
       FROM aics_applications aics
       WHERE (a.reference_no = aics.reference_no OR a.reference_no = aics.qc_id)
         AND aics.status IN ('approved', 'completed', 'for_release', 'released', 'assistance_released')
-        AND a.status = 'pending'
-        AND a.scheduled_date IS NULL;
+        AND a.status = 'pending';
     `).catch(() => {});
 
     await db.query(`
@@ -318,8 +315,7 @@ async function syncAndCleanAppointments() {
       FROM livelihood_applications l
       WHERE (a.reference_no = l.reference_number OR LOWER(a.reference_no) = LOWER(l.reference_number))
         AND l.application_status IN ('approved', 'completed', 'released')
-        AND a.status = 'pending'
-        AND a.scheduled_date IS NULL;
+        AND a.status = 'pending';
     `).catch(() => {});
 
   } catch (err) {
