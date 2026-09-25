@@ -54,6 +54,25 @@ async function syncAndCleanAppointments() {
       DELETE FROM appointments
       WHERE (module = 'AICS' OR module IS NULL) AND (reference_no LIKE 'CW-%' OR reference_no LIKE 'SP-%')
     `).catch(() => {});
+
+    // Auto-repair any existing appointments rows contaminated with legacy hardcoded 'JEFFERSON FERNANDO LEE' name
+    await db.query(`
+      UPDATE appointments a
+      SET applicant_name = UPPER(TRIM(CONCAT_WS(' ', s.guardian_first_name, s.guardian_last_name)))
+      FROM solo_parent_child_welfare_applications s
+      WHERE a.reference_no = s.reference_number
+        AND a.applicant_name ILIKE '%JEFFERSON FERNANDO LEE%'
+        AND s.guardian_first_name IS NOT NULL AND s.guardian_first_name <> ''
+    `).catch(() => {});
+
+    await db.query(`
+      UPDATE appointments a
+      SET applicant_name = UPPER(TRIM(CONCAT_WS(' ', s.first_name, s.middle_name, s.last_name)))
+      FROM solo_parent_child_welfare_applications s
+      WHERE a.reference_no = s.reference_number
+        AND a.applicant_name ILIKE '%JEFFERSON FERNANDO LEE%'
+        AND s.first_name IS NOT NULL AND s.first_name <> ''
+    `).catch(() => {});
     await db.query(`
       DELETE FROM appointments
       WHERE module = 'AICS' AND (
