@@ -172,12 +172,18 @@ exports.getDisbursements = async (req, res) => {
 
     try {
       await db.query(`
+        UPDATE financial_aid_disbursements
+        SET assistance_type = 'Solo Parent Educational Assistance'
+        WHERE assistance_type ILIKE '%Solo Parent Educational%' OR application_ref ILIKE '%SP-EDU%';
+      `);
+      await db.query(`
         DELETE FROM financial_aid_disbursements f1
         USING financial_aid_disbursements f2
         WHERE f1.id < f2.id AND (
           f1.application_ref = f2.application_ref
           OR f1.disbursement_id = f2.disbursement_id
-        )
+          OR (LOWER(TRIM(f1.applicant_name)) = LOWER(TRIM(f2.applicant_name)) AND LOWER(TRIM(f1.assistance_type)) = LOWER(TRIM(f2.assistance_type)))
+        );
       `);
     } catch (_) {}
 

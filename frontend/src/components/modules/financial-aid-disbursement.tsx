@@ -59,6 +59,30 @@ function extractSoloParentName(s: any): string {
   return name || (s.applicant_name ? String(s.applicant_name).trim().toUpperCase() : "") || (s.applicantName ? String(s.applicantName).trim().toUpperCase() : "") || "JEFFERSON FERNANDO LEE"
 }
 
+function normalizeAssistanceType(type?: string): string {
+  if (!type) return "other"
+  const lower = String(type).toLowerCase()
+  if (lower.includes("solo") && (lower.includes("edu") || lower.includes("aral") || lower.includes("school"))) {
+    return "Solo Parent Educational Assistance"
+  }
+  if (lower.includes("solo") && (lower.includes("sub") || lower.includes("financial") || lower.includes("welfare") || lower.includes("subsidy"))) {
+    return "Solo Parent Financial Subsidy"
+  }
+  if (lower.includes("pwd") || lower.includes("disability") || lower.includes("pension")) {
+    return "PWD Social Assistance"
+  }
+  if (lower.includes("medical") || lower.includes("hospital") || lower.includes("aics")) {
+    return "Medical Assistance"
+  }
+  if (lower.includes("livelihood")) {
+    return "Livelihood Capital Assistance"
+  }
+  if (lower.includes("senior")) {
+    return "Senior Social Assistance"
+  }
+  return type.replace(/\s*payout.*$/gi, "").replace(/\s*\(.*?\)/gi, "").trim()
+}
+
 function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
   try {
     const deletedKeys = getDeletedDisbursementKeys()
@@ -87,7 +111,11 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
           String(s.assistanceType || "").toLowerCase().includes("child welfare")
         if (isGhostSenior || isNonMonetaryCw) return
 
-        const key = `${s.applicationRef || s.disbursementId}_${s.assistanceType}`
+        const normType = normalizeAssistanceType(s.assistanceType)
+        s.assistanceType = normType
+        const cleanName = String(s.applicantName || "").toLowerCase().replace(/[^a-z0-9]/g, "").trim()
+        const key = cleanName ? `${cleanName}_${normType}` : `${s.applicationRef || s.disbursementId}_${normType}`
+
         if (!seenKeys.has(key)) {
           seenKeys.add(key)
           records.push(s)
@@ -151,7 +179,9 @@ function getInitialDisbursementsForAdmin(): SyncedDisbursementRecord[] {
     ]
 
     defaultRecords.forEach((d) => {
-      const key = `${d.applicationRef || d.disbursementId}_${d.assistanceType}`
+      const normType = normalizeAssistanceType(d.assistanceType)
+      const cleanName = String(d.applicantName || "").toLowerCase().replace(/[^a-z0-9]/g, "").trim()
+      const key = cleanName ? `${cleanName}_${normType}` : `${d.applicationRef || d.disbursementId}_${normType}`
       if (!seenKeys.has(key) && !deletedKeys.has(d.id) && !deletedKeys.has(d.disbursementId) && !deletedKeys.has(d.applicationRef)) {
         seenKeys.add(key)
         records.push(d)
@@ -1033,13 +1063,14 @@ export default function FinancialAidDisbursement() {
           return true
         })
 
-        // Deduplicate records strictly by applicant name + assistance type
+        // Deduplicate records strictly by applicant name + normalized assistance type
         const dedupedMap = new Map<string, SyncedDisbursementRecord>()
         approvedOnly.forEach((d) => {
+          const normType = normalizeAssistanceType(d.assistanceType)
+          d.assistanceType = normType
           const cleanName = String(d.applicantName || "").toLowerCase().replace(/[^a-z0-9]/g, "").trim()
-          const cleanType = String(d.assistanceType || "").toLowerCase().replace(/\s*assistance/gi, "").trim()
           const cleanRef = String(d.applicationRef || "").replace(/[^a-zA-Z0-9]/g, "")
-          const dedupKey = cleanName ? `person_${cleanName}_${cleanType}` : `ref_${cleanRef}`
+          const dedupKey = cleanName ? `person_${cleanName}_${normType}` : `ref_${cleanRef}`
 
           if (!dedupedMap.has(dedupKey)) {
             dedupedMap.set(dedupKey, d)
