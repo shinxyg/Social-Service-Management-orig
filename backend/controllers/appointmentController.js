@@ -752,15 +752,27 @@ exports.updateAppointmentStatus = async (req, res) => {
             OR REPLACE(reference_number, '-', '') = $3`,
         [newStatus, cleanId, unhyphenated]
       ).catch(() => {});
+    } else if (resolvedModule.includes('CHILD') || resolvedModule.includes('SOLO') || cleanId.startsWith('CW') || cleanId.startsWith('SP') || resolvedConcern.toLowerCase().includes('child') || resolvedConcern.toLowerCase().includes('solo')) {
+      const cwStatus = (newStatus === 'approved' || newStatus === 'scheduled') ? 'interview_scheduled' : newStatus;
+      await db.query(
+        `UPDATE solo_parent_child_welfare_applications
+         SET application_status = $1, status_remarks = 'Appointment updated to ' || $1, updated_at = NOW()
+         WHERE id::text = $2
+            OR reference_number = $2
+            OR REPLACE(reference_number, '-', '') = $3`,
+        [cwStatus, cleanId, unhyphenated]
+      ).catch(() => {});
     }
 
     // 3. Financial aid disbursement creation ONLY for approved non-GL cash assistance
+    const isChildWelfare = resolvedModule.includes('CHILD') || resolvedConcern.toLowerCase().includes('child welfare') || resolvedConcern.toLowerCase().includes('child protection') || cleanId.startsWith('CW');
+    const isAicsMedical = resolvedModule === 'AICS' || resolvedConcern.toLowerCase().includes('medical');
+
     if (newStatus === 'approved' || newStatus === 'completed' || newStatus === 'for_release') {
       const isPwdApp = resolvedModule === 'PWD' || resolvedConcern.toLowerCase().includes('pwd') || resolvedConcern.toLowerCase().includes('disability');
-      const isAicsMedical = resolvedModule === 'AICS' || resolvedConcern.toLowerCase().includes('medical');
 
-      // Note: AICS Medical uses Guarantee Letter (GL), NOT cash disbursement!
-      if (!isAicsMedical) {
+      // Note: AICS Medical uses Guarantee Letter (GL), and Child Welfare is non-monetary protective service — NEITHER use cash disbursement!
+      if (!isAicsMedical && !isChildWelfare) {
         const targetRef = apptRow?.reference_no || cleanId;
         const targetName = (apptRow?.applicant_name || applicantName || 'BENEFICIARY').toUpperCase();
         const fixedAmount = resolveFixedAmount(resolvedConcern);

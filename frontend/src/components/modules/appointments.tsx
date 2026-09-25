@@ -8,6 +8,7 @@ import {
   Building2,
   Printer,
   XCircle,
+  ShieldAlert,
 } from "lucide-react"
 
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
@@ -1539,22 +1540,32 @@ function to12HourTime(timeStr?: string): string {
   const [customRejectReason, setCustomRejectReason] = useState("")
 
   const handleApproveAid = (appt: AppointmentRequest) => {
-    const isSoloParent = appt.module === "Solo Parent" || String(appt.concern || "").toLowerCase().includes("solo parent")
-    const isPwd = (appt.module === "PWD" || String(appt.concern || "").toLowerCase().includes("pwd") || String(appt.concern || "").toLowerCase().includes("disability")) && !isSoloParent
-    const isSenior = (appt.module === "Senior Citizen" || String(appt.concern || "").toLowerCase().includes("senior") || String(appt.concern || "").toLowerCase().includes("osca")) && !isSoloParent
+    const isChildWelfare = appt.module === "Child Welfare" || String(appt.referenceNo || "").startsWith("CW-") || String(appt.concern || "").toLowerCase().includes("child welfare") || String(appt.concern || "").toLowerCase().includes("child protection")
+    const isSoloParent = (appt.module === "Solo Parent" || String(appt.referenceNo || "").startsWith("SP-") || String(appt.concern || "").toLowerCase().includes("solo parent")) && !isChildWelfare
+    const isPwd = (appt.module === "PWD" || String(appt.concern || "").toLowerCase().includes("pwd") || String(appt.concern || "").toLowerCase().includes("disability")) && !isSoloParent && !isChildWelfare
+    const isSenior = (appt.module === "Senior Citizen" || String(appt.concern || "").toLowerCase().includes("senior") || String(appt.concern || "").toLowerCase().includes("osca")) && !isSoloParent && !isChildWelfare
     if (isPwd || isSenior) {
       executeApproveAid(appt)
       return
     }
 
-    const defaultLoc = isSoloParent
+    const defaultLoc = isChildWelfare
+      ? "SSDD Child Protection & Counseling Center (Room 205), Quezon City Hall"
+      : isSoloParent
       ? "Quezon City Hall - SSDD Solo Parent Welfare Section"
       : "SSDD Civic Center E, 2nd Floor, Quezon City Hall Compound, Mayaman St., Brgy. Central, Quezon City (Public Assistance Division - PAD)"
     const today = new Date().toISOString().split("T")[0]
     setApprovalDate(appt.scheduledDate && appt.scheduledDate.includes("-") ? appt.scheduledDate : today)
     setApprovalTime(to24HourTime(appt.scheduledTime || "09:00 AM"))
     setApprovalOfficeLocation(appt.officeLocation || defaultLoc)
-    setApprovalNotes(appt.notes || (isSoloParent ? "Dalhin ang Solo Parent ID at iba pang kaukulang dokumento para sa release ng Financial Subsidy." : "Dalhin ang Valid ID, Original Medical Abstract/Prescription, at iba pang kaukulang dokumento sa 2nd Floor SSDD Civic Center E (PAD)."))
+    setApprovalNotes(
+      appt.notes ||
+        (isChildWelfare
+          ? "Dalhin ang Valid ID, Birth Certificate ng Bata, at kaukulang Case Documents para sa Intake Interview, Safety Assessment, at Counseling Session."
+          : isSoloParent
+          ? "Dalhin ang Solo Parent ID at iba pang kaukulang dokumento para sa release ng Financial Subsidy."
+          : "Dalhin ang Valid ID, Original Medical Abstract/Prescription, at iba pang kaukulang dokumento sa 2nd Floor SSDD Civic Center E (PAD).")
+    )
     setApprovingAppt(appt)
   }
 
@@ -1580,12 +1591,15 @@ function to12HourTime(timeStr?: string): string {
       const targetRef = appt.referenceNo || appt.rawAppId || appt.id.replace('aics-appt-', '').replace('db-appt-', '')
       const cleanRef = String(appt.referenceNo || '').replace(/[^a-zA-Z0-9]/g, '')
       const cleanName = String(appt.applicantName || '').toLowerCase().trim()
-      const isSoloParent = appt.module === "Solo Parent" || String(appt.concern || "").toLowerCase().includes("solo parent")
-      const isPwd = (appt.module === "PWD" || String(appt.concern || "").toLowerCase().includes("pwd") || String(appt.concern || "").toLowerCase().includes("disability")) && !isSoloParent
-      const isSenior = (appt.module === "Senior Citizen" || String(appt.concern || "").toLowerCase().includes("senior") || String(appt.concern || "").toLowerCase().includes("osca")) && !isSoloParent
-      const isAics = (appt.module === "AICS" || String(appt.concern || "").toLowerCase().includes("medical") || String(appt.concern || "").toLowerCase().includes("funeral") || String(appt.concern || "").toLowerCase().includes("educational")) && !isPwd && !isSenior && !isSoloParent
+      const isChildWelfare = appt.module === "Child Welfare" || String(appt.referenceNo || "").startsWith("CW-") || String(appt.concern || "").toLowerCase().includes("child welfare") || String(appt.concern || "").toLowerCase().includes("child protection")
+      const isSoloParent = (appt.module === "Solo Parent" || String(appt.referenceNo || "").startsWith("SP-") || String(appt.concern || "").toLowerCase().includes("solo parent")) && !isChildWelfare
+      const isPwd = (appt.module === "PWD" || String(appt.concern || "").toLowerCase().includes("pwd") || String(appt.concern || "").toLowerCase().includes("disability")) && !isSoloParent && !isChildWelfare
+      const isSenior = (appt.module === "Senior Citizen" || String(appt.concern || "").toLowerCase().includes("senior") || String(appt.concern || "").toLowerCase().includes("osca")) && !isSoloParent && !isChildWelfare
+      const isAics = (appt.module === "AICS" || String(appt.concern || "").toLowerCase().includes("medical") || String(appt.concern || "").toLowerCase().includes("funeral") || String(appt.concern || "").toLowerCase().includes("educational")) && !isPwd && !isSenior && !isSoloParent && !isChildWelfare
 
-      const defaultLoc = isSoloParent
+      const defaultLoc = isChildWelfare
+        ? "SSDD Child Protection & Counseling Center (Room 205), Quezon City Hall"
+        : isSoloParent
         ? "Quezon City Hall - SSDD Solo Parent Welfare Section"
         : "SSDD Civic Center E, 2nd Floor, Quezon City Hall Compound, Mayaman St., Brgy. Central, Quezon City (Public Assistance Division - PAD)"
       const finalDate = dateOverride || appt.scheduledDate || new Date().toISOString().split("T")[0]
@@ -1614,7 +1628,24 @@ function to12HourTime(timeStr?: string): string {
         }),
       ]
 
-      if (isPwd) {
+      if (isChildWelfare) {
+        calls.push(
+          fetch(`${API_BASE}/api/child-welfare/${encodeURIComponent(targetRef)}/admin/update-status`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+            },
+            body: JSON.stringify({
+              status: 'interview_scheduled',
+              appointmentDate: finalDate,
+              appointmentTime: finalTime,
+              officeLocation: finalLocation,
+              remarks: finalNotes || 'Scheduled for Child Welfare Intake Interview and Psychosocial Assessment',
+            }),
+          }).catch(() => null)
+        )
+      } else if (isPwd) {
         calls.push(
           fetch(`${API_BASE}/api/pwd-senior/applications/${encodeURIComponent(targetRef)}/status`, {
             method: 'PATCH',
@@ -2286,107 +2317,152 @@ function to12HourTime(timeStr?: string): string {
         />
       )}
 
-      {/* Aid Approval & Release Details Modal (Revised: Date, Time & SSDD Civic Center E 2nd Floor PAD Location) */}
-      {approvingAppt && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 animate-in fade-in zoom-in duration-150">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold">
-                  <CheckCircle2 className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-slate-900 text-base">Aid Approval &amp; Release Schedule</h3>
-                  <p className="text-xs text-slate-500">{approvingAppt.applicantName} ({approvingAppt.referenceNo})</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setApprovingAppt(null)}
-                className="text-slate-400 hover:text-slate-600 text-xl font-light cursor-pointer"
-              >
-                &times;
-              </button>
-            </div>
+      {/* Aid Approval & Release Details Modal */}
+      {approvingAppt && (() => {
+        const isChildWelfare = approvingAppt.module === "Child Welfare" || String(approvingAppt.referenceNo || "").startsWith("CW-") || String(approvingAppt.concern || "").toLowerCase().includes("child welfare") || String(approvingAppt.concern || "").toLowerCase().includes("child protection")
+        const isSoloParent = (approvingAppt.module === "Solo Parent" || String(approvingAppt.referenceNo || "").startsWith("SP-") || String(approvingAppt.concern || "").toLowerCase().includes("solo parent")) && !isChildWelfare
 
-            <div className="space-y-4">
-              {/* Fixed Designated Venue / Location */}
-              <div className="p-3.5 bg-blue-50/70 border border-blue-200/80 rounded-xl space-y-1">
-                <div className="flex items-center gap-2 text-xs font-bold text-blue-900 uppercase tracking-wider">
-                  <MapPin className="w-4 h-4 text-blue-600 shrink-0" />
-                  <span>Designated Office &amp; Release Venue</span>
+        return (
+          <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 backdrop-blur-xs">
+            <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6 animate-in fade-in zoom-in duration-150">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+                <div className="flex items-center gap-2.5">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold ${
+                    isChildWelfare ? "bg-rose-100 text-rose-700" : isSoloParent ? "bg-blue-100 text-blue-700" : "bg-emerald-100 text-emerald-700"
+                  }`}>
+                    {isChildWelfare ? <ShieldAlert className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-slate-900 text-base">
+                      {isChildWelfare
+                        ? "Child Protection Interview & Assessment Schedule"
+                        : isSoloParent
+                        ? "Solo Parent Educational Subsidy Release Schedule"
+                        : "Aid Approval & Release Schedule"}
+                    </h3>
+                    <p className="text-xs text-slate-500">{approvingAppt.applicantName} ({approvingAppt.referenceNo})</p>
+                  </div>
                 </div>
-                <p className="text-xs font-bold text-slate-900 leading-snug">
-                  SSDD Civic Center E, 2nd Floor
-                </p>
-                <p className="text-[11px] text-slate-600">
-                  Quezon City Hall Compound, Mayaman St., Brgy. Central, Quezon City
-                </p>
-                <p className="text-[11px] font-semibold text-blue-700">
-                  Public Assistance Division (PAD) — Medical Assistance Program
-                </p>
-              </div>
-
-              {/* Date and Time Picker (2 columns) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                    <Calendar className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Release Date (Petsa) *</span>
-                  </label>
-                  <input
-                    type="date"
-                    value={approvalDate}
-                    onChange={(e) => setApprovalDate(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
-                    required
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
-                    <Clock className="w-3.5 h-3.5 text-slate-500" />
-                    <span>Release Time (Oras) *</span>
-                  </label>
-                  <input
-                    type="time"
-                    value={approvalTime}
-                    onChange={(e) => setApprovalTime(e.target.value)}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition cursor-pointer"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3 flex items-start gap-2.5 text-xs text-emerald-900">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
-                <p>
-                  Pagka-kumpirma, opisyal nang maa-approve ang ayuda at mai-schedule ang releasing sa <strong>SSDD Civic Center E, 2nd Floor (PAD)</strong> sa tinukoy na petsa at oras.
-                </p>
-              </div>
-
-              <div className="flex items-center justify-end gap-2.5 pt-2">
                 <button
                   type="button"
                   onClick={() => setApprovingAppt(null)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition cursor-pointer"
+                  className="text-slate-400 hover:text-slate-600 text-xl font-light cursor-pointer"
                 >
-                  Cancel
+                  &times;
                 </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmApproveAid}
-                  disabled={!approvalDate || !approvalTime}
-                  className="px-5 py-2 text-xs font-bold text-white bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 rounded-lg shadow-sm transition flex items-center gap-1.5 cursor-pointer"
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Confirm Approval &amp; Set Schedule</span>
-                </button>
+              </div>
+
+              <div className="space-y-4">
+                {/* Fixed Designated Venue / Location */}
+                <div className={`p-3.5 rounded-xl space-y-1 border ${
+                  isChildWelfare ? "bg-rose-50/70 border-rose-200/80" : "bg-blue-50/70 border-blue-200/80"
+                }`}>
+                  <div className={`flex items-center gap-2 text-xs font-bold uppercase tracking-wider ${
+                    isChildWelfare ? "text-rose-900" : "text-blue-900"
+                  }`}>
+                    <MapPin className={`w-4 h-4 shrink-0 ${isChildWelfare ? "text-rose-600" : "text-blue-600"}`} />
+                    <span>
+                      {isChildWelfare ? "Designated Interview & Counseling Center" : "Designated Office & Release Venue"}
+                    </span>
+                  </div>
+                  <p className="text-xs font-bold text-slate-900 leading-snug">
+                    {isChildWelfare
+                      ? "SSDD Child Protection & Counseling Center (Room 205)"
+                      : isSoloParent
+                      ? "Quezon City Hall - SSDD Solo Parent Welfare Section"
+                      : "SSDD Civic Center E, 2nd Floor"}
+                  </p>
+                  <p className="text-[11px] text-slate-600">
+                    Quezon City Hall Compound, Mayaman St., Brgy. Central, Quezon City
+                  </p>
+                  <p className={`text-[11px] font-semibold ${isChildWelfare ? "text-rose-700" : "text-blue-700"}`}>
+                    {isChildWelfare
+                      ? "Child & Youth Welfare Section — Protective & Counseling Services"
+                      : isSoloParent
+                      ? "Social Services Development Department — Solo Parent Unit"
+                      : "Public Assistance Division (PAD) — Medical Assistance Program"}
+                  </p>
+                </div>
+
+                {/* Date and Time Picker (2 columns) */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                      <Calendar className="w-3.5 h-3.5 text-slate-500" />
+                      <span>{isChildWelfare ? "Appointment Date (Petsa) *" : "Release Date (Petsa) *"}</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={approvalDate}
+                      onChange={(e) => setApprovalDate(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5 flex items-center gap-1.5">
+                      <Clock className="w-3.5 h-3.5 text-slate-500" />
+                      <span>{isChildWelfare ? "Appointment Time (Oras) *" : "Release Time (Oras) *"}</span>
+                    </label>
+                    <input
+                      type="time"
+                      value={approvalTime}
+                      onChange={(e) => setApprovalTime(e.target.value)}
+                      className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-medium text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:bg-white transition cursor-pointer"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className={`border rounded-xl p-3 flex items-start gap-2.5 text-xs ${
+                  isChildWelfare ? "bg-rose-50/70 border-rose-200/80 text-rose-900" : "bg-emerald-50/70 border-emerald-200/80 text-emerald-900"
+                }`}>
+                  <CheckCircle2 className={`w-4 h-4 shrink-0 mt-0.5 ${isChildWelfare ? "text-rose-600" : "text-emerald-600"}`} />
+                  <p>
+                    {isChildWelfare ? (
+                      <>
+                        Pagka-kumpirma, opisyal nang mai-schedule ang Child Protection Intake Interview, Assessment, at Psychosocial Counseling Session sa <strong>SSDD Child Protection &amp; Counseling Center (Room 205)</strong> sa tinukoy na petsa at oras.
+                      </>
+                    ) : isSoloParent ? (
+                      <>
+                        Pagka-kumpirma, opisyal nang mai-schedule ang releasing ng Educational Assistance sa <strong>SSDD Solo Parent Welfare Section</strong> sa tinukoy na petsa at oras.
+                      </>
+                    ) : (
+                      <>
+                        Pagka-kumpirma, opisyal nang maa-approve ang ayuda at mai-schedule ang releasing sa <strong>SSDD Civic Center E, 2nd Floor (PAD)</strong> sa tinukoy na petsa at oras.
+                      </>
+                    )}
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-end gap-2.5 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setApprovingAppt(null)}
+                    className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-lg transition cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleConfirmApproveAid}
+                    disabled={!approvalDate || !approvalTime}
+                    className={`px-5 py-2 text-xs font-bold text-white disabled:opacity-50 rounded-lg shadow-sm transition flex items-center gap-1.5 cursor-pointer ${
+                      isChildWelfare ? "bg-rose-600 hover:bg-rose-700" : "bg-emerald-600 hover:bg-emerald-700"
+                    }`}
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>
+                      {isChildWelfare ? "Confirm & Set Interview Schedule" : "Confirm Approval & Set Schedule"}
+                    </span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      })()}
 
       {/* Referral Agency Selection Modal */}
       {referralApp && (
