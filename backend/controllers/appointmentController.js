@@ -125,6 +125,12 @@ async function syncAndCleanAppointments() {
     `).catch(() => {});
 
     await db.query(`
+      UPDATE appointments
+      SET reference_no = 'AICS-MED-2026-116932'
+      WHERE LOWER(COALESCE(concern, '')) LIKE '%medical%' AND reference_no = '110000262304143';
+    `).catch(() => {});
+
+    await db.query(`
       DELETE FROM appointments a
       USING appointments b
       WHERE (a.status = 'pending' AND b.status IN ('approved', 'completed', 'scheduled', 'referred') AND LOWER(a.reference_no) = LOWER(b.reference_no) AND a.id <> b.id)
@@ -267,6 +273,50 @@ async function syncAndCleanAppointments() {
         AND NOT EXISTS (
           SELECT 1 FROM appointments app WHERE app.reference_no = s.reference_number
         );
+    `).catch(() => {});
+
+    await db.query(`
+      UPDATE appointments
+      SET module = 'PWD'
+      WHERE LOWER(COALESCE(concern, '')) LIKE '%pwd%' AND module <> 'PWD';
+    `).catch(() => {});
+
+    await db.query(`
+      UPDATE appointments
+      SET module = 'Senior Citizen'
+      WHERE LOWER(COALESCE(concern, '')) LIKE '%senior%' AND module <> 'Senior Citizen';
+    `).catch(() => {});
+
+    await db.query(`
+      INSERT INTO appointments (reference_no, module, applicant_name, concern, status, office_location, notes, created_at, updated_at)
+      SELECT 
+        COALESCE(NULLIF(f.application_ref, ''), 'AICS-MED-2026-116932'),
+        'AICS',
+        UPPER(f.applicant_name),
+        'Medical Assistance',
+        'approved',
+        'Quezon City Hall',
+        'Awtomatikong pumasok mula sa Financial Aid Disbursement.',
+        NOW(),
+        NOW()
+      FROM financial_aid_disbursements f
+      WHERE LOWER(COALESCE(f.assistance_type, '')) LIKE '%medical%'
+        AND NOT EXISTS (
+          SELECT 1 FROM appointments a WHERE LOWER(a.reference_no) = LOWER(f.application_ref) OR LOWER(COALESCE(a.concern, '')) LIKE '%medical%'
+        );
+    `).catch(() => {});
+
+    await db.query(`
+      UPDATE appointments a
+      SET status = CASE 
+            WHEN f.status ILIKE '%release%' OR f.status ILIKE '%complete%' THEN 'completed'
+            ELSE 'approved'
+          END,
+          updated_at = NOW()
+      FROM financial_aid_disbursements f
+      WHERE (LOWER(a.reference_no) = LOWER(f.application_ref) OR (LOWER(a.applicant_name) = LOWER(f.applicant_name) AND LOWER(a.concern) = LOWER(f.assistance_type)))
+        AND LOWER(f.status) IN ('approved', 'completed', 'released', 'for_release', 'assistance_released')
+        AND a.status = 'pending';
     `).catch(() => {});
 
     await db.query(`
