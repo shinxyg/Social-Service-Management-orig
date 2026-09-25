@@ -2098,7 +2098,6 @@ exports.resetTestCitizenAccount = async (req, res) => {
     if (benRes.rows.length > 0) {
       const benIds = benRes.rows.map(r => r.id);
       await db.query(`DELETE FROM beneficiary_history WHERE beneficiary_id = ANY($1::int[])`, [benIds]).catch(() => {});
-      await db.query(`DELETE FROM beneficiary_verifications WHERE beneficiary_id = ANY($1::int[])`, [benIds]).catch(() => {});
       await db.query(`DELETE FROM beneficiaries WHERE id = ANY($1::int[])`, [benIds]).catch(() => {});
     }
 

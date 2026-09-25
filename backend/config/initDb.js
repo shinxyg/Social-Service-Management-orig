@@ -584,17 +584,6 @@ async function initDb() {
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
 
-      CREATE TABLE IF NOT EXISTS beneficiary_verifications (
-        id SERIAL PRIMARY KEY,
-        beneficiary_id INTEGER REFERENCES beneficiaries(id) ON DELETE CASCADE,
-        status VARCHAR(50) NOT NULL,
-        reviewed_by VARCHAR(150) NOT NULL,
-        reviewed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-        reason TEXT,
-        remarks TEXT,
-        created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-      );
-
       CREATE TABLE IF NOT EXISTS beneficiary_history (
         id SERIAL PRIMARY KEY,
         beneficiary_id INTEGER REFERENCES beneficiaries(id) ON DELETE CASCADE,
@@ -611,8 +600,38 @@ async function initDb() {
       CREATE INDEX IF NOT EXISTS idx_beneficiaries_user_id ON beneficiaries(user_id);
       CREATE INDEX IF NOT EXISTS idx_beneficiaries_num ON beneficiaries(beneficiary_number);
       CREATE INDEX IF NOT EXISTS idx_beneficiaries_qcid ON beneficiaries(qcid_number);
-      CREATE INDEX IF NOT EXISTS idx_ben_verif_ben_id ON beneficiary_verifications(beneficiary_id);
       CREATE INDEX IF NOT EXISTS idx_ben_history_ben_id ON beneficiary_history(beneficiary_id);
+      CREATE INDEX IF NOT EXISTS idx_ben_history_created_at ON beneficiary_history(created_at DESC);
+
+      -- Auto-migrate legacy beneficiary_verifications data into beneficiary_history and drop beneficiary_verifications
+      DO $$
+      BEGIN
+        IF EXISTS (SELECT FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'beneficiary_verifications') THEN
+          INSERT INTO beneficiary_history (beneficiary_id, program, action, performed_by, status, detail, remarks, created_at)
+          SELECT 
+            bv.beneficiary_id,
+            'Beneficiary Management',
+            CASE 
+              WHEN LOWER(bv.status) = 'verified' THEN 'Beneficiary Verified'
+              WHEN LOWER(bv.status) = 'unverified' THEN 'Beneficiary Flagged Unverified'
+              ELSE 'Beneficiary Under Review'
+            END,
+            COALESCE(bv.reviewed_by, 'System'),
+            bv.status,
+            COALESCE(bv.reason, bv.remarks, 'Verification record'),
+            bv.remarks,
+            COALESCE(bv.created_at, bv.reviewed_at, NOW())
+          FROM beneficiary_verifications bv
+          WHERE NOT EXISTS (
+            SELECT 1 FROM beneficiary_history bh 
+            WHERE bh.beneficiary_id = bv.beneficiary_id 
+              AND bh.program = 'Beneficiary Management'
+              AND bh.status = bv.status
+          );
+
+          DROP TABLE IF EXISTS beneficiary_verifications CASCADE;
+        END IF;
+      END $$;
 
       -- Clean up dummy mock records
       DELETE FROM beneficiaries
@@ -847,7 +866,6 @@ async function initDb() {
       if (benRes.rows.length > 0) {
         const benIds = benRes.rows.map(r => r.id);
         await db.query(`DELETE FROM beneficiary_history WHERE beneficiary_id = ANY($1::int[])`, [benIds]).catch(() => {});
-        await db.query(`DELETE FROM beneficiary_verifications WHERE beneficiary_id = ANY($1::int[])`, [benIds]).catch(() => {});
         await db.query(`DELETE FROM beneficiaries WHERE id = ANY($1::int[])`, [benIds]).catch(() => {});
       }
 

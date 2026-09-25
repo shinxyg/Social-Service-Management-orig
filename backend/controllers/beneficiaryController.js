@@ -3,7 +3,6 @@ const fs = require('fs');
 const path = require('path');
 
 let memoryBeneficiaries = [];
-let memoryVerifications = [];
 let memoryHistory = [];
 
 async function insertBeneficiaryIfMissing(applicantData) {
@@ -1068,12 +1067,6 @@ async function verifyBeneficiary(req, res) {
       if (updateRes.rows.length > 0) {
         updatedBeneficiary = updateRes.rows[0];
 
-        await db.query(
-          `INSERT INTO beneficiary_verifications (beneficiary_id, status, reviewed_by, reviewed_at, reason, remarks, created_at)
-           VALUES ($1, $2, $3, NOW(), $4, $5, NOW())`,
-          [updatedBeneficiary.id, cleanStatus, verified_by, reason || null, noteText]
-        ).catch(() => {});
-
         const actionLabel =
           cleanStatus === "verified"
             ? "Beneficiary Verified"
@@ -1107,24 +1100,15 @@ async function verifyBeneficiary(req, res) {
         memoryBeneficiaries[memIdx].updated_at = new Date().toISOString();
         updatedBeneficiary = memoryBeneficiaries[memIdx];
 
-        memoryVerifications.push({
-          id: memoryVerifications.length + 1,
-          beneficiary_id: updatedBeneficiary.id,
-          status: cleanStatus,
-          reviewed_by: verified_by,
-          reviewed_at: new Date().toISOString(),
-          reason: reason || null,
-          remarks: noteText,
-        });
-
         memoryHistory.push({
           id: memoryHistory.length + 1,
           beneficiary_id: updatedBeneficiary.id,
           program: 'Beneficiary Management',
-          action: cleanStatus === "verified" ? "Beneficiary Verified" : "Verification Status Updated",
+          action: cleanStatus === "verified" ? "Beneficiary Verified" : cleanStatus === "unverified" ? "Beneficiary Flagged Unverified" : "Beneficiary Under Review",
           performed_by: verified_by,
           status: cleanStatus,
           detail: noteText,
+          remarks: noteText,
           created_at: new Date().toISOString(),
         });
       }

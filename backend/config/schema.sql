@@ -439,26 +439,12 @@ CREATE INDEX IF NOT EXISTS idx_beneficiaries_qcid ON beneficiaries(qcid_number);
 CREATE INDEX IF NOT EXISTS idx_beneficiaries_email ON beneficiaries(email);
 CREATE INDEX IF NOT EXISTS idx_beneficiaries_status ON beneficiaries(verification_status);
 
--- 16. Beneficiary Verification Audit Table (1:M with Beneficiaries)
-CREATE TABLE IF NOT EXISTS beneficiary_verifications (
-  id SERIAL PRIMARY KEY,
-  beneficiary_id INTEGER REFERENCES beneficiaries(id) ON DELETE CASCADE,
-  status VARCHAR(50) NOT NULL, -- 'verified', 'unverified', 'pending'
-  reviewed_by VARCHAR(150) NOT NULL,
-  reviewed_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  reason TEXT,
-  remarks TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
-CREATE INDEX IF NOT EXISTS idx_ben_verif_ben_id ON beneficiary_verifications(beneficiary_id);
-
--- 17. Beneficiary History & Activity Log (1:M with Beneficiaries)
+-- 16. Beneficiary History & Activity Log (1:M with Beneficiaries)
 CREATE TABLE IF NOT EXISTS beneficiary_history (
   id SERIAL PRIMARY KEY,
   beneficiary_id INTEGER REFERENCES beneficiaries(id) ON DELETE CASCADE,
   application_id VARCHAR(100),
-  program VARCHAR(100) NOT NULL, -- 'AICS', 'PWD', 'Senior Citizen', 'Solo Parent', 'Child Welfare', 'Livelihood', 'Training', 'System'
+  program VARCHAR(100) NOT NULL, -- 'Beneficiary Management', 'AICS', 'PWD', 'Senior Citizen', 'Solo Parent', 'Child Welfare', 'Livelihood', 'Training', 'System'
   action VARCHAR(150) NOT NULL,
   performed_by VARCHAR(150) NOT NULL,
   status VARCHAR(50),
