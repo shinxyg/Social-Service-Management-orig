@@ -1228,7 +1228,7 @@ export default function Appointments() {
             const isRejected = st === "rejected" || cached?.decision === "rejected" || cached?.status === "rejected"
 
             const decision: ("approved" | "referred" | "rejected" | undefined) = isApproved ? "approved" : (isReferred ? "referred" : (isRejected ? "rejected" : undefined))
-            const apptStatus: AppointmentStatus = isApproved ? (schedDate ? "approved" : "pending") : (isReferred ? "referred" : (isRejected ? "rejected" : (schedDate ? "scheduled" : "pending")))
+            const apptStatus: AppointmentStatus = isApproved ? "approved" : (isReferred ? "referred" : (isRejected ? "rejected" : (schedDate ? "scheduled" : "pending")))
 
             appts.push({
               id: apptId,

@@ -1065,9 +1065,16 @@ exports.updateApplicationStatus = async (req, res) => {
           await db.query(
             `INSERT INTO appointments
               (reference_no, module, applicant_name, concern, status, office_location, notes, created_at, updated_at)
-             SELECT $1, 'Solo Parent', $2, $3, 'pending', 'Quezon City Hall - SSDD Solo Parent Welfare Section', $4, NOW(), NOW()
-             WHERE NOT EXISTS (SELECT 1 FROM appointments WHERE reference_no = $1 AND concern = $3)`,
+             SELECT $1, 'Solo Parent', $2, $3, 'approved', 'Quezon City Hall - SSDD Solo Parent Welfare Section', $4, NOW(), NOW()
+             WHERE NOT EXISTS (SELECT 1 FROM appointments WHERE reference_no = $1 AND (concern = $3 OR module = 'Solo Parent'))`,
             [apptRef, apptFullName, apptConcern, apptNotes]
+          );
+
+          await db.query(
+            `UPDATE appointments
+             SET status = 'approved', updated_at = NOW()
+             WHERE reference_no = $1 AND status = 'pending'`,
+            [apptRef]
           );
 
           if (isEduApp) {

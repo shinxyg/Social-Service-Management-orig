@@ -269,6 +269,59 @@ async function syncAndCleanAppointments() {
         );
     `).catch(() => {});
 
+    await db.query(`
+      UPDATE appointments a
+      SET status = CASE 
+            WHEN s.application_status IN ('completed', 'released', 'assistance_released') THEN 'completed'
+            ELSE 'approved'
+          END,
+          updated_at = NOW()
+      FROM solo_parent_child_welfare_applications s
+      WHERE (a.reference_no = s.reference_number OR LOWER(a.reference_no) = LOWER(s.reference_number))
+        AND s.application_status IN ('approved', 'completed', 'for_release', 'released', 'assistance_released')
+        AND a.status = 'pending'
+        AND a.scheduled_date IS NULL;
+    `).catch(() => {});
+
+    await db.query(`
+      UPDATE appointments a
+      SET status = CASE 
+            WHEN p.status IN ('completed', 'released') THEN 'completed'
+            ELSE 'approved'
+          END,
+          updated_at = NOW()
+      FROM pwd_senior_applications p
+      WHERE (a.reference_no = p.reference_number OR LOWER(a.reference_no) = LOWER(p.reference_number))
+        AND p.status IN ('approved', 'completed', 'for_release', 'released')
+        AND a.status = 'pending'
+        AND a.scheduled_date IS NULL;
+    `).catch(() => {});
+
+    await db.query(`
+      UPDATE appointments a
+      SET status = CASE 
+            WHEN aics.status IN ('completed', 'released', 'assistance_released') THEN 'completed'
+            ELSE 'approved'
+          END,
+          updated_at = NOW()
+      FROM aics_applications aics
+      WHERE (a.reference_no = aics.reference_no OR a.reference_no = aics.qc_id)
+        AND aics.status IN ('approved', 'completed', 'for_release', 'released', 'assistance_released')
+        AND a.status = 'pending'
+        AND a.scheduled_date IS NULL;
+    `).catch(() => {});
+
+    await db.query(`
+      UPDATE appointments a
+      SET status = 'approved',
+          updated_at = NOW()
+      FROM livelihood_applications l
+      WHERE (a.reference_no = l.reference_number OR LOWER(a.reference_no) = LOWER(l.reference_number))
+        AND l.application_status IN ('approved', 'completed', 'released')
+        AND a.status = 'pending'
+        AND a.scheduled_date IS NULL;
+    `).catch(() => {});
+
   } catch (err) {
     console.warn('⚠️ Background appointment sync error:', err.message);
   }
