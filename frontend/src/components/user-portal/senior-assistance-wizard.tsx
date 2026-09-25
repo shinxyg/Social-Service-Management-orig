@@ -2275,18 +2275,19 @@ function UploadedDocPreviewModal({
   file: File | null
   onClose: () => void
 }) {
-  if (!file) return null
-  const isImage = file.type.startsWith("image/") || /\.(jpe?g|png|webp|jfif|bmp|gif)$/i.test(file.name)
+  const isImage = file ? (file.type.startsWith("image/") || /\.(jpe?g|png|webp|jfif|bmp|gif)$/i.test(file.name)) : false
   const [previewUrl, setPreviewUrl] = useState<string>("")
 
   useEffect(() => {
-    if (!isImage) return
+    if (!file || !isImage) return
     const url = URL.createObjectURL(file)
     setPreviewUrl(url)
     return () => {
       URL.revokeObjectURL(url)
     }
   }, [file, isImage])
+
+  if (!file) return null
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-in fade-in duration-150">

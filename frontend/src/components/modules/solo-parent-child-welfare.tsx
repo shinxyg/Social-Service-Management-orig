@@ -1254,9 +1254,7 @@ function DocumentPreviewModal({
   app?: WelfareSubmission | null
   onClose: () => void
 }) {
-  if (!doc) return null
-
-  const candidates = React.useMemo(() => getDocumentCandidateUrls(doc, app), [doc, app])
+  const candidates = React.useMemo(() => (doc ? getDocumentCandidateUrls(doc, app) : []), [doc, app])
   const [candidateIndex, setCandidateIndex] = useState(0)
   const [isZoomed, setIsZoomed] = useState(false)
 
@@ -1272,6 +1270,8 @@ function DocumentPreviewModal({
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [onClose])
+
+  if (!doc) return null
 
   const currentSrc = candidates[candidateIndex] || ""
   const hasError = !currentSrc || candidateIndex >= candidates.length
@@ -1599,6 +1599,7 @@ function DetailedView({ app, onClose, onApprove, onReject, allSubmissions }: Det
   const [rejectionReason, setRejectionReason] = useState(app.rejectionReason || "")
   const [actionMode, setActionMode] = useState<"view" | "approve" | "reject">("view")
   const [previewDoc, setPreviewDoc] = useState<ApplicationDocument | null>(null)
+  const [selectedProvision, setSelectedProvision] = useState<string>("Child Psychosocial Support & Counseling")
 
   const address = getAddress(app)
   const subLabel = isSoloParent(app)
@@ -2271,8 +2272,9 @@ function DetailedView({ app, onClose, onApprove, onReject, allSubmissions }: Det
             </div>
           </div>
 
-          {}
-           <DocumentPreviewModal doc={previewDoc} app={app} onClose={() => setPreviewDoc(null)} />
+          {previewDoc && (
+            <DocumentPreviewModal doc={previewDoc} app={app} onClose={() => setPreviewDoc(null)} />
+          )}
           {(app.status === "pending" || app.status === "ssdd_validation" || app.status === "interview_scheduled" || app.status === "under_assessment" || (app as any).application_status === "pending") && (
             <div className="pt-6" style={{ borderTop: "1px solid var(--line)" }}>
               {actionMode === "view" && (
@@ -2296,144 +2298,131 @@ function DetailedView({ app, onClose, onApprove, onReject, allSubmissions }: Det
 
               {actionMode === "approve" && (
                 isSolo ? (
-                  (() => {
-                    const isEdu =
-                      String((app as any).service || (app as any).serviceName || (app as any).applicationType || (app as any).application_type || (app as any).category_title || "").toLowerCase().includes("educational") ||
-                      String(app.referenceNumber || "").toUpperCase().includes("SP-EDU")
-
-                    if (isEdu) {
-                      return (
-                        <div className="space-y-4 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
-                          <div>
-                            <div className="flex items-center justify-between">
-                              <label className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
-                                Confirm Solo Parent Educational Assistance Approval
-                              </label>
-                              <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 px-2.5 py-1 rounded-md font-mono">
-                                Fixed Grant: ₱5,000 / yr
-                              </span>
-                            </div>
-                            <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                              Approving will validate the citizen's eligibility for the <strong>Solo Parent Educational Assistance</strong> (₱5,000 fixed annual grant). The grant will be automatically recorded in <strong>Financial Aid Disbursement</strong> and scheduled in <strong>Appointments</strong> for payout release.
-                            </p>
-                          </div>
-                          <div className="flex gap-3">
-                            <button
-                              type="button"
-                              onClick={() => setActionMode("view")}
-                              className="gw-btn-ghost flex-1 h-10 text-sm cursor-pointer"
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                onApprove(app.id, "5000")
-                                onClose()
-                              }}
-                              className="gw-btn-approve flex-1 h-10 text-sm cursor-pointer font-semibold"
-                            >
-                              Confirm Approval &amp; Schedule Educational Grant (₱5,000)
-                            </button>
-                          </div>
+                  (isSolo && (
+                    String((app as any).service || (app as any).serviceName || (app as any).applicationType || (app as any).application_type || (app as any).category_title || "").toLowerCase().includes("educational") ||
+                    String(app.referenceNumber || "").toUpperCase().includes("SP-EDU")
+                  )) ? (
+                    <div className="space-y-4 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                            Confirm Solo Parent Educational Assistance Approval
+                          </label>
+                          <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 px-2.5 py-1 rounded-md font-mono">
+                            Fixed Grant: ₱5,000 / yr
+                          </span>
                         </div>
-                      )
-                    }
-
-                    return (
-                      <div className="space-y-4 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <label className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
-                              Confirm Solo Parent Financial Subsidy Approval
-                            </label>
-                            <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 px-2 py-0.5 rounded-md font-mono">
-                              Subsidy: ₱1,000 / mo (Quarterly ₱3,000)
-                            </span>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                            Approving will validate the citizen's eligibility for the <strong>Solo Parent Financial Subsidy Program</strong> (₱1,000/month statutory benefit). The 3-month quarterly accumulation period will begin, automatically recording this grant in <strong>Financial Aid Disbursement</strong> and connecting to <strong>Appointments</strong> for the upcoming payout cycle.
-                          </p>
-                        </div>
-                        <div className="flex gap-3">
-                          <button
-                            type="button"
-                            onClick={() => setActionMode("view")}
-                            className="gw-btn-ghost flex-1 h-10 text-sm cursor-pointer"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onApprove(app.id, idNumber || "3000")
-                              onClose()
-                            }}
-                            className="gw-btn-approve flex-1 h-10 text-sm cursor-pointer"
-                          >
-                            Confirm Approval &amp; Schedule Subsidy
-                          </button>
-                        </div>
+                        <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                          Approving will validate the citizen's eligibility for the <strong>Solo Parent Educational Assistance</strong> (₱5,000 fixed annual grant). The grant will be automatically recorded in <strong>Financial Aid Disbursement</strong> and scheduled in <strong>Appointments</strong> for payout release.
+                        </p>
                       </div>
-                    )
-                  })()
+                      <div className="flex gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setActionMode("view")}
+                          className="gw-btn-ghost flex-1 h-10 text-sm cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onApprove(app.id, "5000")
+                            onClose()
+                          }}
+                          className="gw-btn-approve flex-1 h-10 text-sm cursor-pointer font-semibold"
+                        >
+                          Confirm Approval &amp; Schedule Educational Grant (₱5,000)
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
+                      <div>
+                        <div className="flex items-center justify-between">
+                          <label className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+                            Confirm Solo Parent Financial Subsidy Approval
+                          </label>
+                          <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 px-2 py-0.5 rounded-md font-mono">
+                            Subsidy: ₱1,000 / mo (Quarterly ₱3,000)
+                          </span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                          Approving will validate the citizen's eligibility for the <strong>Solo Parent Financial Subsidy Program</strong> (₱1,000/month statutory benefit). The 3-month quarterly accumulation period will begin, automatically recording this grant in <strong>Financial Aid Disbursement</strong> and connecting to <strong>Appointments</strong> for the upcoming payout cycle.
+                        </p>
+                      </div>
+                      <div className="flex gap-3">
+                        <button
+                          type="button"
+                          onClick={() => setActionMode("view")}
+                          className="gw-btn-ghost flex-1 h-10 text-sm cursor-pointer"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            onApprove(app.id, idNumber || "3000")
+                            onClose()
+                          }}
+                          className="gw-btn-approve flex-1 h-10 text-sm cursor-pointer"
+                        >
+                          Confirm Approval &amp; Schedule Subsidy
+                        </button>
+                      </div>
+                    </div>
+                  )
                 ) : (
-                  (() => {
-                    const [selectedProvision, setSelectedProvision] = useState("Child Psychosocial Support & Counseling")
-                    const [customNotes, setCustomNotes] = useState("")
-                    return (
-                      <div className="space-y-4 p-4 rounded-xl border border-sky-500/30 bg-sky-500/5">
-                        <div>
-                          <div className="flex items-center justify-between">
-                            <label className="text-xs font-bold uppercase tracking-wider text-sky-800 dark:text-sky-300">
-                              Confirm {(app as any).supportCategory || "Child Welfare"} Protective Service Approval
-                            </label>
-                            <span className="text-[11px] font-semibold text-sky-700 bg-sky-100 dark:bg-sky-950/60 dark:text-sky-300 px-2.5 py-1 rounded-md font-mono">
-                              Non-Monetary Service Provision
-                            </span>
-                          </div>
-                          <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                            Approving will authorize official <strong>Protective Welfare Service Provision &amp; Case Endorsement</strong> for <strong>{(app as any).childName || displayName(app)}</strong>. Record will be forwarded to <strong>SSDD Child Protection &amp; Counseling Center</strong> for session scheduling and partner referrals (Bahay Silungan / QC CPU / PAO).
-                          </p>
-                        </div>
-                        <div>
-                          <label className="text-xs font-semibold text-sky-900 dark:text-sky-200">Select Protective Service Provision Package</label>
-                          <select
-                            value={selectedProvision}
-                            onChange={(e) => setSelectedProvision(e.target.value)}
-                            className="gw-input w-full mt-1 px-3 py-2 text-xs font-medium"
-                          >
-                            <option value="Child Psychosocial Support & Counseling">Child Psychosocial Support & Counseling</option>
-                            <option value="Temporary Protective Custody / Bahay Silungan Referral">Temporary Protective Custody / Bahay Silungan Referral</option>
-                            <option value="Medical & Psychological Evaluation Referral (QC CPU)">Medical & Psychological Evaluation Referral (QC CPU)</option>
-                            <option value="Legal Assistance Endorsement to PAO / WCPD">Legal Assistance Endorsement to PAO / WCPD</option>
-                            <option value="Special Education (SPED) / Daycare Placement Endorsement">Special Education (SPED) / Daycare Placement Endorsement</option>
-                            <option value="Comprehensive Child Protection Case Management">Comprehensive Child Protection Case Management</option>
-                          </select>
-                        </div>
-                        <div className="flex gap-3 pt-1">
-                          <button
-                            type="button"
-                            onClick={() => setActionMode("view")}
-                            className="gw-btn-ghost flex-1 h-10 text-sm cursor-pointer"
-                          >
-                            Cancel
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => {
-                              onApprove(app.id, selectedProvision)
-                              onClose()
-                            }}
-                            className="gw-btn-approve flex-1 h-10 text-sm cursor-pointer font-semibold"
-                            style={{ background: "var(--brick)", borderColor: "var(--brick-ink)" }}
-                          >
-                            Confirm &amp; Issue Service Order
-                          </button>
-                        </div>
+                  <div className="space-y-4 p-4 rounded-xl border border-sky-500/30 bg-sky-500/5">
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <label className="text-xs font-bold uppercase tracking-wider text-sky-800 dark:text-sky-300">
+                          Confirm {(app as any).supportCategory || "Child Welfare"} Protective Service Approval
+                        </label>
+                        <span className="text-[11px] font-semibold text-sky-700 bg-sky-100 dark:bg-sky-950/60 dark:text-sky-300 px-2.5 py-1 rounded-md font-mono">
+                          Non-Monetary Service Provision
+                        </span>
                       </div>
-                    )
-                  })()
+                      <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                        Approving will authorize official <strong>Protective Welfare Service Provision &amp; Case Endorsement</strong> for <strong>{(app as any).childName || displayName(app)}</strong>. Record will be forwarded to <strong>SSDD Child Protection &amp; Counseling Center</strong> for session scheduling and partner referrals (Bahay Silungan / QC CPU / PAO).
+                      </p>
+                    </div>
+                    <div>
+                      <label className="text-xs font-semibold text-sky-900 dark:text-sky-200">Select Protective Service Provision Package</label>
+                      <select
+                        value={selectedProvision}
+                        onChange={(e) => setSelectedProvision(e.target.value)}
+                        className="gw-input w-full mt-1 px-3 py-2 text-xs font-medium"
+                      >
+                        <option value="Child Psychosocial Support & Counseling">Child Psychosocial Support & Counseling</option>
+                        <option value="Temporary Protective Custody / Bahay Silungan Referral">Temporary Protective Custody / Bahay Silungan Referral</option>
+                        <option value="Medical & Psychological Evaluation Referral (QC CPU)">Medical & Psychological Evaluation Referral (QC CPU)</option>
+                        <option value="Legal Assistance Endorsement to PAO / WCPD">Legal Assistance Endorsement to PAO / WCPD</option>
+                        <option value="Special Education (SPED) / Daycare Placement Endorsement">Special Education (SPED) / Daycare Placement Endorsement</option>
+                        <option value="Comprehensive Child Protection Case Management">Comprehensive Child Protection Case Management</option>
+                      </select>
+                    </div>
+                    <div className="flex gap-3 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => setActionMode("view")}
+                        className="gw-btn-ghost flex-1 h-10 text-sm cursor-pointer"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onApprove(app.id, selectedProvision)
+                          onClose()
+                        }}
+                        className="gw-btn-approve flex-1 h-10 text-sm cursor-pointer font-semibold"
+                        style={{ background: "var(--brick)", borderColor: "var(--brick-ink)" }}
+                      >
+                        Confirm &amp; Issue Service Order
+                      </button>
+                    </div>
+                  </div>
                 )
               )}
 

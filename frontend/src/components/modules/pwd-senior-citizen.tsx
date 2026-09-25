@@ -1089,14 +1089,17 @@ function DocumentViewerModal({
   app?: ApplicationSubmission | null
   onClose: () => void
 }) {
-  if (!doc) return null
-  const [src, setSrc] = useState<string>(() => getDocImageUrl(doc, app))
+  const [src, setSrc] = useState<string>(() => (doc ? getDocImageUrl(doc, app) : ""))
   const [retryStep, setRetryStep] = useState(0)
 
   useEffect(() => {
-    setSrc(getDocImageUrl(doc, app))
-    setRetryStep(0)
+    if (doc) {
+      setSrc(getDocImageUrl(doc, app))
+      setRetryStep(0)
+    }
   }, [doc, app])
+
+  if (!doc) return null
 
   const isImage = /\.(jpe?g|png|webp|avif|gif)$/i.test(doc.filename || doc.name || src) || (src && src.startsWith("data:image"))
 
