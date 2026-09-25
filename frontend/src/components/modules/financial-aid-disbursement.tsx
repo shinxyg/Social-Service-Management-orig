@@ -1239,6 +1239,7 @@ export default function FinancialAidDisbursement() {
                   const isSoloSubsidy = String(d.assistanceType).toLowerCase().includes("solo") && (String(d.assistanceType).toLowerCase().includes("subsidy") || String(d.assistanceType).toLowerCase().includes("financial") || String(d.assistanceType).toLowerCase().includes("welfare"))
                   const pwdState = isPwd ? getPwdPensionAccumulation(d.dateApproved || d.appointmentDate, d.releasedDate) : null
                   const soloState = isSoloSubsidy ? getSoloParentSubsidyAccumulation(d.dateApproved || d.appointmentDate, d.releasedDate) : null
+                  const isMedical = String(d.assistanceType).toLowerCase().includes("medical") || String(d.assistanceType).toLowerCase().includes("guarantee") || String(d.assistanceType).toLowerCase().includes("gl") || String(d.assistanceType).toLowerCase().includes("medicine") || String(d.assistanceType).toLowerCase().includes("gamot")
 
                   return (
                     <tr key={d.id} className="hover:bg-gray-50/60 transition-colors">
@@ -1252,7 +1253,9 @@ export default function FinancialAidDisbursement() {
                         {d.assistanceType}
                       </td>
                       <td className="px-4 py-3.5 font-black text-emerald-700 text-sm">
-                        {!isRevealed ? (
+                        {isMedical ? (
+                          <span className="text-gray-400 font-semibold italic text-xs">—</span>
+                        ) : !isRevealed ? (
                           <div className="space-y-0.5">
                             <div className="inline-flex items-center gap-1.5">
                               <span className="font-mono tracking-wider text-gray-400 select-none">₱••••••</span>

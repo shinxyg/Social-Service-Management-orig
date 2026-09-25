@@ -177,6 +177,8 @@ exports.getDisbursements = async (req, res) => {
         WHERE f1.id < f2.id AND (
           f1.application_ref = f2.application_ref
           OR REPLACE(f1.application_ref, '-', '') = REPLACE(f2.application_ref, '-', '')
+          OR f1.disbursement_id = f2.disbursement_id
+          OR (LOWER(TRIM(f1.applicant_name)) = LOWER(TRIM(f2.applicant_name)) AND LOWER(TRIM(f1.assistance_type)) = LOWER(TRIM(f2.assistance_type)))
         )
       `);
     } catch (_) {}
@@ -528,7 +530,7 @@ exports.getDisbursements = async (req, res) => {
     } catch (_) {}
 
     const result = await db.query(
-      `SELECT
+      `SELECT DISTINCT ON (f.disbursement_id)
          f.id,
          f.disbursement_id,
          f.application_ref,
@@ -552,20 +554,11 @@ exports.getDisbursements = async (req, res) => {
        LEFT JOIN (
          SELECT DISTINCT ON (reference_no) *
          FROM appointments
+         WHERE reference_no IS NOT NULL AND reference_no != ''
          ORDER BY reference_no, (CASE WHEN scheduled_date IS NOT NULL AND scheduled_date != '' THEN 1 ELSE 0 END) DESC, updated_at DESC
        ) a ON (
          f.application_ref = a.reference_no 
          OR REPLACE(f.application_ref, '-', '') = REPLACE(a.reference_no, '-', '')
-         OR (
-            LOWER(TRIM(f.applicant_name)) = LOWER(TRIM(a.applicant_name))
-            AND (
-              (f.assistance_type ILIKE '%solo%' AND (a.module = 'Solo Parent' OR a.concern ILIKE '%solo%'))
-              OR (f.assistance_type ILIKE '%pwd%' AND (a.module = 'PWD' OR a.concern ILIKE '%pwd%'))
-              OR (f.assistance_type ILIKE '%senior%' AND (a.module = 'Senior Citizen' OR a.concern ILIKE '%senior%'))
-              OR (f.assistance_type ILIKE '%livelihood%' AND (a.module = 'Livelihood' OR a.concern ILIKE '%livelihood%'))
-              OR (f.assistance_type ILIKE '%medical%' AND (a.module = 'AICS' OR a.concern ILIKE '%medical%'))
-            )
-          )
        )
        WHERE f.disbursement_id != 'DISB-2026-9929'
          AND f.application_ref NOT LIKE 'CW-%'
@@ -584,7 +577,7 @@ exports.getDisbursements = async (req, res) => {
            OR f.assistance_type ILIKE '%Silungan%'
            OR f.assistance_type ILIKE '%Child Welfare%'
          )
-       ORDER BY f.created_at DESC`
+       ORDER BY f.disbursement_id, f.created_at DESC`
     );
 
     res.json({ disbursements: result.rows });
