@@ -195,13 +195,10 @@ exports.getDisbursements = async (req, res) => {
         INSERT INTO financial_aid_disbursements (
           disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
           date_approved, status, venue, remarks
-        ) VALUES (
-          'DISB-2026-8056', 'SP-EDU-2026-175792', 'JEFFERSON FERNANDO LEE', 'Solo Parent Educational Assistance', 5000,
-          'September 25, 2026', 'PENDING', 'Quezon City Hall', 'Approved Solo Parent Educational Assistance (₱5,000 Annual Grant).'
-        ) ON CONFLICT (disbursement_id) DO UPDATE SET
-          application_ref = 'SP-EDU-2026-175792',
-          assistance_type = 'Solo Parent Educational Assistance',
-          fixed_amount = 5000;
+        )
+        SELECT 'DISB-2026-8056', 'SP-EDU-2026-175792', 'JEFFERSON FERNANDO LEE', 'Solo Parent Educational Assistance', 5000,
+               'September 25, 2026', 'PENDING', 'Quezon City Hall', 'Approved Solo Parent Educational Assistance (₱5,000 Annual Grant).'
+        WHERE NOT EXISTS (SELECT 1 FROM financial_aid_disbursements WHERE disbursement_id = 'DISB-2026-8056');
       `);
     } catch (_) {}
 
@@ -210,13 +207,10 @@ exports.getDisbursements = async (req, res) => {
         INSERT INTO financial_aid_disbursements (
           disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
           date_approved, status, venue, remarks
-        ) VALUES (
-          'DISB-2026-8720', 'SP-SUB-2026-187117', 'JEFFERSON FERNANDO LEE', 'Solo Parent Financial Subsidy', 3000,
-          'September 25, 2026', 'RELEASED', 'Quezon City Hall - SSDD', 'Approved Solo Parent Financial Subsidy.'
-        ) ON CONFLICT (disbursement_id) DO UPDATE SET
-          application_ref = 'SP-SUB-2026-187117',
-          assistance_type = 'Solo Parent Financial Subsidy',
-          fixed_amount = 3000;
+        )
+        SELECT 'DISB-2026-8720', 'SP-SUB-2026-187117', 'JEFFERSON FERNANDO LEE', 'Solo Parent Financial Subsidy', 3000,
+               'September 25, 2026', 'RELEASED', 'Quezon City Hall - SSDD', 'Approved Solo Parent Financial Subsidy.'
+        WHERE NOT EXISTS (SELECT 1 FROM financial_aid_disbursements WHERE disbursement_id = 'DISB-2026-8720');
       `);
     } catch (_) {}
 
@@ -225,13 +219,10 @@ exports.getDisbursements = async (req, res) => {
         INSERT INTO financial_aid_disbursements (
           disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
           date_approved, status, venue, remarks
-        ) VALUES (
-          'DISB-2026-4173', 'PWD-SOC-2026-262304', 'JEFFERSON FERNANDO LEE', 'PWD Social Assistance', 1500,
-          'September 25, 2026', 'PENDING', 'Quezon City Hall', 'Approved PWD Social Assistance ready for payout release.'
-        ) ON CONFLICT (disbursement_id) DO UPDATE SET
-          application_ref = 'PWD-SOC-2026-262304',
-          assistance_type = 'PWD Social Assistance',
-          fixed_amount = 1500;
+        )
+        SELECT 'DISB-2026-4173', 'PWD-SOC-2026-262304', 'JEFFERSON FERNANDO LEE', 'PWD Social Assistance', 1500,
+               'September 25, 2026', 'PENDING', 'Quezon City Hall', 'Approved PWD Social Assistance ready for payout release.'
+        WHERE NOT EXISTS (SELECT 1 FROM financial_aid_disbursements WHERE disbursement_id = 'DISB-2026-4173');
       `);
     } catch (_) {}
 
@@ -240,13 +231,10 @@ exports.getDisbursements = async (req, res) => {
         INSERT INTO financial_aid_disbursements (
           disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
           date_approved, status, venue, remarks
-        ) VALUES (
-          'DISB-2026-5512', 'AICS-MED-2026-116932', 'JEFFERSON FERNANDO LEE', 'Medical Assistance', 5000,
-          'September 25, 2026', 'PENDING', 'Quezon City Hall', 'Approved AICS Medical Assistance (₱5,000 Financial Aid) ready for payout release.'
-        ) ON CONFLICT (disbursement_id) DO UPDATE SET
-          application_ref = 'AICS-MED-2026-116932',
-          assistance_type = 'Medical Assistance',
-          fixed_amount = 5000;
+        )
+        SELECT 'DISB-2026-5512', 'AICS-MED-2026-116932', 'JEFFERSON FERNANDO LEE', 'Medical Assistance', 5000,
+               'September 25, 2026', 'PENDING', 'Quezon City Hall', 'Approved AICS Medical Assistance (₱5,000 Financial Aid) ready for payout release.'
+        WHERE NOT EXISTS (SELECT 1 FROM financial_aid_disbursements WHERE disbursement_id = 'DISB-2026-5512');
       `);
     } catch (_) {}
 

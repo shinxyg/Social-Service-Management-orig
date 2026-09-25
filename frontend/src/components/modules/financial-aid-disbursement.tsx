@@ -448,7 +448,7 @@ export default function FinancialAidDisbursement() {
         let appointmentsMap: Record<string, any> = {}
 
 
-        const fetchWithTimeout = async (url: string, options?: RequestInit, timeoutMs: number = 2800): Promise<Response> => {
+        const fetchWithTimeout = async (url: string, options?: RequestInit, timeoutMs: number = 8000): Promise<Response> => {
           const controller = new AbortController()
           const timer = setTimeout(() => controller.abort(), timeoutMs)
           try {
@@ -470,23 +470,23 @@ export default function FinancialAidDisbursement() {
           resApptsSettled,
           resSoloSettled,
         ] = await Promise.allSettled([
-          fetchWithTimeout(`${API_BASE}/api/financial-aid`, undefined, 2800),
-          fetchWithTimeout(`${API_BASE}/api/aics/applications`, undefined, 2800),
-          fetchWithTimeout(`${API_BASE}/api/pwd-senior/applications`, undefined, 2800),
-          fetchWithTimeout(`${API_BASE}/api/livelihood/applications`, undefined, 2800),
+          fetchWithTimeout(`${API_BASE}/api/financial-aid`, undefined, 8000),
+          fetchWithTimeout(`${API_BASE}/api/aics/applications`, undefined, 8000),
+          fetchWithTimeout(`${API_BASE}/api/pwd-senior/applications`, undefined, 8000),
+          fetchWithTimeout(`${API_BASE}/api/livelihood/applications`, undefined, 8000),
           fetchWithTimeout(`${API_BASE}/api/child-welfare/admin/all?limit=100`, {
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
             },
-          }, 2800),
-          fetchWithTimeout(`${API_BASE}/api/appointments`, undefined, 2800),
+          }, 8000),
+          fetchWithTimeout(`${API_BASE}/api/appointments`, undefined, 8000),
           fetchWithTimeout(`${API_BASE}/api/solo-parent/admin/all?limit=100`, {
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
             },
-          }, 2800),
+          }, 8000),
         ])
 
         if (resDbSettled.status === "fulfilled" && resDbSettled.value.ok) {
