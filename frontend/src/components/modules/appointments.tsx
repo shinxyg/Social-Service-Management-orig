@@ -709,8 +709,30 @@ function getAppointmentDeduplicationKey(a: { id?: string; referenceNo?: string; 
   return `${mod}_${cleanConcern}_name_${cleanName}_${Date.now()}`
 }
 
+const fetchWithTimeout = async (url: string, options?: RequestInit, timeoutMs: number = 2800): Promise<Response> => {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), timeoutMs)
+  try {
+    const res = await fetch(url, { ...options, signal: controller.signal })
+    return res
+  } catch {
+    return new Response(JSON.stringify({ appointments: [], applications: [] }), { status: 200, headers: { "Content-Type": "application/json" } })
+  } finally {
+    clearTimeout(timer)
+  }
+}
+
 export default function Appointments() {
-  const [appointments, setAppointments] = useState<AppointmentRequest[]>([])
+  const [appointments, setAppointments] = useState<AppointmentRequest[]>(() => {
+    try {
+      const stored = localStorage.getItem("cached_appointments_list") || localStorage.getItem("all_appointments")
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed
+      }
+    } catch {}
+    return []
+  })
   const [schedulingAppt, setSchedulingAppt] = useState<AppointmentRequest | null>(null)
   const [filterModule, setFilterModule] = useState<"all" | ModuleKey>("all")
   const [filterStatus, setFilterStatus] = useState<"all" | AppointmentStatus>("all")
@@ -778,22 +800,22 @@ export default function Appointments() {
           resCwSettled,
           resSpSettled,
         ] = await Promise.allSettled([
-          fetch(`${API_BASE}/api/appointments`),
-          fetch(`${API_BASE}/api/aics/applications`),
-          fetch(`${API_BASE}/api/pwd-senior/applications`),
-          fetch(`${API_BASE}/api/livelihood/applications`),
-          fetch(`${API_BASE}/api/child-welfare/admin/all?limit=100`, {
+          fetchWithTimeout(`${API_BASE}/api/appointments`, undefined, 2800),
+          fetchWithTimeout(`${API_BASE}/api/aics/applications`, undefined, 2800),
+          fetchWithTimeout(`${API_BASE}/api/pwd-senior/applications`, undefined, 2800),
+          fetchWithTimeout(`${API_BASE}/api/livelihood/applications`, undefined, 2800),
+          fetchWithTimeout(`${API_BASE}/api/child-welfare/admin/all?limit=100`, {
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
             },
-          }),
-          fetch(`${API_BASE}/api/solo-parent/admin/all?limit=100`, {
+          }, 2800),
+          fetchWithTimeout(`${API_BASE}/api/solo-parent/admin/all?limit=100`, {
             headers: {
               "Content-Type": "application/json",
               Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
             },
-          }),
+          }, 2800),
         ])
 
         const cleanDate = (d: any) => {

@@ -384,7 +384,21 @@ exports.getAppointments = async (req, res) => {
 
     const [deletedRes, result] = await Promise.all([
       db.query('SELECT reference_no FROM deleted_appointments WHERE reference_no NOT IN (SELECT reference_no FROM appointments WHERE reference_no IS NOT NULL)').catch(() => ({ rows: [] })),
-      db.query(`SELECT * FROM appointments WHERE reference_no != 'DISB-2026-9929' AND NOT ((module = 'Senior Citizen' OR concern ILIKE '%Senior%') AND reference_no NOT IN (SELECT reference_number FROM pwd_senior_applications WHERE category ILIKE '%senior%' AND reference_number IS NOT NULL)) ORDER BY created_at DESC LIMIT 300`).catch(() => db.query('SELECT * FROM appointments ORDER BY id DESC LIMIT 300')),
+      db.query(`
+        SELECT a.* 
+        FROM appointments a
+        WHERE a.reference_no != 'DISB-2026-9929' 
+          AND NOT (
+            (a.module = 'Senior Citizen' OR a.concern ILIKE '%Senior%') 
+            AND NOT EXISTS (
+              SELECT 1 FROM pwd_senior_applications p 
+              WHERE p.category ILIKE '%senior%' 
+                AND p.reference_number = a.reference_no
+            )
+          ) 
+        ORDER BY a.created_at DESC 
+        LIMIT 300
+      `).catch(() => db.query('SELECT * FROM appointments ORDER BY id DESC LIMIT 300')),
     ]);
 
     const deletedSet = new Set(deletedRes.rows.map((r) => String(r.reference_no).toLowerCase().trim()));

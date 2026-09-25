@@ -383,10 +383,51 @@ export default function FinancialAidDisbursement() {
         let remoteRecords: SyncedDisbursementRecord[] = []
         let appointmentsMap: Record<string, any> = {}
 
-        const resDb = await fetch(`${API_BASE}/api/financial-aid`)
-        if (resDb.ok) {
+
+        const fetchWithTimeout = async (url: string, options?: RequestInit, timeoutMs: number = 2800): Promise<Response> => {
+          const controller = new AbortController()
+          const timer = setTimeout(() => controller.abort(), timeoutMs)
           try {
-            const dataDb = await resDb.json()
+            const res = await fetch(url, { ...options, signal: controller.signal })
+            return res
+          } catch {
+            return new Response(JSON.stringify({ disbursements: [], applications: [], appointments: [] }), { status: 200, headers: { "Content-Type": "application/json" } })
+          } finally {
+            clearTimeout(timer)
+          }
+        }
+
+        const [
+          resDbSettled,
+          resAicsSettled,
+          resPwdSettled,
+          resLivSettled,
+          resCwSettled,
+          resApptsSettled,
+          resSoloSettled,
+        ] = await Promise.allSettled([
+          fetchWithTimeout(`${API_BASE}/api/financial-aid`, undefined, 2800),
+          fetchWithTimeout(`${API_BASE}/api/aics/applications`, undefined, 2800),
+          fetchWithTimeout(`${API_BASE}/api/pwd-senior/applications`, undefined, 2800),
+          fetchWithTimeout(`${API_BASE}/api/livelihood/applications`, undefined, 2800),
+          fetchWithTimeout(`${API_BASE}/api/child-welfare/admin/all?limit=100`, {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+            },
+          }, 2800),
+          fetchWithTimeout(`${API_BASE}/api/appointments`, undefined, 2800),
+          fetchWithTimeout(`${API_BASE}/api/solo-parent/admin/all?limit=100`, {
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
+            },
+          }, 2800),
+        ])
+
+        if (resDbSettled.status === "fulfilled" && resDbSettled.value.ok) {
+          try {
+            const dataDb = await resDbSettled.value.json()
             if (dataDb.disbursements && Array.isArray(dataDb.disbursements)) {
               const dbRecords: SyncedDisbursementRecord[] = dataDb.disbursements
                 .filter((d: any) => {
