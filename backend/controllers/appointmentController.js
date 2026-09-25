@@ -45,17 +45,13 @@ function resolveFixedAmount(concern) {
 
 async function syncAndCleanAppointments() {
   try {
-    // 0. Ensure deleted reference set is loaded
-    const deletedRes = await db.query('SELECT reference_no FROM deleted_appointments').catch(() => ({ rows: [] }));
-    const deletedSet = new Set((deletedRes.rows || []).map((r) => String(r.reference_no).toLowerCase().trim()));
-
-    // Clean up erroneous AICS appointments that belong to Child Welfare or Solo Parent
+    // 1. Clean up erroneous AICS appointments that belong to Child Welfare or Solo Parent
     await db.query(`
       DELETE FROM appointments
       WHERE (module = 'AICS' OR module IS NULL) AND (reference_no LIKE 'CW-%' OR reference_no LIKE 'SP-%')
     `).catch(() => {});
 
-    // Auto-repair any existing appointments rows contaminated with legacy hardcoded 'JEFFERSON FERNANDO LEE' name
+    // 2. Auto-repair any existing appointments rows contaminated with legacy hardcoded 'JEFFERSON FERNANDO LEE' name
     await db.query(`
       UPDATE appointments a
       SET applicant_name = UPPER(TRIM(CONCAT_WS(' ', s.guardian_first_name, s.guardian_last_name)))
@@ -73,22 +69,16 @@ async function syncAndCleanAppointments() {
         AND a.applicant_name ILIKE '%JEFFERSON FERNANDO LEE%'
         AND s.first_name IS NOT NULL AND s.first_name <> ''
     `).catch(() => {});
+
+    // 3. Clean up unapproved / rejected records
     await db.query(`
       DELETE FROM appointments
       WHERE module = 'AICS' AND (
-        reference_no IN (
-          SELECT reference_no FROM aics_applications 
-          WHERE status IN ('rejected', 'denied', 'disapproved', 'cancelled')
-        )
-        OR reference_no IN (
-          SELECT qc_id FROM aics_applications 
-          WHERE status IN ('rejected', 'denied', 'disapproved', 'cancelled')
-            AND qc_id IS NOT NULL AND qc_id <> ''
-        )
+        reference_no IN (SELECT reference_no FROM aics_applications WHERE status IN ('rejected', 'denied', 'disapproved', 'cancelled'))
+        OR reference_no IN (SELECT qc_id FROM aics_applications WHERE status IN ('rejected', 'denied', 'disapproved', 'cancelled') AND qc_id IS NOT NULL AND qc_id <> '')
       )
     `).catch(() => {});
 
-    // Ensure AICS applications with existing appointment dates are marked as scheduled
     await db.query(`
       UPDATE aics_applications
       SET status = 'scheduled', updated_at = NOW()
@@ -96,7 +86,6 @@ async function syncAndCleanAppointments() {
         AND status IN ('pending', 'submit_pending', 'waiting_approval')
     `).catch(() => {});
 
-    // 2. Clean up unapproved or rejected applications for PWD / Senior Citizen (Strictly require Admin approval first)
     await db.query(`
       DELETE FROM appointments
       WHERE module IN ('PWD', 'Senior Citizen') AND reference_no IN (
@@ -104,18 +93,16 @@ async function syncAndCleanAppointments() {
       )
     `).catch(() => {});
 
-    // 3. Clean up orphaned appointments whose parent applications were deleted from the DB
     await db.query(`
       DELETE FROM appointments
       WHERE module IN ('PWD', 'Senior Citizen')
-        AND reference_no NOT IN (SELECT reference_number FROM pwd_senior_applications)
+        AND NOT EXISTS (SELECT 1 FROM pwd_senior_applications p WHERE p.reference_number = appointments.reference_no)
     `).catch(() => {});
 
     await db.query(`
       DELETE FROM appointments
       WHERE module = 'AICS'
-        AND reference_no NOT IN (SELECT reference_no FROM aics_applications)
-        AND reference_no NOT IN (SELECT qc_id FROM aics_applications WHERE qc_id IS NOT NULL AND qc_id <> '')
+        AND NOT EXISTS (SELECT 1 FROM aics_applications a WHERE a.reference_no = appointments.reference_no OR a.qc_id = appointments.reference_no)
     `).catch(() => {});
 
     await db.query(`
@@ -158,190 +145,130 @@ async function syncAndCleanAppointments() {
         AND status NOT IN ('approved', 'completed', 'rejected', 'referred')
     `).catch(() => {});
 
-    // Import active AICS applications for appointment scheduling
-    const activeAics = await db.query(
-      `SELECT reference_no, qc_id, assistance_type, first_name, middle_name, last_name, suffix, status, details, created_at
-       FROM aics_applications
-       WHERE status NOT IN ('rejected', 'denied', 'disapproved', 'cancelled')`
-    ).catch(() => ({ rows: [] }));
+    // 4. Set-based Bulk Inserts for fast execution (1 statement per module)
+    await db.query(`
+      INSERT INTO appointments (reference_no, module, applicant_name, concern, status, scheduled_date, scheduled_time, office_location, notes, created_at, updated_at)
+      SELECT 
+        COALESCE(NULLIF(TRIM(a.reference_no), ''), a.qc_id) AS reference_no,
+        'AICS' AS module,
+        UPPER(TRIM(CONCAT_WS(' ', a.first_name, a.middle_name, a.last_name, a.suffix))) AS applicant_name,
+        INITCAP(REPLACE(a.assistance_type, ' assistance', '')) || ' Assistance' AS concern,
+        CASE 
+          WHEN a.status IN ('approved', 'completed', 'for_release', 'released') THEN 'approved'
+          WHEN a.status IN ('for_referral', 'referred') THEN 'referred'
+          WHEN a.status IN ('scheduled', 'under_review') OR (a.details->>'appointmentDate' IS NOT NULL AND a.details->>'appointmentDate' <> '') THEN 'scheduled'
+          ELSE 'pending'
+        END AS status,
+        NULLIF(a.details->>'appointmentDate', '') AS scheduled_date,
+        NULLIF(a.details->>'appointmentTime', '') AS scheduled_time,
+        COALESCE(NULLIF(a.details->>'appointmentVenue', ''), 'Quezon City Hall') AS office_location,
+        'Awtomatikong pumasok mula sa AICS aplikasyon para sa scheduling at assessment.' AS notes,
+        COALESCE(a.created_at, NOW()),
+        NOW()
+      FROM aics_applications a
+      WHERE a.status NOT IN ('rejected', 'denied', 'disapproved', 'cancelled')
+        AND COALESCE(NULLIF(TRIM(a.reference_no), ''), a.qc_id) IS NOT NULL
+        AND NOT EXISTS (
+          SELECT 1 FROM deleted_appointments d WHERE LOWER(d.reference_no) = LOWER(COALESCE(NULLIF(TRIM(a.reference_no), ''), a.qc_id))
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM appointments app 
+          WHERE app.reference_no = COALESCE(NULLIF(TRIM(a.reference_no), ''), a.qc_id) 
+            AND app.module = 'AICS'
+        );
+    `).catch(() => {});
 
-    for (const row of activeAics.rows) {
-      const refNo = String(row.reference_no || row.qc_id || '').trim();
-      if (!refNo || deletedSet.has(refNo.toLowerCase())) continue;
-      const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
-      const rawType = (row.assistance_type || 'Medical').replace(/\s*assistance/gi, '').trim();
-      const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + ' Assistance';
-      const isApproved = ['approved', 'completed', 'for_release', 'released'].includes(row.status);
-      const isReferred = ['for_referral', 'referred'].includes(row.status);
-      const isSched = ['scheduled', 'under_review'].includes(row.status);
+    await db.query(`
+      INSERT INTO appointments (reference_no, module, applicant_name, concern, status, office_location, notes, created_at, updated_at)
+      SELECT 
+        l.reference_number,
+        'Livelihood',
+        UPPER(TRIM(CONCAT_WS(' ', l.first_name, l.last_name))),
+        'Livelihood Capital Assistance',
+        'pending',
+        'Quezon City Hall - SSDD Livelihood Center',
+        'Awtomatikong pumasok mula sa na-aprubahang Livelihood Capital allocation para sa appointment scheduling.',
+        COALESCE(l.created_at, NOW()),
+        NOW()
+      FROM livelihood_applications l
+      WHERE l.application_status = 'approved'
+        AND NOT EXISTS (
+          SELECT 1 FROM deleted_appointments d WHERE LOWER(d.reference_no) = LOWER(l.reference_number)
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM appointments app WHERE app.reference_no = l.reference_number AND app.module = 'Livelihood'
+        );
+    `).catch(() => {});
 
-      const details = (typeof row.details === 'object' && row.details !== null) ? row.details : {};
-      const schedDate = details.appointmentDate || null;
-      const schedTime = details.appointmentTime || null;
-      const venue = details.appointmentVenue || 'Quezon City Hall';
-      const initStatus = isApproved ? 'approved' : isReferred ? 'referred' : (isSched || schedDate) ? 'scheduled' : 'pending';
+    await db.query(`
+      INSERT INTO appointments (reference_no, module, applicant_name, concern, status, office_location, notes, created_at, updated_at)
+      SELECT 
+        p.reference_number,
+        CASE WHEN p.category ILIKE '%pwd%' THEN 'PWD' ELSE 'Senior Citizen' END,
+        UPPER(TRIM(CONCAT_WS(' ', p.first_name, p.middle_name, p.last_name, p.suffix))),
+        CASE WHEN p.category ILIKE '%pwd%' THEN 'PWD Social Assistance' ELSE 'Senior Social Assistance' END,
+        'pending',
+        'Quezon City Hall - PDAO Room 102',
+        'Awtomatikong pumasok mula sa PWD/Senior Social Assistance aplikasyon.',
+        COALESCE(p.submitted_at, p.created_at, NOW()),
+        NOW()
+      FROM pwd_senior_applications p
+      WHERE p.status IN ('approved', 'completed', 'for_release', 'released')
+        AND (p.type ILIKE '%assist%' OR p.category ILIKE '%assist%' OR p.disability_class ILIKE '%assist%' OR p.extra_data::text ILIKE '%assist%')
+        AND NOT EXISTS (
+          SELECT 1 FROM deleted_appointments d WHERE LOWER(d.reference_no) = LOWER(p.reference_number)
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM appointments app WHERE app.reference_no = p.reference_number
+        );
+    `).catch(() => {});
 
-      const checkExists = await db.query(
-        `SELECT id, status, scheduled_date FROM appointments WHERE reference_no = $1 AND module = 'AICS' AND concern = $2`,
-        [refNo, cleanType]
-      ).catch(() => ({ rows: [] }));
+    await db.query(`
+      INSERT INTO appointments (reference_no, module, applicant_name, concern, status, office_location, notes, created_at, updated_at)
+      SELECT 
+        s.reference_number,
+        'Solo Parent',
+        UPPER(TRIM(CONCAT_WS(' ', s.first_name, s.middle_name, s.last_name, s.suffix))),
+        CASE WHEN (s.application_type ILIKE '%edu%' OR s.reference_number ILIKE '%SP-EDU%') THEN 'Solo Parent Educational Assistance' ELSE 'Solo Parent Financial Subsidy' END,
+        CASE WHEN s.application_status IN ('approved', 'completed', 'for_release', 'released') THEN 'approved' ELSE 'pending' END,
+        'Quezon City Hall - SSDD Solo Parent Welfare Section',
+        'Awtomatikong pumasok mula sa Solo Parent aplikasyon.',
+        COALESCE(s.created_at, NOW()),
+        NOW()
+      FROM solo_parent_child_welfare_applications s
+      WHERE (s.module_type = 'SOLO_PARENT' OR s.reference_number ILIKE 'SP-%')
+        AND s.application_status NOT IN ('rejected', 'denied', 'disapproved', 'cancelled', 'draft')
+        AND NOT EXISTS (
+          SELECT 1 FROM deleted_appointments d WHERE LOWER(d.reference_no) = LOWER(s.reference_number)
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM appointments app WHERE app.reference_no = s.reference_number
+        );
+    `).catch(() => {});
 
-      if (checkExists.rows.length === 0) {
-        await db.query(
-          `INSERT INTO appointments
-            (reference_no, module, applicant_name, concern, status, scheduled_date, scheduled_time, office_location, notes, created_at, updated_at)
-           VALUES ($1, 'AICS', $2, $3, $4, $5, $6, $7, 'Awtomatikong pumasok mula sa AICS aplikasyon para sa scheduling at assessment.', COALESCE($8, NOW()), NOW())`,
-          [refNo, fullName, cleanType, initStatus, schedDate, schedTime, venue, row.created_at || null]
-        ).catch(() => {});
-      } else {
-        const existing = checkExists.rows[0];
-        if (schedDate && !existing.scheduled_date) {
-          await db.query(
-            `UPDATE appointments SET status = $1, scheduled_date = $2, scheduled_time = $3, office_location = $4, updated_at = NOW() WHERE id = $5`,
-            [initStatus, schedDate, schedTime, venue, existing.id]
-          ).catch(() => {});
-        } else if (isApproved && existing.status !== 'approved') {
-          await db.query(
-            `UPDATE appointments SET status = 'approved', updated_at = NOW() WHERE id = $1`,
-            [existing.id]
-          ).catch(() => {});
-        }
-      }
-    }
+    await db.query(`
+      INSERT INTO appointments (reference_no, module, applicant_name, concern, status, office_location, notes, created_at, updated_at)
+      SELECT 
+        s.reference_number,
+        'Child Welfare',
+        COALESCE(NULLIF(UPPER(TRIM(CONCAT_WS(' ', s.guardian_first_name, s.guardian_last_name))), ''), UPPER(TRIM(s.child_name)), 'BENEFICIARY'),
+        COALESCE(NULLIF(s.category_title, ''), 'Child Welfare Support'),
+        CASE WHEN s.application_status IN ('approved', 'completed', 'for_release', 'released', 'interview_scheduled') THEN 'approved' ELSE 'pending' END,
+        'SSDD Child Protection & Counseling Center (Room 205)',
+        'Awtomatikong pumasok mula sa Child Welfare aplikasyon para sa scheduling.',
+        COALESCE(s.created_at, NOW()),
+        NOW()
+      FROM solo_parent_child_welfare_applications s
+      WHERE (s.module_type = 'CHILD_WELFARE' OR s.reference_number ILIKE 'CW-%')
+        AND s.application_status NOT IN ('rejected', 'denied', 'disapproved', 'cancelled', 'draft')
+        AND NOT EXISTS (
+          SELECT 1 FROM deleted_appointments d WHERE LOWER(d.reference_no) = LOWER(s.reference_number)
+        )
+        AND NOT EXISTS (
+          SELECT 1 FROM appointments app WHERE app.reference_no = s.reference_number
+        );
+    `).catch(() => {});
 
-    const approvedLivelihood = await db.query(
-      `SELECT l.reference_number, l.first_name, l.last_name
-       FROM livelihood_applications l
-       WHERE l.application_status = 'approved'
-         AND (
-           LOWER(COALESCE(l.assistance->>'assistance_status', '')) IN ('for_release', 'released', 'for release', 'for_processing')
-           OR l.assistance IS NOT NULL
-         )`
-    ).catch(() => ({ rows: [] }));
-
-    for (const row of approvedLivelihood.rows) {
-      const refNo = String(row.reference_number || '').trim();
-      if (!refNo || deletedSet.has(refNo.toLowerCase())) continue;
-      const fullName = `${row.first_name || ''} ${row.last_name || ''}`.trim().toUpperCase() || 'BENEFICIARY';
-      await db.query(
-        `INSERT INTO appointments
-          (reference_no, module, applicant_name, concern, status, office_location, notes)
-         SELECT $1, 'Livelihood', $2, 'Livelihood Capital Assistance', 'pending', 'Quezon City Hall - SSDD Livelihood Center', 'Awtomatikong pumasok mula sa na-aprubahang Livelihood Capital allocation para sa appointment scheduling.'
-         WHERE NOT EXISTS (SELECT 1 FROM appointments WHERE reference_no = $1 AND module = 'Livelihood' AND concern = 'Livelihood Capital Assistance')`,
-        [refNo, fullName]
-      ).catch(() => {});
-    }
-
-    // Import active PWD and Senior assistance applications ONLY when approved by Admin
-    const activePwdSenior = await db.query(
-      `SELECT reference_number, category, type, first_name, middle_name, last_name, suffix, status, submitted_at, created_at
-       FROM pwd_senior_applications
-       WHERE status IN ('approved', 'completed', 'for_release', 'released')
-         AND (type ILIKE '%assist%' OR category ILIKE '%assist%' OR disability_class ILIKE '%assist%' OR extra_data::text ILIKE '%assist%')`
-    ).catch(() => ({ rows: [] }));
-
-    for (const row of activePwdSenior.rows) {
-      const refNo = String(row.reference_number || '').trim();
-      if (!refNo || deletedSet.has(refNo.toLowerCase())) continue;
-      const isPwd = String(row.category || '').toUpperCase().includes('PWD');
-      const isSenior = String(row.category || '').toUpperCase().includes('SENIOR');
-      if (!isPwd && !isSenior) continue;
-      const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
-      const mod = isPwd ? 'PWD' : 'Senior Citizen';
-      const concern = isPwd ? 'PWD Social Assistance' : 'Senior Social Assistance';
-      const checkExists = await db.query(
-        `SELECT id, status, scheduled_date FROM appointments WHERE reference_no = $1 AND module = $2 AND concern = $3`,
-        [refNo, mod, concern]
-      ).catch(() => ({ rows: [] }));
-
-      if (checkExists.rows.length === 0) {
-        await db.query(
-          `INSERT INTO appointments
-            (reference_no, module, applicant_name, concern, status, office_location, notes, created_at, updated_at)
-           VALUES ($1, $2, $3, $4, 'pending', 'Quezon City Hall - PDAO Room 102', 'Awtomatikong pumasok mula sa PWD/Senior Social Assistance aplikasyon.', COALESCE($5, NOW()), NOW())`,
-          [refNo, mod, fullName, concern, row.submitted_at || row.created_at || null]
-        ).catch(() => {});
-      }
-    }
-
-    const activeSoloParent = await db.query(
-      `SELECT reference_number, application_type, application_status, first_name, middle_name, last_name, suffix, created_at, updated_at
-       FROM solo_parent_child_welfare_applications
-       WHERE (module_type = 'SOLO_PARENT' OR reference_number ILIKE 'SP-%')
-         AND application_status NOT IN ('rejected', 'denied', 'disapproved', 'cancelled', 'draft')`
-    ).catch(() => ({ rows: [] }));
-
-    for (const row of activeSoloParent.rows) {
-      const refNo = String(row.reference_number || '').trim();
-      if (!refNo || deletedSet.has(refNo.toLowerCase())) continue;
-      const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'APPLICANT';
-      const isEdu = String(row.application_type || row.reference_number || '').toUpperCase().includes('SP-EDU') ||
-                    String(row.application_type || '').toUpperCase() === 'EDUCATIONAL_ASSISTANCE';
-      const concern = isEdu ? 'Solo Parent Educational Assistance' : 'Solo Parent Financial Subsidy';
-      const isApproved = ['approved', 'completed', 'for_release', 'released'].includes(String(row.application_status || '').toLowerCase());
-      const notes = isEdu
-        ? (isApproved
-            ? 'Awtomatikong pumasok mula sa na-aprubahang Solo Parent Educational Assistance para sa grant disbursement.'
-            : 'Awtomatikong pumasok mula sa Solo Parent Educational Assistance aplikasyon.')
-        : (isApproved
-            ? 'Awtomatikong pumasok mula sa na-aprubahang Solo Parent aplikasyon para sa scheduling.'
-            : 'Awtomatikong pumasok mula sa Solo Parent Financial Subsidy aplikasyon.');
-      const initialStatus = isApproved ? 'approved' : 'pending';
-
-      const checkExists = await db.query(
-        `SELECT id, status FROM appointments WHERE reference_no = $1 AND concern = $2`,
-        [refNo, concern]
-      ).catch(() => ({ rows: [] }));
-
-      if (checkExists.rows.length === 0) {
-        await db.query(
-          `INSERT INTO appointments
-            (reference_no, module, applicant_name, concern, status, office_location, notes, created_at, updated_at)
-           VALUES ($1, 'Solo Parent', $2, $3, $4, 'Quezon City Hall - SSDD Solo Parent Welfare Section', $5, COALESCE($6, NOW()), NOW())`,
-          [refNo, fullName, concern, initialStatus, notes, row.created_at || null]
-        ).catch(() => {});
-      } else if (isApproved && checkExists.rows[0].status === 'pending') {
-        await db.query(
-          `UPDATE appointments SET status = 'approved', updated_at = NOW() WHERE id = $1`,
-          [checkExists.rows[0].id]
-        ).catch(() => {});
-      }
-    }
-
-    const activeCw = await db.query(
-      `SELECT reference_number, category_title, guardian_first_name, guardian_last_name, child_name, application_status, created_at
-       FROM solo_parent_child_welfare_applications
-       WHERE (module_type = 'CHILD_WELFARE' OR reference_number ILIKE 'CW-%')
-         AND application_status NOT IN ('rejected', 'denied', 'disapproved', 'cancelled', 'draft')`
-    ).catch(() => ({ rows: [] }));
-
-    for (const row of activeCw.rows) {
-      const refNo = String(row.reference_number || '').trim();
-      if (!refNo || deletedSet.has(refNo.toLowerCase())) continue;
-      const fullName = [row.guardian_first_name, row.guardian_last_name].filter(Boolean).join(' ').trim().toUpperCase() || (row.child_name || '').toUpperCase() || 'BENEFICIARY';
-      const concern = row.category_title ? `${row.category_title} (Child Welfare)` : 'Child Welfare Support';
-      const isApproved = ['approved', 'completed', 'for_release', 'released', 'interview_scheduled'].includes(String(row.application_status || '').toLowerCase());
-      const initialStatus = isApproved ? 'approved' : 'pending';
-
-      const checkExists = await db.query(
-        `SELECT id, status FROM appointments WHERE reference_no = $1`,
-        [refNo]
-      ).catch(() => ({ rows: [] }));
-
-      if (checkExists.rows.length === 0) {
-        await db.query(
-          `INSERT INTO appointments
-            (reference_no, module, applicant_name, concern, status, office_location, notes)
-           VALUES ($1, 'Child Welfare', $2, $3, $4, 'SSDD Child Protection & Counseling Center (Room 205)', 'Awtomatikong pumasok mula sa Child Welfare aplikasyon para sa scheduling.')`,
-          [refNo, fullName, concern, initialStatus]
-        ).catch(() => {});
-      } else if (isApproved && checkExists.rows[0].status === 'pending') {
-        await db.query(
-          `UPDATE appointments SET status = 'approved', module = 'Child Welfare', updated_at = NOW() WHERE id = $1`,
-          [checkExists.rows[0].id]
-        ).catch(() => {});
-      }
-    }
   } catch (err) {
     console.warn('⚠️ Background appointment sync error:', err.message);
   }
@@ -383,19 +310,14 @@ exports.getAppointments = async (req, res) => {
     triggerAppointmentSyncIfStale();
 
     const [deletedRes, result] = await Promise.all([
-      db.query('SELECT reference_no FROM deleted_appointments WHERE reference_no NOT IN (SELECT reference_no FROM appointments WHERE reference_no IS NOT NULL)').catch(() => ({ rows: [] })),
+      db.query('SELECT reference_no FROM deleted_appointments WHERE reference_no IS NOT NULL').catch(() => ({ rows: [] })),
       db.query(`
         SELECT a.* 
         FROM appointments a
         WHERE a.reference_no != 'DISB-2026-9929' 
-          AND NOT (
-            (a.module = 'Senior Citizen' OR a.concern ILIKE '%Senior%') 
-            AND NOT EXISTS (
-              SELECT 1 FROM pwd_senior_applications p 
-              WHERE p.category ILIKE '%senior%' 
-                AND p.reference_number = a.reference_no
-            )
-          ) 
+          AND NOT EXISTS (
+            SELECT 1 FROM deleted_appointments d WHERE LOWER(d.reference_no) = LOWER(a.reference_no)
+          )
         ORDER BY a.created_at DESC 
         LIMIT 300
       `).catch(() => db.query('SELECT * FROM appointments ORDER BY id DESC LIMIT 300')),

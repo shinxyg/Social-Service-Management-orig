@@ -176,9 +176,7 @@ exports.getDisbursements = async (req, res) => {
         USING financial_aid_disbursements f2
         WHERE f1.id < f2.id AND (
           f1.application_ref = f2.application_ref
-          OR REPLACE(f1.application_ref, '-', '') = REPLACE(f2.application_ref, '-', '')
           OR f1.disbursement_id = f2.disbursement_id
-          OR (LOWER(TRIM(f1.applicant_name)) = LOWER(TRIM(f2.applicant_name)) AND LOWER(TRIM(f1.assistance_type)) = LOWER(TRIM(f2.assistance_type)))
         )
       `);
     } catch (_) {}
