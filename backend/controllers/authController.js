@@ -144,14 +144,6 @@ async function recordNewSession(userId, email, sessionToken, req) {
   };
   const cleanEmail = String(email).toLowerCase();
   try {
-
-    await db.query(
-      `UPDATE user_login_sessions
-       SET is_active = false, logout_at = NOW(), logout_reason = $1
-       WHERE LOWER(email) = $2 AND is_active = true`,
-      [`Overtaken by new login from ${devInfo.deviceName}`, cleanEmail]
-    );
-
     await db.query(
       `INSERT INTO user_login_sessions
        (user_id, email, session_token, device_type, device_name, browser, os, ip_address, location, is_active, login_at, last_active_at)
@@ -161,14 +153,6 @@ async function recordNewSession(userId, email, sessionToken, req) {
   } catch (err) {
     console.warn('[DB Error] Recording login session to DB failed, updating memorySessions fallback:', err.message);
   }
-
-  memorySessions.forEach((s) => {
-    if (s.email.toLowerCase() === cleanEmail && s.isActive) {
-      s.isActive = false;
-      s.logoutAt = new Date().toISOString();
-      s.logoutReason = `Overtaken by new login from ${devInfo.deviceName}`;
-    }
-  });
 
   memorySessions.unshift({
     id: Date.now(),
@@ -798,32 +782,20 @@ exports.verifySession = async (req, res) => {
           });
         }
 
-        if (dbUser.active_session_token === sessionToken) {
-          return res.status(200).json({ success: true, active: true });
-        }
-
-        if (!dbUser.active_session_token) {
-          db.query('UPDATE users SET active_session_token = $1 WHERE id = $2', [sessionToken, dbUser.id]).catch(() => {});
-          return res.status(200).json({ success: true, active: true });
-        }
-
-        const sessRes = await db.query(
-          `SELECT device_name, device_type, browser, os, ip_address, login_at
-           FROM user_login_sessions
-           WHERE LOWER(email) = $1 AND is_active = true
-           ORDER BY id DESC LIMIT 1`,
-          [email]
+        // Allow multiple concurrent active sessions across devices
+        const sessCheck = await db.query(
+          'SELECT is_active, logout_reason FROM user_login_sessions WHERE LOWER(email) = $1 AND session_token = $2',
+          [email, sessionToken]
         );
+        if (sessCheck.rows.length > 0 && sessCheck.rows[0].is_active === false) {
+          return res.status(200).json({
+            success: false,
+            isSessionTerminated: true,
+            message: sessCheck.rows[0].logout_reason || 'This session has been logged out.',
+          });
+        }
 
-        const newDevice = sessRes.rows.length > 0 ? sessRes.rows[0] : null;
-        const devName = newDevice?.device_name || (newDevice?.device_type ? `${newDevice.device_type}` : 'Another Device');
-
-        return res.status(200).json({
-          success: false,
-          isSessionTerminated: true,
-          newDevice: newDevice || { device_name: devName, device_type: 'Device' },
-          message: `Your account was accessed from a new device: ${devName}. You have been logged out from this session for your security.`,
-        });
+        return res.status(200).json({ success: true, active: true });
       }
     } catch (dbErr) {
       console.warn('[DB Warning] verifySession check fallback:', dbErr.message);

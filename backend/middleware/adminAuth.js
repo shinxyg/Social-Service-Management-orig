@@ -51,6 +51,25 @@ module.exports = async function adminAuthMiddleware(req, res, next) {
 
   try {
     const sessionRes = await db.query(
+      `SELECT u.id, u.email, u.first_name, u.last_name, u.role
+       FROM user_login_sessions s
+       JOIN users u ON LOWER(u.email) = LOWER(s.email)
+       WHERE s.session_token = $1 AND s.is_active = true`,
+      [token]
+    );
+    if (sessionRes.rows.length > 0) {
+      const dbUser = sessionRes.rows[0];
+      const role = (dbUser.role || '').toLowerCase();
+      const isAdmin = role === 'admin' || role === 'superadmin' || role === 'staff' || role === 'worker' || role === 'social worker';
+      if (isAdmin) {
+        req.user = dbUser;
+        return next();
+      }
+    }
+  } catch {}
+
+  try {
+    const sessionRes = await db.query(
       'SELECT id, email, first_name, last_name, role FROM users WHERE active_session_token = $1',
       [token]
     );

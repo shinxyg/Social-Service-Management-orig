@@ -431,6 +431,43 @@ exports.getDisbursements = async (req, res) => {
       }
     } catch (_) {}
 
+    try {
+      const approvedAics = await db.query(
+        `SELECT reference_no, assistance_type, first_name, middle_name, last_name, suffix, approved_amount, updated_at, created_at
+         FROM aics_applications
+         WHERE status IN ('approved', 'completed', 'for_release', 'released')`
+      );
+      for (const row of approvedAics.rows) {
+        const disbCheck = await db.query(
+          'SELECT id FROM financial_aid_disbursements WHERE application_ref = $1',
+          [row.reference_no]
+        );
+        if (disbCheck.rows.length === 0) {
+          const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
+          const fullName = [row.first_name, row.middle_name, row.last_name, row.suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
+          const type = row.assistance_type || 'Medical Assistance';
+          const amount = Number(row.approved_amount) > 0 ? Number(row.approved_amount) : resolveFixedAmount(type);
+          await db.query(
+            `INSERT INTO financial_aid_disbursements (
+              disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
+              date_approved, status, venue, remarks
+            ) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8)
+            ON CONFLICT DO NOTHING`,
+            [
+              disbId,
+              row.reference_no,
+              fullName,
+              type,
+              amount,
+              new Date(row.updated_at || row.created_at || Date.now()).toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
+              'Quezon City Hall',
+              'Approved AICS financial grant. Ready for Appointment scheduling and payout.',
+            ]
+          );
+        }
+      }
+    } catch (_) {}
+
     const result = await db.query(
       `SELECT
          f.id,
