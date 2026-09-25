@@ -138,6 +138,63 @@ exports.getDisbursements = async (req, res) => {
     } catch (_) {}
 
     try {
+      const jeffTerm = '%jefferson%';
+      const refTerm = '%110000262304143%';
+
+      await db.query(`
+        DELETE FROM financial_aid_disbursements
+        WHERE applicant_name ILIKE $1
+           OR application_ref ILIKE $2
+           OR application_ref ILIKE '%SP-EDU%'
+           OR application_ref ILIKE '%SP-SUB%'
+           OR application_ref ILIKE '%PWD-SOC%'
+           OR application_ref ILIKE '%AICS-MED%';
+      `, [jeffTerm, refTerm]).catch(() => {});
+
+      await db.query(`
+        DELETE FROM appointments
+        WHERE applicant_name ILIKE $1
+           OR reference_no ILIKE $2
+           OR reference_no ILIKE '%SP-EDU%'
+           OR reference_no ILIKE '%SP-SUB%'
+           OR reference_no ILIKE '%PWD-SOC%'
+           OR reference_no ILIKE '%AICS-MED%';
+      `, [jeffTerm, refTerm]).catch(() => {});
+
+      await db.query(`
+        DELETE FROM solo_parent_child_welfare_applications
+        WHERE first_name ILIKE $1
+           OR last_name ILIKE $1
+           OR reference_number ILIKE $2
+           OR qcid_number ILIKE $2
+           OR reference_number ILIKE '%SP-EDU%'
+           OR reference_number ILIKE '%SP-SUB%';
+      `, [jeffTerm, refTerm]).catch(() => {});
+
+      await db.query(`
+        DELETE FROM pwd_senior_applications
+        WHERE first_name ILIKE $1
+           OR last_name ILIKE $1
+           OR reference_number ILIKE $2;
+      `, [jeffTerm, refTerm]).catch(() => {});
+
+      await db.query(`
+        DELETE FROM aics_applications
+        WHERE first_name ILIKE $1
+           OR last_name ILIKE $1
+           OR reference_no ILIKE $2
+           OR qc_id ILIKE $2;
+      `, [jeffTerm, refTerm]).catch(() => {});
+
+      await db.query(`
+        DELETE FROM livelihood_applications
+        WHERE first_name ILIKE $1
+           OR last_name ILIKE $1
+           OR reference_number ILIKE $2;
+      `, [jeffTerm, refTerm]).catch(() => {});
+    } catch (_) {}
+
+    try {
       await db.query(`
         DELETE FROM financial_aid_disbursements
         WHERE assistance_type ILIKE '%ID Card%' OR assistance_type ILIKE '%Issuance%'
