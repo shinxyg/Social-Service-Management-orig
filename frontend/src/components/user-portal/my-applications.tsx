@@ -2599,27 +2599,27 @@ export default function MyApplications() {
               const appDate = extractAnyDateFromApp(app)
 
               const st = String(app.application_status || app.status || "pending").toLowerCase()
-              let statusLabel = "Pending (SSDD Validation)"
-              let remarksText = "Sinusuri ng SSDD Intake Officer ang Child Birth Certificate, Guardian ID, at Certificate of Enrollment / Indigency. Hintayin ang iskedyul."
+              let statusLabel: ApplicationStatus = "Pending (SSDD Validation)"
+              let remarksText = "Sinusuri ng SSDD Intake Officer ang Birth Certificate ng bata, Guardian ID, at Safety Circumstance Report."
 
               if (st === "approved") {
                 statusLabel = "Approved"
-                remarksText = `Aprubado para sa ₱${(Number(app.approved_amount) || 5000).toLocaleString()}.00 Grant. Tingnan ang Payout Schedule sa Financial Aid.`
-              } else if (st === "released" || st === "completed") {
-                statusLabel = "Released"
-                remarksText = `Natanggap na ang ₱${(Number(app.approved_amount) || 5000).toLocaleString()}.00 Assistance (Official Certificate / Payout Voucher Ready)`
+                remarksText = "Aprubado para sa Child Welfare Protective Service Provision. Tingnan ang Assigned Service Schedule / Case Intervention Order."
+              } else if (st === "service_delivered" || st === "released" || st === "completed") {
+                statusLabel = "Completed"
+                remarksText = "Matagumpay na naipagkaloob ang Child Protective Intervention at Case Support."
+              } else if (st === "for_service_provision" || st === "for_distribution" || st === "for_release") {
+                statusLabel = "For Release"
+                remarksText = "Handa na ang Referral Order at Protective Service Schedule sa SSDD Child Protection Center."
+              } else if (st === "interview_scheduled" || st === "scheduled") {
+                statusLabel = "Interview Scheduled"
+                remarksText = "Nakatakda ang Intake & Safety Interview sa Quezon City Hall SSDD Child Protection & Counseling Center."
+              } else if (st === "under_assessment" || st === "for_assessment") {
+                statusLabel = "Under Assessment"
+                remarksText = "Naisagawa na ang panayam. Kasalukuyang inihahanda ang pinal na Protective Intervention Plan at SCSR."
               } else if (st === "rejected") {
                 statusLabel = "Rejected"
-                remarksText = app.rejection_reason || app.admin_notes ? `Dahilan: ${app.rejection_reason || app.admin_notes}` : "Dahilan: Ineligible / Lampas sa edad."
-              } else if (st === "interview_scheduled") {
-                statusLabel = "Interview Scheduled"
-                remarksText = "Nakatakda ang interview sa Quezon City Hall SSDD Child Welfare Desk."
-              } else if (st === "under_assessment") {
-                statusLabel = "Under Assessment"
-                remarksText = "Naisagawa na ang panayam. Kasalukuyang inihahanda ang case evaluation report."
-              } else if (st === "payout_scheduled" || st === "for_distribution") {
-                statusLabel = "Payout Scheduled"
-                remarksText = "Payout Scheduled: Quezon City Hall SSDD Payout Hall!"
+                remarksText = app.rejection_reason || app.admin_notes ? `Dahilan: ${app.rejection_reason || app.admin_notes}` : "Dahilan: Outside QC Jurisdiction o No protective risk detected."
               }
 
               return {

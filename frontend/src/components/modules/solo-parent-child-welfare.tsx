@@ -909,7 +909,7 @@ async function approveSubmission(app: WelfareSubmission, value: string) {
 
   const body = isSolo
     ? { status: "approved", assignedIdNumber: value, soloParentIdNumber: value, referenceNumber: app.referenceNumber }
-    : { status: "approved", approvedAmount: value, referenceNumber: app.referenceNumber }
+    : { status: "approved", serviceProvision: value, serviceType: value, referenceNumber: app.referenceNumber }
 
   const res = await fetch(url, { method: "PATCH", headers: authHeaders(), body: JSON.stringify(body) })
   if (!res.ok) {
@@ -1479,9 +1479,9 @@ function ApplicationCard({ app, onView }: CardProps) {
                     {isEdu ? "₱5,000 / yr Educational Grant Approved" : "₱1,000 / mo Subsidy Approved"}
                   </span>
                 )
-              : app.status === "approved" && (app as any).approvedAmount && (
-                  <span className="gw-mono text-xs font-semibold" style={{ color: "var(--forest-ink)" }}>
-                    ₱{(app as any).approvedAmount} approved
+              : app.status === "approved" && (
+                  <span className="gw-mono text-xs font-semibold" style={{ color: "var(--brick-ink)" }}>
+                    Protective Service Provision Authorized
                   </span>
                 )}
           </div>
@@ -2378,40 +2378,62 @@ function DetailedView({ app, onClose, onApprove, onReject, allSubmissions }: Det
                     )
                   })()
                 ) : (
-                  <div className="space-y-4 p-4 rounded-xl border border-emerald-500/30 bg-emerald-500/5">
-                    <div>
-                      <div className="flex items-center justify-between">
-                        <label className="text-xs font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
-                          Confirm {(app as any).supportCategory || "Child Welfare Support"} Approval
-                        </label>
-                        <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-100 dark:bg-emerald-950/60 dark:text-emerald-300 px-2.5 py-1 rounded-md font-mono">
-                          Fixed Grant: ₱5,000
-                        </span>
+                  (() => {
+                    const [selectedProvision, setSelectedProvision] = useState("Child Psychosocial Support & Counseling")
+                    const [customNotes, setCustomNotes] = useState("")
+                    return (
+                      <div className="space-y-4 p-4 rounded-xl border border-sky-500/30 bg-sky-500/5">
+                        <div>
+                          <div className="flex items-center justify-between">
+                            <label className="text-xs font-bold uppercase tracking-wider text-sky-800 dark:text-sky-300">
+                              Confirm {(app as any).supportCategory || "Child Welfare"} Protective Service Approval
+                            </label>
+                            <span className="text-[11px] font-semibold text-sky-700 bg-sky-100 dark:bg-sky-950/60 dark:text-sky-300 px-2.5 py-1 rounded-md font-mono">
+                              Non-Monetary Service Provision
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
+                            Approving will authorize official <strong>Protective Welfare Service Provision &amp; Case Endorsement</strong> for <strong>{(app as any).childName || displayName(app)}</strong>. Record will be forwarded to <strong>SSDD Child Protection &amp; Counseling Center</strong> for session scheduling and partner referrals (Bahay Silungan / QC CPU / PAO).
+                          </p>
+                        </div>
+                        <div>
+                          <label className="text-xs font-semibold text-sky-900 dark:text-sky-200">Select Protective Service Provision Package</label>
+                          <select
+                            value={selectedProvision}
+                            onChange={(e) => setSelectedProvision(e.target.value)}
+                            className="gw-input w-full mt-1 px-3 py-2 text-xs font-medium"
+                          >
+                            <option value="Child Psychosocial Support & Counseling">Child Psychosocial Support & Counseling</option>
+                            <option value="Temporary Protective Custody / Bahay Silungan Referral">Temporary Protective Custody / Bahay Silungan Referral</option>
+                            <option value="Medical & Psychological Evaluation Referral (QC CPU)">Medical & Psychological Evaluation Referral (QC CPU)</option>
+                            <option value="Legal Assistance Endorsement to PAO / WCPD">Legal Assistance Endorsement to PAO / WCPD</option>
+                            <option value="Special Education (SPED) / Daycare Placement Endorsement">Special Education (SPED) / Daycare Placement Endorsement</option>
+                            <option value="Comprehensive Child Protection Case Management">Comprehensive Child Protection Case Management</option>
+                          </select>
+                        </div>
+                        <div className="flex gap-3 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => setActionMode("view")}
+                            className="gw-btn-ghost flex-1 h-10 text-sm cursor-pointer"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              onApprove(app.id, selectedProvision)
+                              onClose()
+                            }}
+                            className="gw-btn-approve flex-1 h-10 text-sm cursor-pointer font-semibold"
+                            style={{ background: "var(--brick)", borderColor: "var(--brick-ink)" }}
+                          >
+                            Confirm &amp; Issue Service Order
+                          </button>
+                        </div>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-2 leading-relaxed">
-                        Approving will automatically record this grant (<strong>₱5,000 Fixed Financial Aid</strong>) for <strong>{(app as any).supportCategory || "Child Welfare Assistance"}</strong> to <strong>Financial Aid Disbursement</strong> and connect to <strong>Appointments</strong> for payout scheduling.
-                      </p>
-                    </div>
-                    <div className="flex gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setActionMode("view")}
-                        className="gw-btn-ghost flex-1 h-10 text-sm cursor-pointer"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          onApprove(app.id, "5000")
-                          onClose()
-                        }}
-                        className="gw-btn-approve flex-1 h-10 text-sm cursor-pointer font-semibold"
-                      >
-                        Confirm Approval &amp; Forward (₱5,000)
-                      </button>
-                    </div>
-                  </div>
+                    )
+                  })()
                 )
               )}
 
@@ -2458,9 +2480,9 @@ function DetailedView({ app, onClose, onApprove, onReject, allSubmissions }: Det
                   <strong className="gw-mono">ID number:</strong> {app.assignedIdNumber}
                 </p>
               )}
-              {!isSoloParent(app) && app.approvedAmount && (
+              {!isSoloParent(app) && (
                 <p className="text-sm mt-2" style={{ color: "var(--forest-ink)" }}>
-                  <strong>Approved amount:</strong> ₱{app.approvedAmount}
+                  <strong>Authorized Service Provision:</strong> {(app as any).serviceProvision || (app as any).service_provision || (app as any).supportCategory || "Child Psychosocial Support & Protective Intervention"}
                 </p>
               )}
               {app.notes && (
@@ -2586,7 +2608,7 @@ export default function SoloParentChildWelfareAdmin() {
         const localChild = JSON.parse(localStorage.getItem("child_welfare_applications") || "[]")
         const nextChild = localChild.map((a: any) =>
           a.id === app.id || (targetRef && a.referenceNumber === targetRef)
-            ? { ...a, status: "approved", approved_amount: value, approved_by: "Social Worker Staff", updated_at: approvedDate, approved_date: approvedDate, approvedDate, submittedAt: a.submittedAt || a.created_at || approvedDate }
+            ? { ...a, status: "approved", serviceProvision: value, service_provision: value, approved_by: "Social Worker Staff", updated_at: approvedDate, approved_date: approvedDate, approvedDate, submittedAt: a.submittedAt || a.created_at || approvedDate }
             : a
         )
         localStorage.setItem("child_welfare_applications", JSON.stringify(nextChild))
@@ -2711,29 +2733,16 @@ export default function SoloParentChildWelfareAdmin() {
           })
         }
       } else {
+        const supportTitle = app.supportCategory ? `${app.supportCategory} (Child Welfare)` : "Child Welfare & Protection"
+        const serviceProvisionName = value || "Child Psychosocial Support & Protective Case Assistance"
 
-        const grantAmount = Number(value) || 5000
-        const supportTitle = app.supportCategory ? `${app.supportCategory} (Child Welfare)` : "Child Welfare Support"
-
+        // Ensure NO financial disbursement record exists for child welfare (Non-monetary service)
         try {
           const currentDisbursements = getSavedDisbursements()
-          if (!currentDisbursements.some((d) => d.applicationRef === app.referenceNumber)) {
-            const newRecord: SyncedDisbursementRecord = {
-              id: `disb-cw-${app.referenceNumber || Date.now()}`,
-              disbursementId: `DISB-2026-${String(currentDisbursements.length + 1).padStart(4, "0")}`,
-              applicationRef: app.referenceNumber,
-              applicantName: displayName(app).toUpperCase(),
-              assistanceType: supportTitle,
-              fixedAmount: grantAmount,
-              dateApproved: new Date().toLocaleDateString("en-PH", { month: "long", day: "numeric", year: "numeric" }),
-              status: "PENDING",
-              venue: "Quezon City Hall - Social Services Development Department",
-              remarks: "Awtomatikong pumasok mula sa Child Welfare Assistance aplikasyon.",
-            }
-            saveDisbursements([newRecord, ...currentDisbursements])
-          }
+          const filtered = currentDisbursements.filter((d) => d.applicationRef !== app.referenceNumber && !d.id.startsWith("disb-cw-"))
+          saveDisbursements(filtered)
         } catch (err) {
-          console.warn("Failed saving child welfare disbursement record:", err)
+          console.warn("Failed cleaning child welfare disbursement record:", err)
         }
 
         try {
@@ -2746,18 +2755,18 @@ export default function SoloParentChildWelfareAdmin() {
               module: "Child Welfare",
               applicantName: displayName(app),
               applicant_name: displayName(app),
-              concern: supportTitle,
+              concern: `Child Protective Service Provision (${serviceProvisionName})`,
+              office_location: "Quezon City Hall - SSDD Child Protection & Counseling Center (Room 205)",
               status: "pending",
             }),
           }).catch(() => {})
         } catch {}
 
         pushUserNotification({
-          title: "Child Welfare: Approved",
-          desc: `Congratulations! Your application for ${supportTitle} has been approved and forwarded to Appointments for payout scheduling and Financial Aid Disbursement (₱${grantAmount.toLocaleString()}).`,
+          title: "Child Welfare: Approved for Service Provision",
+          desc: `Congratulations! Your request for ${supportTitle} has been approved for Protective Service Provision: ${serviceProvisionName}. Handa na ang inyong Referral & Case Intervention Plan.`,
           applicationRef: app.referenceNumber,
           assistanceType: supportTitle,
-          amount: grantAmount,
         })
       }
 

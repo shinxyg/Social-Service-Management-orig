@@ -239,6 +239,15 @@ async function initChildWelfareColumns() {
     "ALTER TABLE solo_parent_child_welfare_applications ADD COLUMN IF NOT EXISTS form_data JSONB DEFAULT '{}'::jsonb",
     "ALTER TABLE solo_parent_child_welfare_applications ADD COLUMN IF NOT EXISTS uploaded_documents JSONB DEFAULT '[]'::jsonb",
     "ALTER TABLE solo_parent_child_welfare_applications ADD COLUMN IF NOT EXISTS approved_amount VARCHAR(50)",
+    "ALTER TABLE solo_parent_child_welfare_applications ADD COLUMN IF NOT EXISTS service_type VARCHAR(255)",
+    "ALTER TABLE solo_parent_child_welfare_applications ADD COLUMN IF NOT EXISTS service_provision TEXT",
+    "ALTER TABLE solo_parent_child_welfare_applications ADD COLUMN IF NOT EXISTS protective_services JSONB DEFAULT '[]'::jsonb",
+    "ALTER TABLE solo_parent_child_welfare_applications ADD COLUMN IF NOT EXISTS intervention_plan TEXT",
+    "ALTER TABLE solo_parent_child_welfare_applications ADD COLUMN IF NOT EXISTS scsr_notes TEXT",
+    "ALTER TABLE solo_parent_child_welfare_applications ADD COLUMN IF NOT EXISTS case_worker VARCHAR(255)",
+    "ALTER TABLE solo_parent_child_welfare_applications ADD COLUMN IF NOT EXISTS service_schedule_date VARCHAR(100)",
+    "ALTER TABLE solo_parent_child_welfare_applications ADD COLUMN IF NOT EXISTS service_venue VARCHAR(255)",
+    "ALTER TABLE solo_parent_child_welfare_applications ADD COLUMN IF NOT EXISTS referral_facility VARCHAR(255)",
     "ALTER TABLE solo_parent_child_welfare_applications ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()",
     "ALTER TABLE solo_parent_child_welfare_applications ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()"
   ];
@@ -262,6 +271,8 @@ async function initChildWelfareColumns() {
 
   try {
     await db.query(columnDefs.join(';\n'));
+    // Clean up any old financial disbursement records created under child welfare (non-monetary service)
+    await db.query(`DELETE FROM financial_aid_disbursements WHERE application_ref LIKE 'CW-%' OR assistance_type ILIKE '%child welfare%'`).catch(() => {});
   } catch {}
   childColsInitialized = true;
 }
@@ -758,29 +769,65 @@ exports.getApplicationById = async (req, res) => {
 exports.updateApplicationStatus = async (req, res) => {
   try {
     const { applicationId } = req.params;
-    const { status, adminNotes, rejectionReason, approvedAmount, referenceNumber, reference_number } = req.body;
+    const {
+      status,
+      adminNotes,
+      rejectionReason,
+      serviceType,
+      service_type,
+      serviceProvision,
+      service_provision,
+      interventionPlan,
+      intervention_plan,
+      scsrNotes,
+      scsr_notes,
+      caseWorker,
+      case_worker,
+      serviceScheduleDate,
+      service_schedule_date,
+      serviceVenue,
+      service_venue,
+      referralFacility,
+      referral_facility,
+      referenceNumber,
+      reference_number
+    } = req.body;
 
     const validStatuses = [
       'pending',
       'ssdd_validation',
       'interview_scheduled',
+      'scheduled',
       'under_assessment',
+      'for_assessment',
+      'interview_conducted',
+      'for_approval',
       'approved',
-      'rejected',
-      'for_distribution',
-      'payout_scheduled',
-      'released',
+      'for_service_provision',
+      'service_delivered',
       'completed',
+      'released',
+      'rejected',
       'cancelled'
     ];
     if (!validStatuses.includes(status)) {
       return res.status(400).json({ success: false, message: 'Invalid status' });
     }
 
-    const finalAmount = status === 'approved' ? (approvedAmount || '5000') : null;
     const targetRef = referenceNumber || reference_number || applicationId;
     const cleanId = String(applicationId).replace(/^CW-/, '').trim();
-    const appBy = status === 'approved' ? (req.user?.id || 'Social Worker Admin') : null;
+    const appBy = (status === 'approved' || status === 'service_delivered' || status === 'completed')
+      ? (req.user?.id || req.user?.username || 'Social Worker / Child Protection Officer')
+      : null;
+
+    const finalServiceType = serviceType || service_type || null;
+    const finalServiceProvision = serviceProvision || service_provision || finalServiceType || 'Child Psychosocial Support & Protective Case Assistance';
+    const finalInterventionPlan = interventionPlan || intervention_plan || adminNotes || null;
+    const finalScsrNotes = scsrNotes || scsr_notes || null;
+    const finalCaseWorker = caseWorker || case_worker || appBy || 'SSDD Child Protection Social Worker';
+    const finalSchedDate = serviceScheduleDate || service_schedule_date || null;
+    const finalVenue = serviceVenue || service_venue || 'Quezon City Hall - SSDD Child Protection & Counseling Center (Room 205)';
+    const finalFacility = referralFacility || referral_facility || 'QC SSDD Child Protection Unit';
 
     let app = null;
 
@@ -790,18 +837,25 @@ exports.updateApplicationStatus = async (req, res) => {
          SET application_status = $1,
              admin_notes = COALESCE($2, admin_notes),
              rejection_reason = $3,
-             approved_by = $4,
-             approved_amount = $5,
+             approved_by = COALESCE($4, approved_by),
+             service_type = COALESCE($5, service_type),
+             service_provision = COALESCE($6, service_provision),
+             intervention_plan = COALESCE($7, intervention_plan),
+             scsr_notes = COALESCE($8, scsr_notes),
+             case_worker = COALESCE($9, case_worker),
+             service_schedule_date = COALESCE($10, service_schedule_date),
+             service_venue = COALESCE($11, service_venue),
+             referral_facility = COALESCE($12, referral_facility),
              updated_at = NOW()
          WHERE module_type = 'CHILD_WELFARE' AND (
-               reference_number = $6
-            OR reference_number = $7
-            OR reference_number = $8
-            OR id::text = $6
-            OR id::text = $8
-            OR LOWER(reference_number) = LOWER($6)
-            OR LOWER(reference_number) = LOWER($7)
-            OR LOWER(reference_number) = LOWER($8)
+               reference_number = $13
+            OR reference_number = $14
+            OR reference_number = $15
+            OR id::text = $13
+            OR id::text = $15
+            OR LOWER(reference_number) = LOWER($13)
+            OR LOWER(reference_number) = LOWER($14)
+            OR LOWER(reference_number) = LOWER($15)
          )
          RETURNING *`,
         [
@@ -809,7 +863,14 @@ exports.updateApplicationStatus = async (req, res) => {
           adminNotes || null,
           status === 'rejected' ? rejectionReason : null,
           appBy,
-          finalAmount,
+          finalServiceType,
+          finalServiceProvision,
+          finalInterventionPlan,
+          finalScsrNotes,
+          finalCaseWorker,
+          finalSchedDate,
+          finalVenue,
+          finalFacility,
           applicationId,
           targetRef,
           cleanId,
@@ -849,15 +910,14 @@ exports.updateApplicationStatus = async (req, res) => {
         const broadQ = await db.query(
           `UPDATE solo_parent_child_welfare_applications
            SET application_status = $1,
-               approved_amount = COALESCE($2, approved_amount),
                updated_at = NOW()
            WHERE module_type = 'CHILD_WELFARE' AND (
-                 reference_number ILIKE '%' || $3 || '%'
-              OR form_data->>'referenceNumber' = $3
-              OR guardian_email = $3
+                 reference_number ILIKE '%' || $2 || '%'
+              OR form_data->>'referenceNumber' = $2
+              OR guardian_email = $2
            )
            RETURNING *`,
-          [status, finalAmount, cleanId || targetRef]
+          [status, cleanId || targetRef]
         );
         if (broadQ.rows.length > 0) {
           app = broadQ.rows[0];
@@ -865,68 +925,77 @@ exports.updateApplicationStatus = async (req, res) => {
       } catch (err) {}
     }
 
-    if (status === 'approved') {
+    // Always ensure Child Welfare does NOT have entries in financial_aid_disbursements (non-monetary service)
+    if (app && app.reference_number) {
+      try {
+        await db.query('DELETE FROM financial_aid_disbursements WHERE application_ref = $1', [app.reference_number]).catch(() => {});
+      } catch (_) {}
+    }
+
+    // Connect to appointments if an interview or service provision session is scheduled
+    if (app && (status === 'interview_scheduled' || status === 'approved' || status === 'for_service_provision')) {
       try {
         const guardianName = [app.guardian_first_name, app.guardian_middle_name, app.guardian_last_name].filter(Boolean).join(' ').trim().toUpperCase() || 'GUARDIAN / BENEFICIARY';
-        const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-        const title = app.category_title ? `${app.category_title} (Child Welfare)` : 'Child Welfare Assistance';
-        const amt = Number(finalAmount) || 5000;
-
-        const disbCheck = await db.query('SELECT id FROM financial_aid_disbursements WHERE application_ref = $1', [app.reference_number]);
-        if (disbCheck.rows.length === 0) {
-          await db.query(
-            `INSERT INTO financial_aid_disbursements (
-              disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
-              date_approved, status, venue, remarks
-            ) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', $7, $8)
-            ON CONFLICT DO NOTHING`,
-            [
-              disbId,
-              app.reference_number,
-              guardianName,
-              title,
-              amt,
-              new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
-              'Quezon City Hall - SSDD Child Welfare Section',
-              'Approved Child Welfare financial grant. Ready for Appointment scheduling and payout.',
-            ]
-          );
-        } else {
-          await db.query(
-            `UPDATE financial_aid_disbursements
-             SET fixed_amount = $1, applicant_name = $2, assistance_type = $3, updated_at = NOW()
-             WHERE application_ref = $4`,
-            [amt, guardianName, title, app.reference_number]
-          );
-        }
+        const title = app.category_title ? `${app.category_title} (Child Welfare & Protection)` : 'Child Welfare & Protective Services';
+        const concernLabel = status === 'interview_scheduled'
+          ? 'Child Welfare Intake & Safety Assessment Interview'
+          : `Child Protective Service Provision (${finalServiceProvision || 'Psychosocial Support'})`;
 
         const apptCheck = await db.query('SELECT id FROM appointments WHERE reference_no = $1', [app.reference_number]);
         if (apptCheck.rows.length === 0) {
           await db.query(
             `INSERT INTO appointments (reference_no, module, applicant_name, concern, status, office_location, notes)
-             VALUES ($1, 'Child Welfare', $2, $3, 'pending', 'Quezon City Hall - SSDD Child Welfare Section', 'Approved grant payout scheduling.')
+             VALUES ($1, 'Child Welfare', $2, $3, 'pending', $4, $5)
              ON CONFLICT DO NOTHING`,
-            [app.reference_number, guardianName, title]
+            [
+              app.reference_number,
+              guardianName,
+              concernLabel,
+              finalVenue,
+              `Protective Service Provision for ${app.child_name || 'beneficiary child'}.`,
+            ]
+          );
+        } else {
+          await db.query(
+            `UPDATE appointments
+             SET concern = $1, office_location = $2, updated_at = NOW()
+             WHERE reference_no = $3`,
+            [concernLabel, finalVenue, app.reference_number]
           );
         }
       } catch (syncErr) {
-        console.warn('[Child Welfare Approval Sync Warning]:', syncErr.message);
+        console.warn('[Child Welfare Appointment Sync Warning]:', syncErr.message);
       }
     } else if (status === 'rejected' && app) {
       try {
-        await db.query('DELETE FROM financial_aid_disbursements WHERE application_ref = $1', [app.reference_number]).catch(() => {});
         await db.query('DELETE FROM appointments WHERE reference_no = $1', [app.reference_number]).catch(() => {});
       } catch (_) {}
     }
 
+    // Notifications (Non-monetary protective service notice)
     if (app) {
       try {
         const notifUserId = app.user_id || app.reference_number;
-        const isApproved = status === 'approved';
-        const notifTitle = isApproved ? 'Child Welfare Application: Approved' : 'Child Welfare Application: Not Approved';
-        const notifDesc = isApproved
-          ? `Congratulations! Your application for ${app.category_title || 'Child Welfare Assistance'} (Ref: ${app.reference_number}) has been approved for ₱${finalAmount || 5000} financial grant.`
-          : `Child Welfare Assistance: ${rejectionReason || 'Not approved'} (Ref: ${app.reference_number})`;
+        const programTitle = app.category_title || 'Child Welfare & Protection';
+        let notifTitle = 'Child Welfare Application Update';
+        let notifDesc = `Your Child Welfare application (Ref: ${app.reference_number}) status is updated to ${status}.`;
+
+        if (status === 'approved' || status === 'for_service_provision') {
+          notifTitle = 'Child Welfare: Approved for Service Provision';
+          notifDesc = `Congratulations! Your request for ${programTitle} (Ref: ${app.reference_number}) has been approved for Protective Service Provision: ${finalServiceProvision}. Handa na ang inyong Referral & Case Intervention Plan.`;
+        } else if (status === 'interview_scheduled' || status === 'scheduled') {
+          notifTitle = 'Child Welfare: Interview & Assessment Scheduled';
+          notifDesc = `Nakatakda ang inyong Intake Interview at Case Assessment para kay ${app.child_name || 'bata'} sa ${finalVenue}.`;
+        } else if (status === 'under_assessment') {
+          notifTitle = 'Child Welfare: Under Case Assessment';
+          notifDesc = `Naisagawa na ang panayam para kay ${app.child_name || 'bata'}. Kasalukuyang inihahanda ang Social Case Study Report (SCSR).`;
+        } else if (status === 'service_delivered' || status === 'completed' || status === 'released') {
+          notifTitle = 'Child Welfare: Service Provision Completed';
+          notifDesc = `Matagumpay na naipagkaloob ang Child Protective Intervention (${finalServiceProvision}) para kay ${app.child_name || 'bata'}.`;
+        } else if (status === 'rejected') {
+          notifTitle = 'Child Welfare: Application Status Update';
+          notifDesc = `Child Welfare (${programTitle}): ${rejectionReason || 'Case not endorsed'} (Ref: ${app.reference_number})`;
+        }
 
         await db.query(
           `INSERT INTO user_notifications (user_id, title, description, application_ref, is_read, is_dismissed, created_at)

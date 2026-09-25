@@ -423,7 +423,7 @@ exports.getNotifications = async (req, res) => {
                 id: notifId,
                 title: isApproved ? `Child Welfare (${programName}): Approved` : `Child Welfare (${programName}): Not Approved`,
                 desc: isApproved
-                  ? `Congratulations! Your application for ${programName} (Ref: ${app.reference_number}) has been approved for ₱${(Number(app.approved_amount) || 5000).toLocaleString()} financial grant.`
+                  ? `Congratulations! Your request for ${programName} (Ref: ${app.reference_number}) has been approved for Protective Service Provision & Case Assistance.`
                   : `Child Welfare (${programName}): ${app.rejection_reason || 'Not approved'} (Ref: ${app.reference_number})`,
                 time: formatManilaTime(appDate),
                 unread: userStateMap[notifId]?.is_read !== undefined ? !userStateMap[notifId].is_read : true,
