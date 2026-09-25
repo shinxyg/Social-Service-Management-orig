@@ -923,10 +923,7 @@ export default function Appointments() {
                   const isReferredDecision = rawStatus === 'referred' || cached?.decision === 'referred' || cached?.status === 'referred'
                   const isRejectedDecision = rawStatus === 'rejected' || cached?.decision === 'rejected' || cached?.status === 'rejected'
 
-                  if (!hasDate) {
-                    statusVal = 'pending'
-                    cachedDecision = undefined
-                  } else if (isApprovedDecision) {
+                  if (isApprovedDecision) {
                     statusVal = 'approved'
                     cachedDecision = 'approved'
                   } else if (isReferredDecision) {
@@ -935,8 +932,11 @@ export default function Appointments() {
                   } else if (isRejectedDecision) {
                     statusVal = 'rejected'
                     cachedDecision = 'rejected'
-                  } else {
+                  } else if (hasDate) {
                     statusVal = 'scheduled'
+                    cachedDecision = undefined
+                  } else {
+                    statusVal = 'pending'
                     cachedDecision = undefined
                   }
 
@@ -997,10 +997,7 @@ export default function Appointments() {
                 let apptStatus: AppointmentStatus = 'pending'
                 let cachedDecision: ("approved" | "referred" | "rejected" | undefined) = undefined
 
-                if (!hasDate) {
-                  apptStatus = 'pending'
-                  cachedDecision = undefined
-                } else if (rawAppStatus === 'approved' || rawAppStatus === 'completed' || cached?.decision === 'approved') {
+                if (rawAppStatus === 'approved' || rawAppStatus === 'completed' || cached?.decision === 'approved') {
                   apptStatus = 'approved'
                   cachedDecision = 'approved'
                 } else if (rawAppStatus === 'for_referral' || rawAppStatus === 'referred' || cached?.decision === 'referred') {
@@ -1009,8 +1006,11 @@ export default function Appointments() {
                 } else if (rawAppStatus === 'rejected' || cached?.decision === 'rejected') {
                   apptStatus = 'rejected'
                   cachedDecision = 'rejected'
-                } else {
+                } else if (hasDate) {
                   apptStatus = 'scheduled'
+                } else {
+                  apptStatus = 'pending'
+                  cachedDecision = undefined
                 }
 
                 appts.push({
