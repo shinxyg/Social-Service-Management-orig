@@ -375,7 +375,14 @@ exports.getDisbursements = async (req, res) => {
       const approvedAppts = await db.query(
         `SELECT id, reference_no, module, applicant_name, concern, scheduled_date, scheduled_time, office_location, notes, created_at, updated_at
          FROM appointments
-         WHERE status = 'approved'`
+         WHERE status = 'approved'
+           AND module != 'Child Welfare'
+           AND concern NOT ILIKE '%intake%'
+           AND concern NOT ILIKE '%assessment%'
+           AND concern NOT ILIKE '%interview%'
+           AND concern NOT ILIKE '%protective%'
+           AND concern NOT ILIKE '%custody%'
+           AND concern NOT ILIKE '%silungan%'`
       );
       for (const appt of approvedAppts.rows) {
         const ref = String(appt.reference_no || '').trim();
@@ -551,6 +558,14 @@ exports.getDisbursements = async (req, res) => {
            f.assistance_type ILIKE '%Senior%' 
            AND f.application_ref NOT IN (SELECT reference_number FROM pwd_senior_applications WHERE category ILIKE '%senior%' AND reference_number IS NOT NULL)
          )
+         AND NOT (
+           f.assistance_type ILIKE '%Intake%'
+           OR f.assistance_type ILIKE '%Assessment%'
+           OR f.assistance_type ILIKE '%Interview%'
+           OR f.assistance_type ILIKE '%Protective%'
+           OR f.assistance_type ILIKE '%Custody%'
+           OR f.assistance_type ILIKE '%Silungan%'
+         )
        ORDER BY f.created_at DESC`
     );
 
@@ -611,12 +626,15 @@ exports.cleanupOrphanDisbursements = async (req, res) => {
   try {
     const result = await db.query(`
       DELETE FROM financial_aid_disbursements
-      WHERE application_ref NOT IN (
-        SELECT reference_no FROM aics_applications WHERE status IN ('approved', 'completed', 'for_release')
-      )
+      WHERE assistance_type ILIKE '%Intake%'
+         OR assistance_type ILIKE '%Assessment%'
+         OR assistance_type ILIKE '%Interview%'
+         OR assistance_type ILIKE '%Protective%'
+         OR assistance_type ILIKE '%Custody%'
+         OR assistance_type ILIKE '%Silungan%'
       RETURNING *
     `);
-    res.json({ message: 'Cleaned orphan records.', deletedCount: result.rowCount });
+    res.json({ message: 'Cleaned non-monetary records.', deletedCount: result.rowCount });
   } catch (err) {
     console.error('Error cleaning disbursements:', err);
     res.status(500).json({ error: 'Failed to clean disbursements.' });

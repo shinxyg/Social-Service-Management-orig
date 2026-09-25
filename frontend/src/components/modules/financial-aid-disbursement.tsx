@@ -936,7 +936,9 @@ export default function FinancialAidDisbursement() {
             const cwApps = Array.isArray(dataCw.applications) ? dataCw.applications : []
             const approvedCw = cwApps.filter((c: any) => {
               const st = String(c.application_status || c.status).toLowerCase()
-              return st === "approved" || st === "for_release" || st === "released" || st === "completed"
+              const categoryTitle = String(c.category_title || c.service || "").toLowerCase()
+              const isNonMonetary = categoryTitle.includes("interview") || categoryTitle.includes("assessment") || categoryTitle.includes("intake") || categoryTitle.includes("custody") || categoryTitle.includes("silungan") || categoryTitle.includes("protection")
+              return (st === "approved" || st === "for_release" || st === "released" || st === "completed") && !isNonMonetary
             })
             approvedCw.forEach((c: any) => {
               const ref = c.reference_number || `CW-2026-${c.id}`
@@ -1005,14 +1007,20 @@ export default function FinancialAidDisbursement() {
             if (!remoteRecords.some((rr) => rr.applicationRef === ref)) {
               const fullName = extractSoloParentName(s)
               const isReleased = String(s.status || "").toLowerCase() === "released" || String(s.status || "").toLowerCase() === "completed"
-              const type = "Solo Parent Financial Subsidy"
+              const isEdu =
+                Boolean(s.isEducational || s.isEdu) ||
+                String(s.service || s.service_name || s.application_type || s.type || "").toLowerCase().includes("educational") ||
+                String(ref).toUpperCase().includes("SP-EDU")
+              const type = isEdu ? "Solo Parent Educational Assistance" : "Solo Parent Financial Subsidy"
+              const amount = isEdu ? 5000 : 3000
+
               remoteRecords.push({
                 id: idStr,
                 disbursementId: disbId,
                 applicationRef: ref,
                 applicantName: fullName,
                 assistanceType: type,
-                fixedAmount: resolveFixedAmount(type),
+                fixedAmount: amount,
                 dateApproved: new Date(s.approvedDate || s.submittedAt || Date.now()).toLocaleDateString("en-PH", {
                   month: "short",
                   day: "numeric",
@@ -1020,7 +1028,9 @@ export default function FinancialAidDisbursement() {
                 }),
                 status: isReleased ? ("RELEASED" as DisbursementStage) : ("PENDING" as DisbursementStage),
                 venue: "Quezon City Hall - SSDD Solo Parent Welfare Section",
-                remarks: "Automatically generated from Solo Parent Financial Subsidy application.",
+                remarks: isEdu
+                  ? "Awtomatikong pumasok mula sa Solo Parent Educational Assistance (₱5,000.00 Annual Grant) para sa payout release."
+                  : "Automatically generated from Solo Parent Financial Subsidy application.",
               })
             }
           })
@@ -1037,13 +1047,19 @@ export default function FinancialAidDisbursement() {
                 const disbId = `DISB-2026-${String(ref).slice(-4).padStart(4, "0")}`
                 if (deletedKeys.has(ref) || deletedKeys.has(idStr) || deletedKeys.has(disbId)) return
                 if (!remoteRecords.some((rr) => rr.applicationRef === ref)) {
+                  const isEdu =
+                    String(a.concern || "").toLowerCase().includes("educational") ||
+                    String(ref).toUpperCase().includes("SP-EDU")
+                  const type = isEdu ? "Solo Parent Educational Assistance" : "Solo Parent Financial Subsidy"
+                  const amount = isEdu ? 5000 : 3000
+
                   remoteRecords.push({
                     id: idStr,
                     disbursementId: disbId,
                     applicationRef: ref,
                     applicantName: String(a.applicantName || "JEFFERSON FERNANDO LEE").toUpperCase(),
-                    assistanceType: "Solo Parent Financial Subsidy",
-                    fixedAmount: resolveFixedAmount("Solo Parent Financial Subsidy"),
+                    assistanceType: type,
+                    fixedAmount: amount,
                     dateApproved: new Date(a.submittedAt || Date.now()).toLocaleDateString("en-PH", {
                       month: "short",
                       day: "numeric",
@@ -1053,7 +1069,7 @@ export default function FinancialAidDisbursement() {
                     appointmentDate: a.scheduledDate,
                     appointmentTime: a.scheduledTime,
                     venue: a.officeLocation || "Quezon City Hall - SSDD Solo Parent Welfare Section",
-                    remarks: a.notes || "Approved Solo Parent Financial Subsidy.",
+                    remarks: a.notes || (isEdu ? "Approved Solo Parent Educational Assistance." : "Approved Solo Parent Financial Subsidy."),
                   })
                 }
               }
