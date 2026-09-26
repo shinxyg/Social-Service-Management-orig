@@ -464,8 +464,14 @@ exports.updateApplicationStatus = async (req, res) => {
     let certificateType = app.certificate_type || null;
     const assistanceLower = (app.assistance_type || '').toLowerCase();
     if (['approved', 'completed', 'initial_approved', 'waiting_approval'].includes(normalizedStatus)) {
-      if (assistanceLower.includes('medicine') || assistanceLower.includes('gamot') || assistanceLower.includes('medical medicine')) {
-        certificateType = 'Medicine Certificate / Voucher';
+      if (
+        assistanceLower.includes('medicine') ||
+        assistanceLower.includes('gamot') ||
+        assistanceLower.includes('medical medicine') ||
+        assistanceLower.includes('medical assistance') ||
+        assistanceLower.includes('prescription')
+      ) {
+        certificateType = 'Medicine Gift Certificate / Voucher';
       } else {
         certificateType = 'Guarantee Letter (Hospital/Medical Bill)';
       }
@@ -554,8 +560,8 @@ exports.updateApplicationStatus = async (req, res) => {
         [app.reference_no]
       );
 
-      const certMsg = certificateType === 'Medicine Certificate / Voucher'
-        ? 'Maaari niyo nang i-download ang inyong Medicine Voucher / Certificate sa User Portal.'
+      const certMsg = String(certificateType).includes('Medicine')
+        ? 'Maaari niyo nang i-download ang inyong Medicine Gift Certificate / Voucher sa User Portal.'
         : 'Maaari niyo nang i-download at i-print ang inyong Official Guarantee Letter sa User Portal.';
 
       await sendUserNotification(
