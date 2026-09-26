@@ -425,13 +425,6 @@ exports.getDocumentFile = async (req, res) => {
 };
 
 // 6. Update Application Status (Admin Action Workflow)
-// Workflow steps:
-// a) 'initial_approved': Moves application to Appointments module (status: pending appointment). Keeps history in user portal.
-// b) 'approved' (in Appointment): Generates Guarantee Letter / Certificate (Medical Medicine vs Medical Bill), moves record to Financial Aid Payout module.
-// c) 'rejected': Rejects application with reason, sends user notification.
-// d) 'referred': Refers application to another agency/department.
-// e) 'payout_scheduled': Admin sets payout date, time, venue in Financial Aid module.
-// f) 'released': Payout cash released to user.
 exports.updateApplicationStatus = async (req, res) => {
   const client = await db.connect();
   try {
@@ -448,8 +441,14 @@ exports.updateApplicationStatus = async (req, res) => {
       adminName,
     } = req.body;
 
-    // Fetch existing application
-    const appRes = await client.query('SELECT * FROM aics_applications WHERE id = $1 OR reference_no = $1', [id]);
+    const targetIdStr = String(id || '').trim();
+
+    // Fetch existing application safely (casting id to VARCHAR to avoid integer out of range 500 error)
+    const appRes = await client.query(
+      'SELECT * FROM aics_applications WHERE reference_no = $1 OR CAST(id AS VARCHAR) = $1 OR qc_id = $1',
+      [targetIdStr]
+    );
+
     if (appRes.rows.length === 0) {
       await client.query('ROLLBACK');
       return res.status(404).json({ error: 'AICS application not found' });
@@ -459,10 +458,12 @@ exports.updateApplicationStatus = async (req, res) => {
     const applicantFullName = `${app.first_name || ''} ${app.middle_name || ''} ${app.last_name || ''} ${app.suffix || ''}`.replace(/\s+/g, ' ').trim();
     const userIdentifier = app.qc_id || app.email || app.reference_no;
 
+    const normalizedStatus = String(status || '').toLowerCase();
+
     // Determine Certificate Type based on assistance type if approving
     let certificateType = app.certificate_type || null;
     const assistanceLower = (app.assistance_type || '').toLowerCase();
-    if (status === 'approved' || status === 'initial_approved') {
+    if (['approved', 'completed', 'initial_approved', 'waiting_approval'].includes(normalizedStatus)) {
       if (assistanceLower.includes('medicine') || assistanceLower.includes('gamot') || assistanceLower.includes('medical medicine')) {
         certificateType = 'Medicine Certificate / Voucher';
       } else {
@@ -501,8 +502,8 @@ exports.updateApplicationStatus = async (req, res) => {
 
     // --- WORKFLOW BRANCHES ---
 
-    // 1. INITIAL APPROVAL -> Transfer to Appointments module
-    if (status === 'initial_approved') {
+    // 1. INITIAL APPROVAL / PRE-APPROVAL -> Transfer to Appointments module
+    if (['initial_approved', 'waiting_approval', 'for_screening', 'scheduled'].includes(normalizedStatus)) {
       // Create or update appointment record
       await client.query(
         `INSERT INTO appointments (
@@ -521,7 +522,7 @@ exports.updateApplicationStatus = async (req, res) => {
     }
 
     // 2. SOCIAL WORKER FINAL APPROVAL -> Transfer to Financial Aid / Payout Module
-    else if (status === 'approved') {
+    else if (['approved', 'completed'].includes(normalizedStatus)) {
       const disbId = `DISB-AICS-${app.id}-${Date.now().toString().slice(-4)}`;
       const disbAmount = amount ? parseFloat(amount) : (app.amount && parseFloat(app.amount) > 0 ? parseFloat(app.amount) : 5000.00);
 
@@ -565,8 +566,8 @@ exports.updateApplicationStatus = async (req, res) => {
       );
     }
 
-    // 3. REJECTED
-    else if (status === 'rejected') {
+    // 3. REJECTED / DENIED
+    else if (['rejected', 'denied'].includes(normalizedStatus)) {
       await client.query(
         `UPDATE appointments SET status = 'rejected', updated_at = NOW() WHERE reference_no = $1 AND module = 'AICS'`,
         [app.reference_no]
@@ -582,7 +583,7 @@ exports.updateApplicationStatus = async (req, res) => {
     }
 
     // 4. REFERRED
-    else if (status === 'referred') {
+    else if (['referred', 'for_referral'].includes(normalizedStatus)) {
       await client.query(
         `UPDATE appointments SET status = 'referred', updated_at = NOW() WHERE reference_no = $1 AND module = 'AICS'`,
         [app.reference_no]
