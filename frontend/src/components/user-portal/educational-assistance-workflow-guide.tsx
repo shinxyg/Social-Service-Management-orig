@@ -425,8 +425,11 @@ export const EducationalAssistanceWorkflowGuide: React.FC<WorkflowGuideProps> = 
                   <li>• <strong>Lugar:</strong> Quezon City Hall Main Amphitheater / SSDD Center</li>
                   <li>• <strong>Dadalhin:</strong> School Enrollment Cert, Student ID, Parent's QCID, Ballpen.</li>
                 </ul>
-                <div className="text-[11px] text-slate-500 dark:text-slate-400 pt-1 border-t border-purple-100 dark:border-purple-900/50">
-                  📲 SMS / Notice: Nakatanggap ang Magulang ng SMS confirmation ng Payout Date at Venue.
+                <div className="text-[11px] text-purple-900 dark:text-purple-200 font-semibold pt-1 border-t border-purple-100 dark:border-purple-900/50">
+                  📄 <strong>My Applications:</strong> May banner notice: <em>"Educational Payout Scheduled sa QC Hall sa Oktubre 20!"</em>
+                </div>
+                <div className="text-[11px] text-slate-500 dark:text-slate-400 pt-1">
+                  📲 <strong>SMS / Notification:</strong> Nakatanggap ang Magulang ng SMS confirmation ng Payout Date at Venue.
                 </div>
               </div>
             </div>
