@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import SoloParentApplicationWizard from "./solo-parent-wizard"
 import ChildWelfareApplicationWizard, { getLocalizedChildWelfarePrograms } from "./child-welfare-wizard"
+import { EducationalAssistanceWorkflowGuide } from "./educational-assistance-workflow-guide"
 import { useLanguage } from "../ui/language-context"
 import { API_BASE, getAuthHeaders } from "../../config/api"
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
@@ -432,6 +433,7 @@ export default function ApplySoloParent() {
   const [currentStep, setCurrentStep] = useState(1)
   const [cwSubmissionStage, setCwSubmissionStage] = useState<"form" | "matching" | "pending">("form")
   const [spSubmissionStage, setSpSubmissionStage] = useState<"form" | "matching" | "pending">("form")
+  const [showWorkflowModal, setShowWorkflowModal] = useState<boolean>(false)
 
   const [bypassedBlock, setBypassedBlock] = useState(() => {
     try {
@@ -625,6 +627,33 @@ export default function ApplySoloParent() {
                     {language === "en" ? program.descEn : program.desc}
                   </p>
 
+                  {/* 7-Step Process Workflow Strip */}
+                  <div className="p-3 bg-gradient-to-br from-slate-50 to-blue-50/40 dark:from-slate-950 dark:to-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5 font-extrabold text-[11px] text-slate-800 dark:text-slate-200">
+                        <Info className="w-3.5 h-3.5 text-blue-600 dark:text-sky-400" />
+                        <span>7-Step Process Workflow:</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setShowWorkflowModal(true)}
+                        className="text-[11px] font-extrabold text-blue-700 dark:text-sky-400 hover:text-blue-900 dark:hover:text-sky-300 cursor-pointer underline flex items-center gap-1"
+                      >
+                        <span>Tingnan ang 7 Hakbang</span>
+                      </button>
+                    </div>
+
+                    <div className="flex flex-wrap gap-1 text-[10px] font-bold">
+                      <span className="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-200">1. Submit</span>
+                      <span className="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200">2. SSDD Validation</span>
+                      <span className="px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-200">3. Assessment Schedule</span>
+                      <span className="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-200">4. Intake Interview</span>
+                      <span className="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200">5. Qualified</span>
+                      <span className="px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-200">6. For Distribution</span>
+                      <span className="px-2 py-0.5 rounded bg-emerald-600 text-white">7. Received</span>
+                    </div>
+                  </div>
+
                   {/* Status Badges */}
                   {isApproved && (
                     <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-900 dark:text-emerald-200 text-xs space-y-1">
@@ -696,6 +725,17 @@ export default function ApplySoloParent() {
             )
           })}
         </div>
+
+        {/* 7-Step Workflow Guide Modal */}
+        {showWorkflowModal && (
+          <EducationalAssistanceWorkflowGuide
+            language={language as any}
+            isModal
+            onClose={() => setShowWorkflowModal(false)}
+          />
+        )}
+      </div>
+    )
       </div>
     )
   }

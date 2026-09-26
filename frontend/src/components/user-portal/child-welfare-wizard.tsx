@@ -22,6 +22,7 @@ import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils
 import { API_BASE, getAuthHeaders, getAuthToken } from "../../config/api"
 import { readFileAsDataUrl } from "../../utils/fileUpload"
 import DocumentCameraModal from "../ui/document-camera-modal"
+import { EducationalAssistanceWorkflowGuide } from "./educational-assistance-workflow-guide"
 
 function generateReference(qcid?: string) {
   if (qcid && qcid.trim() && qcid.startsWith("CW-")) return qcid.trim()
@@ -758,6 +759,7 @@ export default function ChildWelfareApplicationWizard({
   const [cameraDoc, setCameraDoc] = useState<{ id: string; label: string } | null>(null)
   const [previewDocModal, setPreviewDocModal] = useState<{ title: string; file: File } | null>(null)
   const [showConfirmModal, setShowConfirmModal] = useState(false)
+  const [showWorkflowModal, setShowWorkflowModal] = useState(false)
 
   const currentPrograms = getLocalizedChildWelfarePrograms(language)
 
@@ -1512,20 +1514,31 @@ export default function ChildWelfareApplicationWizard({
           {/* STEP 1: Checklist, Sector, Assistance Type */}
           {step === 1 && (
             <div className="space-y-6">
-              <div className="flex items-start gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
-                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-600" />
-                <div>
-                  <p className="text-sm font-semibold text-blue-900 uppercase">
-                    {selectedProgram.title.toUpperCase()} — PRIMARY REQUIREMENTS
-                  </p>
-                  <p className="text-xs text-blue-700 mt-0.5">
-                    {language === "tl"
-                      ? "Kumpletuhin ang mga pangunahing kwalipikasyon sa ibaba at ihanda ang mga kaukulang dokumento upang makapagpatuloy sa inyong aplikasyon."
-                      : language === "bis"
-                      ? "Kompletoha ang mga nag-unang kwalipikasyon sa ubos ug andama ang mga gikinahanglang dokumento aron makapadayon sa aplikasyon."
-                      : "Complete the primary qualification questions below and prepare the required documents to proceed with your application."}
-                  </p>
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 p-4 rounded-xl bg-blue-50 border border-blue-200">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-4 w-4 shrink-0 mt-0.5 text-blue-600" />
+                  <div>
+                    <p className="text-sm font-semibold text-blue-900 uppercase">
+                      {selectedProgram.title.toUpperCase()} — PRIMARY REQUIREMENTS
+                    </p>
+                    <p className="text-xs text-blue-700 mt-0.5">
+                      {language === "tl"
+                        ? "Kumpletuhin ang mga pangunahing kwalipikasyon sa ibaba at ihanda ang mga kaukulang dokumento upang makapagpatuloy sa inyong aplikasyon."
+                        : language === "bis"
+                        ? "Kompletoha ang mga nag-unang kwalipikasyon sa ubos ug andama ang mga gikinahanglang dokumento aron makapadayon sa aplikasyon."
+                        : "Complete the primary qualification questions below and prepare the required documents to proceed with your application."}
+                    </p>
+                  </div>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => setShowWorkflowModal(true)}
+                  className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs tracking-wide shrink-0 transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer uppercase"
+                >
+                  <Info className="w-3.5 h-3.5" />
+                  <span>Tingnan ang 7 Hakbang ng Proseso</span>
+                </button>
               </div>
 
               <div>
@@ -2660,6 +2673,14 @@ export default function ChildWelfareApplicationWizard({
           handleSubmit()
         }}
       />
+
+      {showWorkflowModal && (
+        <EducationalAssistanceWorkflowGuide
+          language={language as any}
+          isModal
+          onClose={() => setShowWorkflowModal(false)}
+        />
+      )}
     </div>
   )
 }
