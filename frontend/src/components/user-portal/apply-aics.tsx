@@ -2931,6 +2931,53 @@ const handleFinalSubmit = async () => {
       )
     }
 
+    const statusInfo = (() => {
+      const s = String(appStatus || "pending").toLowerCase()
+      if (s === "approved_by_admin" || s === "initial_approved" || s === "waiting_approval") {
+        return {
+          badge: "🟢 Approved by Admin",
+          title: "Approved by Admin — Queueing for Scheduling",
+          desc: "Napatunayan at na-approve na ng Admin ang inyong mga dokumento. Nakalinya na ito para sa pagtatakda ng interview schedule.",
+          statusLabel: "Approved by Admin",
+          badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30",
+        }
+      }
+      if (s === "scheduling" || s === "scheduled") {
+        return {
+          badge: "🔵 Scheduling / Interview Scheduled",
+          title: "Interview Scheduled",
+          desc: "Naitakda na ang inyong interview appointment schedule. Mangyaring humarap sa Social Worker sa nakatakdang araw.",
+          statusLabel: "Scheduling",
+          badgeColor: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-500/15 dark:text-blue-300 dark:border-blue-500/30",
+        }
+      }
+      if (s === "under_review" || s === "under_assessment") {
+        return {
+          badge: "🔵 Under Review & Case Assessment",
+          title: "Case Assessment Under Review",
+          desc: "Kasalukuyang sinusuri ng Social Worker ang inyong case assessment at mga dokumento.",
+          statusLabel: "Under Review",
+          badgeColor: "bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-500/15 dark:text-indigo-300 dark:border-indigo-500/30",
+        }
+      }
+      if (s === "approved" || s === "completed") {
+        return {
+          badge: "🟢 Approved — Waiting for Release GL / Certificate",
+          title: "Approved — Waiting for Release GL / Certificate",
+          desc: "Opisyal nang na-approve ang inyong aplikasyon. Inihahanda na ang inyong Medicine Gift Certificate / Guarantee Letter para sa releasing.",
+          statusLabel: "Waiting for Release GL / Certificate",
+          badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:border-emerald-500/30",
+        }
+      }
+      return {
+        badge: "🟡 Pending Initial Verification",
+        title: "Application Submitted — Pending Verification",
+        desc: `Naisumite na ang inyong aplikasyon para sa ${type}. Sinusuri ng Admin ang inyong mga dokumento bago itakda ang inyong interview schedule.`,
+        statusLabel: "Pending",
+        badgeColor: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30",
+      }
+    })()
+
     return (
       <div className="max-w-xl mx-auto p-4 md:p-6 animate-in fade-in duration-300">
         <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 md:p-8 text-center shadow-lg space-y-6">
@@ -2939,14 +2986,14 @@ const handleFinalSubmit = async () => {
           </div>
 
           <div className="space-y-2">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30">
-              <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" /> Pending Schedule
+            <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border ${statusInfo.badgeColor}`}>
+              <Clock className="w-3.5 h-3.5" /> {statusInfo.badge}
             </span>
             <h2 className="text-2xl font-bold text-slate-900 dark:text-white">
-              Application Submitted — Pending Schedule
+              {statusInfo.title}
             </h2>
             <p className="text-sm text-slate-600 dark:text-slate-400 max-w-md mx-auto">
-              Your application for {type} has been submitted. Please wait while the Social Worker evaluates your documents and assigns your interview schedule.
+              {statusInfo.desc}
             </p>
           </div>
 
@@ -2971,8 +3018,8 @@ const handleFinalSubmit = async () => {
             </div>
             <div className="flex justify-between items-center text-xs pt-0.5">
               <span className="text-slate-500 dark:text-slate-400">Status</span>
-              <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30">
-                Pending Schedule
+              <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${statusInfo.badgeColor}`}>
+                {statusInfo.statusLabel}
               </span>
             </div>
           </div>
