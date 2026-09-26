@@ -24,9 +24,12 @@ import { readFileAsDataUrl } from "../../utils/fileUpload"
 import DocumentCameraModal from "../ui/document-camera-modal"
 import { EducationalAssistanceWorkflowGuide } from "./educational-assistance-workflow-guide"
 
-function generateReference(qcid?: string) {
+function generateReference(qcid?: string, programKey?: string) {
   if (qcid && qcid.trim() && qcid.startsWith("CW-")) return qcid.trim()
   const randomDigits = Math.floor(1000 + Math.random() * 9000)
+  if (programKey === "educational-assistance") {
+    return `CW-EDU-2026-${randomDigits}`
+  }
   return `CW-2026-${randomDigits}`
 }
 
@@ -1106,7 +1109,7 @@ export default function ChildWelfareApplicationWizard({
   }
 
   const handleSubmit = async () => {
-    const ref = generateReference(userProfile?.qcidNo || formData.parentQcid)
+    const ref = generateReference(userProfile?.qcidNo || formData.parentQcid, selectedProgram?.key)
     setReference(ref)
     setShowConfirmModal(false)
     setSubmissionStage("pending")

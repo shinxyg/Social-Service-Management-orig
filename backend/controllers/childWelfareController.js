@@ -201,9 +201,12 @@ function sanitizeAppRow(row) {
   return stripLargeDataUrls(cleanRow);
 }
 
-function generateReference(qcid) {
+function generateReference(qcid, programKey) {
   if (qcid && String(qcid).trim() && String(qcid).startsWith('CW-')) return String(qcid).trim();
   const randomDigits = Math.floor(1000 + Math.random() * 9000);
+  if (String(programKey || '').toLowerCase().includes('educational')) {
+    return `CW-EDU-2026-${randomDigits}`;
+  }
   return `CW-2026-${randomDigits}`;
 }
 

@@ -602,18 +602,18 @@ export default function ApplySoloParent() {
             return (
               <div
                 key={program.id}
-                className={`bg-white dark:bg-slate-900 rounded-xl border shadow-md hover:shadow-lg transition-all duration-200 flex flex-col justify-between overflow-hidden group ${
+                className={`bg-[#0f1f38] text-white rounded-2xl border shadow-xl hover:shadow-2xl transition-all duration-200 flex flex-col justify-between overflow-hidden group ${
                   isApproved
-                    ? "border-emerald-300 dark:border-emerald-800 ring-1 ring-emerald-400/30"
+                    ? "border-emerald-500/50 ring-1 ring-emerald-500/30"
                     : isOngoing
-                    ? "border-amber-300 dark:border-amber-800 ring-1 ring-amber-400/30"
-                    : "border-slate-200 dark:border-slate-800"
+                    ? "border-amber-500/50 ring-1 ring-amber-500/30"
+                    : "border-[#1e3a5f]"
                 }`}
               >
-                {/* Dark navy blue top banner matching Senior / PWD */}
+                {/* Dark navy blue top banner matching reference screenshot */}
                 <div
-                  className={`text-white py-3 px-4 font-bold text-center text-sm md:text-base tracking-wide select-none flex items-center justify-center gap-2 ${
-                    isApproved ? "bg-emerald-800" : isOngoing ? "bg-slate-800" : "bg-[#1e3a5f]"
+                  className={`text-white py-4 px-6 font-bold text-center text-sm md:text-base tracking-wide select-none flex items-center justify-center gap-2 ${
+                    isApproved ? "bg-emerald-800" : isOngoing ? "bg-slate-800" : "bg-[#1b3459]"
                   }`}
                 >
                   {isApproved && <CheckCircle2 className="w-4 h-4 text-emerald-300" />}
@@ -622,50 +622,50 @@ export default function ApplySoloParent() {
                 </div>
 
                 {/* Card Body */}
-                <div className="p-5 sm:p-6 flex flex-col justify-between flex-1 gap-4">
-                  <p className="text-slate-600 dark:text-slate-300 text-xs md:text-sm leading-relaxed text-justify">
+                <div className="p-6 sm:p-7 flex flex-col justify-between flex-1 gap-5 bg-[#0f1f38]">
+                  <p className="text-slate-300 text-xs md:text-sm leading-relaxed text-center font-normal px-2">
                     {language === "en" ? program.descEn : program.desc}
                   </p>
 
                   {/* 7-Step Process Workflow Strip */}
-                  <div className="p-3 bg-gradient-to-br from-slate-50 to-blue-50/40 dark:from-slate-950 dark:to-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl space-y-2">
+                  <div className="p-3 bg-[#162c4d] border border-[#23426e] rounded-xl space-y-2">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 font-extrabold text-[11px] text-slate-800 dark:text-slate-200">
-                        <Info className="w-3.5 h-3.5 text-blue-600 dark:text-sky-400" />
+                      <div className="flex items-center gap-1.5 font-extrabold text-[11px] text-sky-200">
+                        <Info className="w-3.5 h-3.5 text-sky-400" />
                         <span>7-Step Process Workflow:</span>
                       </div>
                       <button
                         type="button"
                         onClick={() => setShowWorkflowModal(true)}
-                        className="text-[11px] font-extrabold text-blue-700 dark:text-sky-400 hover:text-blue-900 dark:hover:text-sky-300 cursor-pointer underline flex items-center gap-1"
+                        className="text-[11px] font-extrabold text-sky-400 hover:text-sky-300 cursor-pointer underline flex items-center gap-1"
                       >
                         <span>Tingnan ang 7 Hakbang</span>
                       </button>
                     </div>
 
                     <div className="flex flex-wrap gap-1 text-[10px] font-bold">
-                      <span className="px-2 py-0.5 rounded bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-200">1. Submit</span>
-                      <span className="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-200">2. SSDD Validation</span>
-                      <span className="px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-200">3. Assessment Schedule</span>
-                      <span className="px-2 py-0.5 rounded bg-purple-100 dark:bg-purple-950 text-purple-800 dark:text-purple-200">4. Intake Interview</span>
-                      <span className="px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-200">5. Qualified</span>
-                      <span className="px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-950 text-indigo-800 dark:text-indigo-200">6. For Distribution</span>
+                      <span className="px-2 py-0.5 rounded bg-blue-950 text-blue-200 border border-blue-800">1. Submit</span>
+                      <span className="px-2 py-0.5 rounded bg-amber-950 text-amber-200 border border-amber-800">2. SSDD Validation</span>
+                      <span className="px-2 py-0.5 rounded bg-sky-950 text-sky-200 border border-sky-800">3. Assessment Schedule</span>
+                      <span className="px-2 py-0.5 rounded bg-purple-950 text-purple-200 border border-purple-800">4. Intake Interview</span>
+                      <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-200 border border-emerald-800">5. Qualified</span>
+                      <span className="px-2 py-0.5 rounded bg-indigo-950 text-indigo-200 border border-indigo-800">6. For Distribution</span>
                       <span className="px-2 py-0.5 rounded bg-emerald-600 text-white">7. Received</span>
                     </div>
                   </div>
 
                   {/* Status Badges */}
                   {isApproved && (
-                    <div className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-900 dark:text-emerald-200 text-xs space-y-1">
+                    <div className="p-3 rounded-xl bg-emerald-950/60 border border-emerald-800 text-emerald-200 text-xs space-y-1">
                       <div className="flex items-center gap-1.5 font-bold">
-                        <Lock className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                        <Lock className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                         <span>
                           {language === "en"
                             ? "Already Availed (Approved & Recorded)"
                             : "Na-avail na (Approved & Recorded)"}
                         </span>
                       </div>
-                      <p className="text-[11px] text-emerald-800/90 dark:text-emerald-300/90">
+                      <p className="text-[11px] text-emerald-300/90">
                         {language === "en"
                           ? "You already have an approved record for this program."
                           : "Mayroon ka nang aprubadong talaan para sa programang ito."}
@@ -674,16 +674,16 @@ export default function ApplySoloParent() {
                   )}
 
                   {isOngoing && (
-                    <div className="p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-amber-900 dark:text-amber-200 text-xs space-y-1">
+                    <div className="p-3 rounded-xl bg-amber-950/60 border border-amber-800 text-amber-200 text-xs space-y-1">
                       <div className="flex items-center gap-1.5 font-bold">
-                        <Clock className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400 shrink-0" />
+                        <Clock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
                         <span>
                           {language === "en"
                             ? "Application In Progress (Active Request)"
                             : "Kasalukuyang Pinoproseso (Active Request)"}
                         </span>
                       </div>
-                      <p className="text-[11px] text-amber-800/90 dark:text-amber-300/90">
+                      <p className="text-[11px] text-amber-300/90">
                         {language === "en"
                           ? "Your application has been submitted and is currently being assessed by a Social Worker."
                           : "Nakasumite na ang inyong aplikasyon at nasa ilalim ng pagsusuri ng Social Worker."}
@@ -714,9 +714,9 @@ export default function ApplySoloParent() {
                       <button
                         type="button"
                         onClick={() => setSearchParams({ category: "child-welfare", program: program.key })}
-                        className="text-[#0066cc] dark:text-sky-400 hover:text-[#004c99] dark:hover:text-sky-300 font-extrabold text-xs md:text-sm tracking-widest uppercase cursor-pointer hover:underline transition-colors py-1 px-4"
+                        className="text-[#00a8ff] hover:text-[#33b8ff] font-extrabold text-sm tracking-widest uppercase cursor-pointer transition-colors py-2 px-6"
                       >
-                        {language === "en" ? "APPLY NOW" : "MAG-APPLY NGAYON"}
+                        {language === "en" ? "APPLY NOW" : "APPLY NOW"}
                       </button>
                     )}
                   </div>

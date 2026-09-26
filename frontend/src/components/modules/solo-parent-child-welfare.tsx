@@ -2722,41 +2722,75 @@ export default function SoloParentChildWelfareAdmin() {
           })
         }
       } else {
-        const supportTitle = app.supportCategory ? `${app.supportCategory} (Child Welfare)` : "Child Welfare & Protection"
-        const serviceProvisionName = value || "Child Psychosocial Support & Protective Case Assistance"
+        const isCwEdu =
+          String((app as any).supportCategory || (app as any).category_title || (app as any).classification_title || (app as any).applicationType || "").toLowerCase().includes("educational") ||
+          String(app.referenceNumber || "").toUpperCase().includes("CW-EDU")
 
-        // Ensure NO financial disbursement record exists for child welfare (Non-monetary service)
-        try {
-          const currentDisbursements = getSavedDisbursements()
-          const filtered = currentDisbursements.filter((d) => d.applicationRef !== app.referenceNumber && !d.id.startsWith("disb-cw-"))
-          saveDisbursements(filtered)
-        } catch (err) {
-          console.warn("Failed cleaning child welfare disbursement record:", err)
+        if (isCwEdu) {
+          try {
+            const currentDisbursements = getSavedDisbursements()
+            if (!currentDisbursements.some((d) => d.applicationRef === app.referenceNumber)) {
+              const newRecord: SyncedDisbursementRecord = {
+                id: `disb-cw-edu-${app.referenceNumber || Date.now()}`,
+                disbursementId: `DISB-2026-${String(currentDisbursements.length + 1).padStart(4, "0")}`,
+                applicationRef: app.referenceNumber,
+                applicantName: displayName(app).toUpperCase(),
+                assistanceType: "Educational Assistance for Indigent Children & Youth",
+                fixedAmount: 3000,
+                dateApproved: new Date().toLocaleDateString("en-PH", { month: "long", day: "numeric", year: "numeric" }),
+                status: "PENDING",
+                venue: "Quezon City Hall Main Amphitheater / SSDD Center",
+                remarks: "Inaprubahan ang Educational Grant (₱3,000.00 Financial Assistance).",
+              }
+              saveDisbursements([newRecord, ...currentDisbursements])
+            }
+          } catch (err) {
+            console.warn("Failed saving CW educational disbursement record:", err)
+          }
+
+          pushUserNotification({
+            title: "Educational Assistance: Approved",
+            desc: "Inaprubahan ang Educational Grant (₱3,000.00 Financial Assistance). Handa na para sa Payout Schedule distribution.",
+            applicationRef: app.referenceNumber,
+            assistanceType: "Educational Assistance",
+          })
+        } else {
+          const supportTitle = app.supportCategory ? `${app.supportCategory} (Child Welfare)` : "Child Welfare & Protection"
+          const serviceProvisionName = value || "Child Psychosocial Support & Protective Case Assistance"
+
+          // Ensure NO financial disbursement record exists for non-monetary child welfare services
+          try {
+            const currentDisbursements = getSavedDisbursements()
+            const filtered = currentDisbursements.filter((d) => d.applicationRef !== app.referenceNumber && !d.id.startsWith("disb-cw-"))
+            saveDisbursements(filtered)
+          } catch (err) {
+            console.warn("Failed cleaning child welfare disbursement record:", err)
+          }
+
+          try {
+            fetch(`${API_BASE}/api/appointments`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                referenceNo: app.referenceNumber,
+                reference_no: app.referenceNumber,
+                module: "Child Welfare",
+                applicantName: displayName(app),
+                applicant_name: displayName(app),
+                concern: `Child Protective Service Provision (${serviceProvisionName})`,
+                office_location: "Quezon City Hall - SSDD Child Protection & Counseling Center (Room 205)",
+                status: "pending",
+              }),
+            }).catch(() => {})
+          } catch {}
+
+          pushUserNotification({
+            title: "Child Welfare: Approved for Service Provision",
+            desc: `Congratulations! Your request for ${supportTitle} has been approved for Protective Service Provision: ${serviceProvisionName}. Handa na ang inyong Referral & Case Intervention Plan.`,
+            applicationRef: app.referenceNumber,
+            assistanceType: supportTitle,
+          })
         }
-
-        try {
-          fetch(`${API_BASE}/api/appointments`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              referenceNo: app.referenceNumber,
-              reference_no: app.referenceNumber,
-              module: "Child Welfare",
-              applicantName: displayName(app),
-              applicant_name: displayName(app),
-              concern: `Child Protective Service Provision (${serviceProvisionName})`,
-              office_location: "Quezon City Hall - SSDD Child Protection & Counseling Center (Room 205)",
-              status: "pending",
-            }),
-          }).catch(() => {})
-        } catch {}
-
-        pushUserNotification({
-          title: "Child Welfare: Approved for Service Provision",
-          desc: `Congratulations! Your request for ${supportTitle} has been approved for Protective Service Provision: ${serviceProvisionName}. Handa na ang inyong Referral & Case Intervention Plan.`,
-          applicationRef: app.referenceNumber,
-          assistanceType: supportTitle,
-        })
       }
 
       window.dispatchEvent(new Event("appointments_updated"))
