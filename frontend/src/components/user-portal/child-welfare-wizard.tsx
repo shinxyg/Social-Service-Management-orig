@@ -1533,15 +1533,6 @@ export default function ChildWelfareApplicationWizard({
                     </p>
                   </div>
                 </div>
-
-                <button
-                  type="button"
-                  onClick={() => setShowWorkflowModal(true)}
-                  className="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs tracking-wide shrink-0 transition-colors shadow-xs flex items-center gap-1.5 cursor-pointer uppercase"
-                >
-                  <Info className="w-3.5 h-3.5" />
-                  <span>Tingnan ang 7 Hakbang ng Proseso</span>
-                </button>
               </div>
 
               <div>
