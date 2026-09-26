@@ -320,7 +320,7 @@ exports.getApplications = async (req, res) => {
   }
 };
 
-// 3. Get Application by Reference Number
+// 3. Get Application by Reference Number or ID
 exports.getApplicationByReference = async (req, res) => {
   try {
     const { referenceNo } = req.params;
@@ -340,14 +340,37 @@ exports.getApplicationByReference = async (req, res) => {
         ) AS documents
       FROM aics_applications a
       LEFT JOIN aics_documents d ON a.id = d.application_id
-      WHERE a.reference_no = $1
+      WHERE a.reference_no = $1 OR CAST(a.id AS VARCHAR) = $1 OR a.qc_id = $1
       GROUP BY a.id
     `;
     const result = await db.query(query, [referenceNo]);
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'AICS Application not found' });
     }
-    return res.status(200).json(result.rows[0]);
+    const app = result.rows[0];
+
+    // Extract embedded document previews from app.details if aics_documents table is empty
+    let docs = app.documents || [];
+    if (!Array.isArray(docs) || docs.length === 0) {
+      const detailsObj = typeof app.details === 'string' ? JSON.parse(app.details) : (app.details || {});
+      const previews = detailsObj.uploadedDocumentPreviews || detailsObj.uploadedDocuments || detailsObj.documents || detailsObj.attachedFiles || [];
+      if (Array.isArray(previews) && previews.length > 0) {
+        docs = previews.map((p, idx) => ({
+          id: idx + 1,
+          document_label: p.label || p.document_label || p.name || `Document ${idx + 1}`,
+          original_filename: p.filename || p.original_filename || p.name || `document_${idx + 1}`,
+          file_type: p.file_type || p.type || 'image/png',
+          dataUrl: p.dataUrl || p.url || p.fileUrl || null,
+          uploaded_at: app.created_at
+        }));
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      application: app,
+      documents: docs
+    });
   } catch (err) {
     console.error('Error fetching AICS application by ref:', err);
     return res.status(500).json({ error: 'Error fetching application: ' + err.message });

@@ -263,35 +263,52 @@ export default function AICS() {
     try {
       const targetIdentifier = app.id ? String(app.id) : encodeURIComponent(app.reference_no || app.qc_id || '')
       const res = await fetch(`${API_BASE}/applications/${targetIdentifier}`)
+      let targetApp = app
+      let mergedDocs: any[] = []
+
       if (res.ok) {
         const data = await res.json()
-        if (data.application) {
-          setReviewingApp(data.application)
-        }
-        let mergedDocs: any[] = data.documents || []
-        const previews: any[] = data.application?.details?.uploadedDocumentPreviews || []
-        if (previews.length > 0) {
+        targetApp = data.application || data || app
+        setReviewingApp(targetApp)
+        mergedDocs = data.documents || (targetApp as any).documents || []
+      }
+
+      const detailsObj = typeof targetApp.details === 'string' ? JSON.parse(targetApp.details) : (targetApp.details || {})
+      const previews: any[] = detailsObj.uploadedDocumentPreviews || detailsObj.uploadedDocuments || detailsObj.documents || detailsObj.attachedFiles || []
+
+      if (previews.length > 0) {
+        if (mergedDocs.length > 0) {
           mergedDocs = mergedDocs.map((doc, idx) => {
-            const matchedPrev = previews.find((p: any) => p.label === doc.document_label || p.filename === doc.original_filename) || previews[idx]
+            const matchedPrev = previews.find((p: any) => p.label === doc.document_label || p.filename === doc.original_filename || p.name === doc.original_filename) || previews[idx]
             return {
               ...doc,
-              dataUrl: matchedPrev?.dataUrl || (doc as any).dataUrl,
+              dataUrl: matchedPrev?.dataUrl || matchedPrev?.url || (doc as any).dataUrl,
             }
           })
-          if (mergedDocs.length === 0) {
-            mergedDocs = previews.map((p: any, idx: number) => ({
-              id: idx + 1,
-              document_label: p.label,
-              original_filename: p.filename,
-              file_type: 'image/png',
-              dataUrl: p.dataUrl,
-            }))
-          }
+        } else {
+          mergedDocs = previews.map((p: any, idx: number) => ({
+            id: idx + 1,
+            document_label: p.label || p.document_label || p.name || `Document ${idx + 1}`,
+            original_filename: p.filename || p.original_filename || p.name || `document_${idx + 1}`,
+            file_type: p.file_type || p.type || 'image/png',
+            dataUrl: p.dataUrl || p.url || p.fileUrl,
+          }))
         }
-        setReviewingDocs(mergedDocs)
       }
+      setReviewingDocs(mergedDocs)
     } catch (err) {
       console.error('Error fetching application details:', err)
+      const detailsObj = typeof app.details === 'string' ? JSON.parse(app.details) : (app.details || {})
+      const previews: any[] = detailsObj.uploadedDocumentPreviews || detailsObj.uploadedDocuments || detailsObj.documents || detailsObj.attachedFiles || []
+      if (previews.length > 0) {
+        setReviewingDocs(previews.map((p: any, idx: number) => ({
+          id: idx + 1,
+          document_label: p.label || p.document_label || p.name || `Document ${idx + 1}`,
+          original_filename: p.filename || p.original_filename || p.name || `document_${idx + 1}`,
+          file_type: p.file_type || p.type || 'image/png',
+          dataUrl: p.dataUrl || p.url || p.fileUrl,
+        })))
+      }
     } finally {
       setActionLoading(false)
     }
