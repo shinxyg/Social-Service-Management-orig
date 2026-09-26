@@ -251,7 +251,7 @@ exports.createApplication = async (req, res) => {
 // 2. Fetch AICS Applications (User / Admin)
 exports.getApplications = async (req, res) => {
   try {
-    const { qcId, email, referenceNo, status, userIdentifier } = req.query;
+    const { qcId, email, referenceNo, status, userIdentifier, role, isAdmin } = req.query;
 
     let query = `
       SELECT 
@@ -274,23 +274,32 @@ exports.getApplications = async (req, res) => {
     const whereClauses = [];
     const params = [];
 
-    if (referenceNo) {
+    const isExplicitAdmin = String(role).toLowerCase() === 'admin' || String(isAdmin) === 'true';
+    const isEmailAdmin = email && (String(email).toLowerCase().includes('admin') || String(email).toLowerCase().includes('sysadmin') || String(email).toLowerCase().includes('socialworker'));
+
+    // Filter by specific user if NOT an admin request
+    if (!isExplicitAdmin && !isEmailAdmin) {
+      if (referenceNo) {
+        params.push(referenceNo);
+        whereClauses.push(`a.reference_no = $${params.length}`);
+      } else if (qcId) {
+        params.push(qcId);
+        whereClauses.push(`(a.qc_id = $${params.length} OR a.reference_no ILIKE '%' || $${params.length} || '%')`);
+      } else if (email) {
+        params.push(email);
+        whereClauses.push(`a.email ILIKE $${params.length}`);
+      } else if (userIdentifier) {
+        params.push(userIdentifier);
+        whereClauses.push(`(a.qc_id = $${params.length} OR a.email ILIKE $${params.length} OR a.reference_no = $${params.length})`);
+      }
+    } else if (referenceNo) {
       params.push(referenceNo);
       whereClauses.push(`a.reference_no = $${params.length}`);
-    } else if (qcId) {
-      params.push(qcId);
-      whereClauses.push(`(a.qc_id = $${params.length} OR a.reference_no ILIKE '%' || $${params.length} || '%')`);
-    } else if (email) {
-      params.push(email);
-      whereClauses.push(`a.email ILIKE $${params.length}`);
-    } else if (userIdentifier) {
-      params.push(userIdentifier);
-      whereClauses.push(`(a.qc_id = $${params.length} OR a.email ILIKE $${params.length} OR a.reference_no = $${params.length})`);
     }
 
-    if (status) {
+    if (status && String(status).toLowerCase() !== 'all') {
       params.push(status);
-      whereClauses.push(`a.status = $${params.length}`);
+      whereClauses.push(`a.status ILIKE $${params.length}`);
     }
 
     if (whereClauses.length > 0) {
