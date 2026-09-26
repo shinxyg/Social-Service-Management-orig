@@ -961,209 +961,264 @@ export default function Appointments() {
           } catch {}
         }
 
+        // 1. AICS Applications
+        let aicsApps: any[] = []
         if (resAicsSettled.status === "fulfilled" && resAicsSettled.value.ok) {
           try {
             const data = await resAicsSettled.value.json()
             if (data.applications && Array.isArray(data.applications)) {
-              data.applications.forEach((app: any) => {
-                const rawAppStatus = String(app.status || '').toLowerCase()
-                if (['rejected', 'denied', 'disapproved', 'cancelled'].includes(rawAppStatus)) return
-
-                const rawType = (app.assistance_type || "Medical").replace(/\s*assistance/gi, "").trim()
-                const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + " Assistance"
-                const ref = String(app.reference_no || app.qc_id || app.reference_number || `AICS-2026-${String(app.id || 1).padStart(4, "0")}`).trim()
-                const apptId = `aics-appt-${app.id || ref}`
-
-                // If already in dataDb.appointments for AICS, DO NOT synthesize a duplicate!
-                const existsInDb = dataDb.appointments && Array.isArray(dataDb.appointments) && dataDb.appointments.some((dba: any) => {
-                  const dbr = String(dba.reference_no || dba.qc_id || dba.reference_number || '').trim().toLowerCase()
-                  const dbid = String(dba.id || '').trim().toLowerCase()
-                  return (ref && dbr === String(ref).trim().toLowerCase()) || (app.id && dbid === String(app.id).trim().toLowerCase())
-                })
-                if (existsInDb) return
-
-                const hasSched = Boolean((app.details as any)?.appointmentDate)
-                const isAicsPending = ['pending', 'submit_pending', 'waiting_approval', 'for_scheduling'].includes(rawAppStatus) && !hasSched
-                const cached = (isAicsPending && !localScheduledMap[apptId]?.savedInSession)
-                  ? undefined
-                  : (localScheduledMap[apptId] || localScheduledMap[`${ref}_${cleanType}`] || localScheduledMap[`AICS_${ref}`] || undefined)
-                const schedDate = (isAicsPending && !cached?.savedInSession) ? null : cleanDate((app.details as any)?.appointmentDate || cached?.scheduledDate)
-                const schedTime = schedDate ? ((app.details as any)?.appointmentTime || cached?.scheduledTime || null) : null
-                const hasDate = Boolean(schedDate)
-
-                let apptStatus: AppointmentStatus = 'pending'
-                let cachedDecision: ("approved" | "referred" | "rejected" | undefined) = undefined
-
-                if (rawAppStatus === 'approved' || rawAppStatus === 'completed' || cached?.decision === 'approved') {
-                  apptStatus = 'approved'
-                  cachedDecision = 'approved'
-                } else if (rawAppStatus === 'for_referral' || rawAppStatus === 'referred' || cached?.decision === 'referred') {
-                  apptStatus = 'referred'
-                  cachedDecision = 'referred'
-                } else if (rawAppStatus === 'rejected' || cached?.decision === 'rejected') {
-                  apptStatus = 'rejected'
-                  cachedDecision = 'rejected'
-                } else if (hasDate) {
-                  apptStatus = 'scheduled'
-                } else {
-                  apptStatus = 'pending'
-                  cachedDecision = undefined
-                }
-
-                appts.push({
-                  id: apptId,
-                  rawAppId: app.id,
-                  referenceNo: ref,
-                  module: "AICS",
-                  applicantName: `${app.first_name || ""} ${app.middle_name || ""} ${app.last_name || ""}`.trim().toUpperCase() || "BENEFICIARY APPLICANT",
-                  submittedAt: app.created_at || new Date().toISOString(),
-                  concern: cleanType,
-                  status: apptStatus,
-                  decision: cachedDecision,
-                  scheduledDate: schedDate,
-                  scheduledTime: schedTime,
-                  officeLocation: cached?.officeLocation || (app.details as any)?.appointmentVenue || "Quezon City Hall",
-                  notes: cached?.notes,
-                  rawApp: app,
-                })
-              })
+              aicsApps = data.applications
             }
           } catch {}
         }
-
-        let pwdSeniorApps: any[] = []
-        if (resPwdSettled.status === "fulfilled" && resPwdSettled.value.ok) {
-          try {
-            pwdSeniorApps = await resPwdSettled.value.json()
-          } catch {}
-        }
-        // Only fallback to localStorage if network completely failed, NOT if DB returned empty
-        if ((resPwdSettled.status !== "fulfilled" || !resPwdSettled.value.ok) && (!pwdSeniorApps || pwdSeniorApps.length === 0)) {
-          try {
-            const local = localStorage.getItem("pwd_senior_applications")
-            if (local) pwdSeniorApps = JSON.parse(local)
-          } catch {}
-        }
-        if (Array.isArray(pwdSeniorApps)) {
-          pwdSeniorApps.forEach((app: any) => {
-            const isAssistance =
-              app.type === "assistance" ||
-              app.type === "social-assistance" ||
-              String(app.category || "").toLowerCase().includes("assistance") ||
-              String(app.service || "").toLowerCase().includes("assistance") ||
-              String(app.assistanceType || "").toLowerCase().includes("assistance")
-            const appSt = String(app.status || '').toLowerCase()
-            if (['rejected', 'denied', 'disapproved', 'cancelled'].includes(appSt)) return
-
-            if (isAssistance) {
-              const ref = app.referenceNumber || app.reference_number || `PWD-QC-2026-${app.id || 1}`
-              const isPwd = String(app.category || "").toUpperCase().includes("PWD")
-              const mod: ModuleKey = isPwd ? "PWD" : "Senior Citizen"
-              const concern = isPwd ? "PWD Social Assistance" : "Senior Social Assistance"
-
-              // If already in dataDb.appointments for PWD/Senior, DO NOT synthesize!
-              const existsInDb = dataDb.appointments && Array.isArray(dataDb.appointments) && dataDb.appointments.some((dba: any) => {
-                const dbr = String(dba.reference_no || dba.qc_id || dba.reference_number || '').trim().toLowerCase()
-                const dbid = String(dba.id || '').trim().toLowerCase()
-                return (ref && dbr === String(ref).trim().toLowerCase()) || (app.id && dbid === String(app.id).trim().toLowerCase())
-              })
-              if (existsInDb) return
-
-              const apptId = `pwd-senior-appt-${app.id || ref}`
-              const fullName = [app.firstName || app.first_name, app.middleName || app.middle_name, app.lastName || app.last_name, app.suffix].filter(Boolean).join(" ").trim().toUpperCase() || "BENEFICIARY"
-              const cached = localScheduledMap[apptId] || localScheduledMap[`${ref}_${concern}`] || localScheduledMap[`${mod}_${ref}`] || undefined
-              const schedDate = cleanDate(cached?.scheduledDate || (app as any).scheduled_date)
-              const schedTime = cached?.scheduledTime || (app as any).scheduled_time || null
-              const isApproved = app.status === "completed" || app.status === "released" || app.status === "approved" || cached?.decision === "approved" || cached?.status === "approved"
-              const isReferred = app.status === "referred" || cached?.decision === "referred" || cached?.status === "referred"
-              const isRejected = app.status === "rejected" || cached?.decision === "rejected" || cached?.status === "rejected"
-
-              const decision: ("approved" | "referred" | "rejected" | undefined) = isApproved ? "approved" : (isReferred ? "referred" : (isRejected ? "rejected" : undefined))
-              const statusVal: AppointmentStatus = isApproved ? "approved" : (isReferred ? "referred" : (isRejected ? "rejected" : (schedDate ? "scheduled" : "pending")))
-
-              appts.push({
-                id: apptId,
-                referenceNo: ref,
-                module: mod,
-                applicantName: fullName,
-                submittedAt: app.submittedAt || app.created_at || new Date().toISOString(),
-                concern,
-                status: statusVal,
-                decision,
-                scheduledDate: schedDate,
-                scheduledTime: schedTime,
-                officeLocation: cached?.officeLocation || "Quezon City Hall",
-                notes: cached?.notes,
-              })
+        try {
+          const localAics = JSON.parse(localStorage.getItem("aics_applications") || "[]")
+          if (Array.isArray(localAics)) {
+            for (const la of localAics) {
+              if (la && !aicsApps.some((a: any) => (a.id && la.id && a.id === la.id) || (a.reference_no && la.reference_no && a.reference_no === la.reference_no))) {
+                aicsApps.push(la)
+              }
             }
+          }
+        } catch {}
+
+        if (Array.isArray(aicsApps)) {
+          aicsApps.forEach((app: any) => {
+            const rawAppStatus = String(app.status || '').toLowerCase()
+            if (['rejected', 'denied', 'disapproved', 'cancelled'].includes(rawAppStatus)) return
+
+            const rawType = (app.assistance_type || "Medical").replace(/\s*assistance/gi, "").trim()
+            const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + " Assistance"
+            const ref = String(app.reference_no || app.qc_id || app.reference_number || `AICS-2026-${String(app.id || 1).padStart(4, "0")}`).trim()
+            const apptId = `aics-appt-${app.id || ref}`
+
+            const existsInDb = dataDb.appointments && Array.isArray(dataDb.appointments) && dataDb.appointments.some((dba: any) => {
+              const dbr = String(dba.reference_no || dba.qc_id || dba.reference_number || '').trim().toLowerCase()
+              const dbMod = String(dba.module || '').trim().toUpperCase()
+              return ref && dbr === String(ref).trim().toLowerCase() && (dbMod === 'AICS' || dbMod === 'FINANCIAL')
+            })
+            if (existsInDb) return
+
+            const hasSched = Boolean((app.details as any)?.appointmentDate)
+            const isAicsPending = ['pending', 'submit_pending', 'waiting_approval', 'for_scheduling'].includes(rawAppStatus) && !hasSched
+            const cached = (isAicsPending && !localScheduledMap[apptId]?.savedInSession)
+              ? undefined
+              : (localScheduledMap[apptId] || localScheduledMap[`${ref}_${cleanType}`] || localScheduledMap[`AICS_${ref}`] || undefined)
+            const schedDate = (isAicsPending && !cached?.savedInSession) ? null : cleanDate((app.details as any)?.appointmentDate || cached?.scheduledDate)
+            const schedTime = schedDate ? ((app.details as any)?.appointmentTime || cached?.scheduledTime || null) : null
+            const hasDate = Boolean(schedDate)
+
+            let apptStatus: AppointmentStatus = 'pending'
+            let cachedDecision: ("approved" | "referred" | "rejected" | undefined) = undefined
+
+            if (rawAppStatus === 'approved' || rawAppStatus === 'completed' || cached?.decision === 'approved') {
+              apptStatus = 'approved'
+              cachedDecision = 'approved'
+            } else if (rawAppStatus === 'for_referral' || rawAppStatus === 'referred' || cached?.decision === 'referred') {
+              apptStatus = 'referred'
+              cachedDecision = 'referred'
+            } else if (rawAppStatus === 'rejected' || cached?.decision === 'rejected') {
+              apptStatus = 'rejected'
+              cachedDecision = 'rejected'
+            } else if (hasDate) {
+              apptStatus = 'scheduled'
+            } else {
+              apptStatus = 'pending'
+              cachedDecision = undefined
+            }
+
+            appts.push({
+              id: apptId,
+              rawAppId: app.id,
+              referenceNo: ref,
+              module: "AICS",
+              applicantName: `${app.first_name || ""} ${app.middle_name || ""} ${app.last_name || ""}`.trim().toUpperCase() || "BENEFICIARY APPLICANT",
+              submittedAt: app.created_at || new Date().toISOString(),
+              concern: cleanType,
+              status: apptStatus,
+              decision: cachedDecision,
+              scheduledDate: schedDate,
+              scheduledTime: schedTime,
+              officeLocation: cached?.officeLocation || (app.details as any)?.appointmentVenue || "Quezon City Hall",
+              notes: cached?.notes,
+              rawApp: app,
+            })
           })
         }
 
+        // 2. PWD & Senior Citizen Applications
+        let pwdSeniorApps: any[] = []
+        if (resPwdSettled.status === "fulfilled" && resPwdSettled.value.ok) {
+          try {
+            const dataPwd = await resPwdSettled.value.json()
+            pwdSeniorApps = Array.isArray(dataPwd) ? dataPwd : (dataPwd?.applications || [])
+          } catch {}
+        }
+        try {
+          const localPwd = JSON.parse(localStorage.getItem("pwd_senior_applications") || "[]")
+          if (Array.isArray(localPwd)) {
+            for (const lp of localPwd) {
+              if (lp && !pwdSeniorApps.some((p: any) => (p.id && lp.id && p.id === lp.id) || (p.referenceNumber && lp.referenceNumber && p.referenceNumber === lp.referenceNumber))) {
+                pwdSeniorApps.push(lp)
+              }
+            }
+          }
+        } catch {}
+
+        if (Array.isArray(pwdSeniorApps)) {
+          pwdSeniorApps.forEach((app: any) => {
+            const appSt = String(app.status || app.application_status || '').toLowerCase()
+            if (['rejected', 'denied', 'disapproved', 'cancelled'].includes(appSt)) return
+
+            const ref = app.referenceNumber || app.reference_number || `PWD-QC-2026-${app.id || 1}`
+            const isPwd = String(app.category || app.module_type || "").toUpperCase().includes("PWD") || String(app.service || "").toLowerCase().includes("pwd") || String(app.assistanceType || "").toLowerCase().includes("pwd")
+            const mod: ModuleKey = isPwd ? "PWD" : "Senior Citizen"
+            const concern = isPwd
+              ? (app.service || app.assistanceType || "PWD ID & Social Assistance")
+              : (app.service || app.assistanceType || "Senior Citizen ID & Social Support")
+
+            const existsInDb = dataDb.appointments && Array.isArray(dataDb.appointments) && dataDb.appointments.some((dba: any) => {
+              const dbr = String(dba.reference_no || dba.qc_id || dba.reference_number || '').trim().toLowerCase()
+              const dbMod = String(dba.module || '').trim().toUpperCase()
+              return ref && dbr === String(ref).trim().toLowerCase() && (dbMod === 'PWD' || dbMod === 'SENIOR CITIZEN' || dbMod === 'SENIOR')
+            })
+            if (existsInDb) return
+
+            const apptId = `pwd-senior-appt-${app.id || ref}`
+            const fullName = [app.firstName || app.first_name, app.middleName || app.middle_name, app.lastName || app.last_name, app.suffix].filter(Boolean).join(" ").trim().toUpperCase() || "BENEFICIARY"
+            const cached = localScheduledMap[apptId] || localScheduledMap[ref] || localScheduledMap[`${ref}_${concern}`] || localScheduledMap[`${mod}_${ref}`] || undefined
+            const schedDate = cleanDate(cached?.scheduledDate || (app as any).scheduled_date || (app as any).appointmentDate)
+            const schedTime = cached?.scheduledTime || (app as any).scheduled_time || (app as any).appointmentTime || null
+            const isApproved = appSt === "completed" || appSt === "released" || appSt === "approved" || cached?.decision === "approved" || cached?.status === "approved"
+            const isReferred = appSt === "referred" || cached?.decision === "referred" || cached?.status === "referred"
+            const isRejected = appSt === "rejected" || cached?.decision === "rejected" || cached?.status === "rejected"
+
+            const decision: ("approved" | "referred" | "rejected" | undefined) = isApproved ? "approved" : (isReferred ? "referred" : (isRejected ? "rejected" : undefined))
+            const statusVal: AppointmentStatus = isApproved ? "approved" : (isReferred ? "referred" : (isRejected ? "rejected" : (schedDate ? "scheduled" : "pending")))
+
+            appts.push({
+              id: apptId,
+              referenceNo: ref,
+              module: mod,
+              applicantName: fullName,
+              submittedAt: app.submittedAt || app.created_at || new Date().toISOString(),
+              concern,
+              status: statusVal,
+              decision,
+              scheduledDate: schedDate,
+              scheduledTime: schedTime,
+              officeLocation: cached?.officeLocation || "Quezon City Hall - PDAO Room 102",
+              notes: cached?.notes,
+            })
+          })
+        }
+
+        // 3. Livelihood Applications
+        let livApps: any[] = []
         if (resLivSettled.status === "fulfilled" && resLivSettled.value.ok) {
           try {
             const dataLiv = await resLivSettled.value.json()
-            if (Array.isArray(dataLiv)) {
-              dataLiv.forEach((l: any) => {
-                if (String(l.application_status || l.status).toLowerCase() === "approved") {
-                  const ref = l.reference_number || `LP-2026-${l.id}`
-                  const apptId = `liv-appt-${l.id || ref}`
-                  const concern = "Livelihood Capital Assistance"
-                  const cached = localScheduledMap[apptId] || localScheduledMap[ref] || localScheduledMap[`${ref}_${concern}`]
-                  const fullName = `${l.first_name || ""} ${l.last_name || ""}`.trim().toUpperCase() || "BENEFICIARY"
-                  const cachedDecision = (cached?.decision as ("approved" | "referred" | "rejected")) || undefined
-                  appts.push({
-                    id: apptId,
-                    referenceNo: ref,
-                    module: "Livelihood",
-                    applicantName: fullName,
-                    submittedAt: l.created_at || new Date().toISOString(),
-                    concern,
-                    status: (cached?.status || "pending") as AppointmentStatus,
-                    decision: cachedDecision,
-                    scheduledDate: cached?.scheduledDate,
-                    scheduledTime: cached?.scheduledTime,
-                    officeLocation: cached?.officeLocation || "Quezon City Hall - SSDD Livelihood Center",
-                    notes: cached?.notes,
-                  })
-                }
-              })
-            }
+            if (Array.isArray(dataLiv)) livApps = dataLiv
           } catch {}
         }
+        try {
+          const localLiv = JSON.parse(localStorage.getItem("livelihood_applications") || "[]")
+          if (Array.isArray(localLiv)) {
+            for (const ll of localLiv) {
+              if (ll && !livApps.some((l: any) => (l.id && ll.id && l.id === ll.id) || (l.reference_number && ll.reference_number && l.reference_number === ll.reference_number))) {
+                livApps.push(ll)
+              }
+            }
+          }
+        } catch {}
 
+        if (Array.isArray(livApps)) {
+          livApps.forEach((l: any) => {
+            const st = String(l.application_status || l.status || "").toLowerCase()
+            if (['rejected', 'denied', 'disapproved', 'cancelled'].includes(st)) return
+
+            const ref = l.reference_number || l.referenceNumber || `LP-2026-${l.id || 1}`
+            const apptId = `liv-appt-${l.id || ref}`
+            const concern = "Livelihood Capital Assistance"
+            const cached = localScheduledMap[apptId] || localScheduledMap[ref] || localScheduledMap[`${ref}_${concern}`]
+            const fullName = `${l.first_name || ""} ${l.last_name || ""}`.trim().toUpperCase() || "BENEFICIARY"
+            const cachedDecision = (cached?.decision as ("approved" | "referred" | "rejected")) || undefined
+            appts.push({
+              id: apptId,
+              referenceNo: ref,
+              module: "Livelihood",
+              applicantName: fullName,
+              submittedAt: l.created_at || new Date().toISOString(),
+              concern,
+              status: (cached?.status || (cached?.scheduledDate ? "scheduled" : "pending")) as AppointmentStatus,
+              decision: cachedDecision,
+              scheduledDate: cached?.scheduledDate,
+              scheduledTime: cached?.scheduledTime,
+              officeLocation: cached?.officeLocation || "Quezon City Hall - SSDD Livelihood Center",
+              notes: cached?.notes,
+            })
+          })
+        }
+
+        // 4. Child Welfare Applications
+        let cwApps: any[] = []
         if (resCwSettled.status === "fulfilled" && resCwSettled.value.ok) {
           try {
             const dataCw = await resCwSettled.value.json()
-            const cwApps = Array.isArray(dataCw.applications) ? dataCw.applications : []
-            cwApps.forEach((c: any) => {
-              const st = String(c.application_status || c.status).toLowerCase()
-              if (st === "approved" || st === "for_release" || st === "released" || st === "completed") {
-                const ref = c.reference_number || `CW-2026-${c.id}`
-                const apptId = `cw-appt-${c.id || ref}`
-                const concern = c.category_title ? `${c.category_title} (Child Welfare)` : "Child Welfare Support"
-                const cached = localScheduledMap[apptId] || localScheduledMap[ref] || localScheduledMap[`${ref}_${concern}`]
-                const fullName = [c.guardian_first_name, c.guardian_last_name].filter(Boolean).join(" ").trim().toUpperCase() || (c.child_name || "").toUpperCase() || "BENEFICIARY"
-                const isDone = st === "released" || st === "completed" || cached?.status === "completed"
-                const cachedDecision = (cached?.decision as ("approved" | "referred" | "rejected")) || undefined
-                appts.push({
-                  id: apptId,
-                  referenceNo: ref,
-                  module: "Child Welfare",
-                  applicantName: fullName,
-                  submittedAt: c.created_at || new Date().toISOString(),
-                  concern,
-                  status: isDone ? "completed" : ((cached?.status || "pending") as AppointmentStatus),
-                  decision: cachedDecision,
-                  scheduledDate: cached?.scheduledDate,
-                  scheduledTime: cached?.scheduledTime,
-                  officeLocation: cached?.officeLocation || "Quezon City Hall - SSDD Child Welfare Section",
-                  notes: cached?.notes,
-                })
-              }
-            })
+            cwApps = Array.isArray(dataCw.applications) ? dataCw.applications : (Array.isArray(dataCw) ? dataCw : [])
           } catch {}
         }
+        try {
+          const localCw = JSON.parse(localStorage.getItem("child_welfare_applications") || "[]")
+          if (Array.isArray(localCw)) {
+            for (const lc of localCw) {
+              if (lc && !cwApps.some((c: any) => (c.id && lc.id && c.id === lc.id) || (c.referenceNumber && lc.referenceNumber && c.referenceNumber === lc.referenceNumber))) {
+                cwApps.push(lc)
+              }
+            }
+          }
+        } catch {}
 
+        if (Array.isArray(cwApps)) {
+          cwApps.forEach((c: any) => {
+            const st = String(c.application_status || c.status || "").toLowerCase()
+            if (['rejected', 'denied', 'disapproved', 'cancelled'].includes(st)) return
+
+            const ref = c.reference_number || c.referenceNumber || `CW-2026-${c.id || 1}`
+            const existsInDb = dataDb.appointments && Array.isArray(dataDb.appointments) && dataDb.appointments.some((dba: any) => {
+              const dbr = String(dba.reference_no || dba.qc_id || dba.reference_number || '').trim().toLowerCase()
+              const dbMod = String(dba.module || '').trim().toUpperCase()
+              return ref && dbr === String(ref).trim().toLowerCase() && (dbMod === 'CHILD WELFARE' || dbMod === 'CHILD_WELFARE')
+            })
+            if (existsInDb) return
+
+            const apptId = `cw-appt-${c.id || ref}`
+            const concern = c.category_title || c.classification_title || c.supportCategory ? `${c.category_title || c.classification_title || c.supportCategory} (Child Welfare)` : "Child Welfare Educational Assistance & Support"
+            const fullName = [c.guardian_first_name || c.guardianFirstName, c.guardian_last_name || c.guardianLastName].filter(Boolean).join(" ").trim().toUpperCase() || (c.child_name || c.childName || "").toUpperCase() || "BENEFICIARY"
+            const cached = localScheduledMap[apptId] || localScheduledMap[ref] || localScheduledMap[`${ref}_${concern}`] || localScheduledMap[`Child Welfare_${ref}`]
+            const schedDate = cleanDate(cached?.scheduledDate || c.appointment_date || c.scheduled_date || c.appointmentDate)
+            const schedTime = cached?.scheduledTime || c.appointment_time || c.scheduled_time || c.appointmentTime || null
+            const isDone = st === "released" || st === "completed" || cached?.status === "completed"
+            const cachedDecision = (cached?.decision as ("approved" | "referred" | "rejected")) || undefined
+
+            appts.push({
+              id: apptId,
+              referenceNo: ref,
+              module: "Child Welfare",
+              applicantName: fullName,
+              submittedAt: c.created_at || c.submittedAt || new Date().toISOString(),
+              concern,
+              status: isDone ? "completed" : ((cached?.status || (schedDate ? "scheduled" : "pending")) as AppointmentStatus),
+              decision: cachedDecision,
+              scheduledDate: schedDate,
+              scheduledTime: schedTime,
+              officeLocation: cached?.officeLocation || c.office_location || "SSDD Child Protection & Counseling Center (Room 205)",
+              notes: cached?.notes || c.notes,
+            })
+          })
+        }
+
+        // 5. Solo Parent Applications
         let soloParentApps: any[] = []
         if (resSpSettled.status === "fulfilled" && resSpSettled.value.ok) {
           try {
@@ -1175,12 +1230,17 @@ export default function Appointments() {
             }
           } catch {}
         }
-        if (!soloParentApps || soloParentApps.length === 0) {
-          try {
-            const local = localStorage.getItem("solo_parent_applications")
-            if (local) soloParentApps = JSON.parse(local)
-          } catch {}
-        }
+        try {
+          const localSp = JSON.parse(localStorage.getItem("solo_parent_applications") || "[]")
+          if (Array.isArray(localSp)) {
+            for (const ls of localSp) {
+              if (ls && !soloParentApps.some((s: any) => (s.id && ls.id && s.id === ls.id) || (s.referenceNumber && ls.referenceNumber && (s.referenceNumber === ls.referenceNumber || s.reference_number === ls.reference_number)))) {
+                soloParentApps.push(ls)
+              }
+            }
+          }
+        } catch {}
+
         if (Array.isArray(soloParentApps)) {
           soloParentApps.forEach((sp: any) => {
             const st = String(sp.status || sp.application_status || "").toLowerCase()
@@ -1193,13 +1253,11 @@ export default function Appointments() {
 
             const ref = sp.referenceNumber || sp.reference_number || (sp.id ? (String(sp.id).startsWith("SP-") ? sp.id : `SP-${sp.id}`) : (isEdu ? `SP-EDU-2026-0001` : `SP-2026-0001`))
 
-            // If already in dataDb.appointments for Solo Parent with the same assistance type, DO NOT synthesize a duplicate!
             const existsInDb = dataDb.appointments && Array.isArray(dataDb.appointments) && dataDb.appointments.some((dba: any) => {
               const dbr = String(dba.reference_no || dba.qc_id || '').trim().toLowerCase()
-              const dbid = String(dba.id || '').trim().toLowerCase()
               const dbMod = String(dba.module || '').trim().toUpperCase()
               const dbConcern = String(dba.concern || '').trim().toLowerCase()
-              const sameRef = (ref && dbr === String(ref).trim().toLowerCase()) || (sp.id && dbid === String(sp.id).trim().toLowerCase())
+              const sameRef = ref && dbr === String(ref).trim().toLowerCase()
               const isEduDb = dbConcern.includes("educational") || dbr.includes("sp-edu")
               const isEduSp = Boolean(isEdu)
               const sameMod = (dbMod === 'SOLO PARENT' || dbMod === 'SOLO_PARENT' || dbMod === 'SOLO') && (isEduDb === isEduSp)

@@ -219,13 +219,12 @@ async function syncAndCleanAppointments() {
         COALESCE(p.submitted_at, p.created_at, NOW()),
         NOW()
       FROM pwd_senior_applications p
-      WHERE p.status IN ('approved', 'completed', 'for_release', 'released')
-        AND (p.type ILIKE '%assist%' OR p.category ILIKE '%assist%' OR p.disability_class ILIKE '%assist%' OR p.extra_data::text ILIKE '%assist%')
+      WHERE p.status NOT IN ('rejected', 'denied', 'disapproved', 'cancelled', 'draft')
         AND NOT EXISTS (
           SELECT 1 FROM deleted_appointments d WHERE LOWER(d.reference_no) = LOWER(p.reference_number)
         )
         AND NOT EXISTS (
-          SELECT 1 FROM appointments app WHERE app.reference_no = p.reference_number
+          SELECT 1 FROM appointments app WHERE LOWER(app.reference_no) = LOWER(p.reference_number)
         );
     `).catch(() => {});
 
