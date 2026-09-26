@@ -627,32 +627,7 @@ export default function ApplySoloParent() {
                     {language === "en" ? program.descEn : program.desc}
                   </p>
 
-                  {/* 7-Step Process Workflow Strip */}
-                  <div className="p-3 bg-[#162c4d] border border-[#23426e] rounded-xl space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1.5 font-extrabold text-[11px] text-sky-200">
-                        <Info className="w-3.5 h-3.5 text-sky-400" />
-                        <span>7-Step Process Workflow:</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setShowWorkflowModal(true)}
-                        className="text-[11px] font-extrabold text-sky-400 hover:text-sky-300 cursor-pointer underline flex items-center gap-1"
-                      >
-                        <span>Tingnan ang 7 Hakbang</span>
-                      </button>
-                    </div>
 
-                    <div className="flex flex-wrap gap-1 text-[10px] font-bold">
-                      <span className="px-2 py-0.5 rounded bg-blue-950 text-blue-200 border border-blue-800">1. Submit</span>
-                      <span className="px-2 py-0.5 rounded bg-amber-950 text-amber-200 border border-amber-800">2. SSDD Validation</span>
-                      <span className="px-2 py-0.5 rounded bg-sky-950 text-sky-200 border border-sky-800">3. Assessment Schedule</span>
-                      <span className="px-2 py-0.5 rounded bg-purple-950 text-purple-200 border border-purple-800">4. Intake Interview</span>
-                      <span className="px-2 py-0.5 rounded bg-emerald-950 text-emerald-200 border border-emerald-800">5. Qualified</span>
-                      <span className="px-2 py-0.5 rounded bg-indigo-950 text-indigo-200 border border-indigo-800">6. For Distribution</span>
-                      <span className="px-2 py-0.5 rounded bg-emerald-600 text-white">7. Received</span>
-                    </div>
-                  </div>
 
                   {/* Status Badges */}
                   {isApproved && (
