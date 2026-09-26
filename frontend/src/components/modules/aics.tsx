@@ -213,7 +213,8 @@ export default function AICS() {
       const res = await fetch(`${API_BASE}/applications`)
       if (!res.ok) throw new Error('Failed to fetch applications')
       const data = await res.json()
-      setApplications(data.applications || [])
+      const appsList = Array.isArray(data) ? data : (data.applications || data.data || [])
+      setApplications(appsList)
     } catch (err) {
       console.error(err)
       if (!silent) {

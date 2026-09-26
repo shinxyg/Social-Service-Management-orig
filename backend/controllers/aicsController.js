@@ -309,7 +309,11 @@ exports.getApplications = async (req, res) => {
     query += ` GROUP BY a.id ORDER BY a.created_at DESC`;
 
     const result = await db.query(query, params);
-    return res.status(200).json(result.rows);
+    return res.status(200).json({
+      success: true,
+      applications: result.rows,
+      data: result.rows,
+    });
   } catch (err) {
     console.error('Error fetching AICS applications:', err);
     return res.status(500).json({ error: 'May error sa pagkuha ng AICS applications: ' + err.message });
