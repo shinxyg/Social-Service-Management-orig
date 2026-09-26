@@ -736,8 +736,6 @@ export default function ApplySoloParent() {
         )}
       </div>
     )
-      </div>
-    )
   }
 
   // Solo Parent Services Card Overview (matching Senior / PWD card pattern)
