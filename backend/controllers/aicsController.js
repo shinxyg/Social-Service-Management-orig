@@ -1,12 +1,14 @@
 const fs = require('fs');
 const path = require('path');
 const db = require('../config/db');
+
 let logActivity = null;
 try {
   const actCtrl = require('./activityLogController');
   logActivity = actCtrl.logActivity;
 } catch {}
 
+// Initialize AICS Tables and Ensure Required Columns Exist
 async function initAicsTable() {
   try {
     await db.query(`
@@ -29,9 +31,26 @@ async function initAicsTable() {
         address TEXT,
         details JSONB DEFAULT '{}'::jsonb,
         status VARCHAR(50) DEFAULT 'pending',
+        rejection_reason TEXT,
+        referral_details TEXT,
+        guarantee_letter_url TEXT,
+        certificate_type VARCHAR(100),
+        amount NUMERIC(12, 2) DEFAULT 0.00,
+        payout_date VARCHAR(100),
+        payout_time VARCHAR(100),
+        payout_venue VARCHAR(255),
         created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
+
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS rejection_reason TEXT;
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS referral_details TEXT;
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS guarantee_letter_url TEXT;
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS certificate_type VARCHAR(100);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS amount NUMERIC(12, 2) DEFAULT 0.00;
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS payout_date VARCHAR(100);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS payout_time VARCHAR(100);
+      ALTER TABLE aics_applications ADD COLUMN IF NOT EXISTS payout_venue VARCHAR(255);
 
       CREATE INDEX IF NOT EXISTS idx_aics_reference_no ON aics_applications(reference_no);
       CREATE INDEX IF NOT EXISTS idx_aics_status ON aics_applications(status);
@@ -47,8 +66,10 @@ async function initAicsTable() {
         file_path TEXT,
         uploaded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
+
+      CREATE INDEX IF NOT EXISTS idx_aics_documents_app_id ON aics_documents(application_id);
     `);
-    console.log('[DB] aics_applications & aics_documents tables ready.');
+    console.log('[DB] aics_applications & aics_documents schema verified.');
   } catch (err) {
     console.warn('[DB] Could not initialize aics tables:', err.message);
   }
@@ -56,14 +77,37 @@ async function initAicsTable() {
 
 initAicsTable();
 
+// Helper: Generate unique reference number
 function generateReferenceNo(qcId) {
-  if (qcId && String(qcId).trim()) return String(qcId).trim();
-  return '110000116932100';
+  const randDigit = Math.floor(1000 + Math.random() * 9000);
+  if (qcId && String(qcId).trim()) {
+    const cleanQc = String(qcId).trim().replace(/[^a-zA-Z0-9-]/g, '');
+    return `AICS-${cleanQc}-${randDigit}`;
+  }
+  return `AICS-2026-${Date.now().toString().slice(-6)}${randDigit}`;
 }
 
+// Helper: Create user notification safely
+async function sendUserNotification(userId, refNo, title, description) {
+  try {
+    if (!userId) return;
+    const notifId = `aics_notif_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    await db.query(
+      `INSERT INTO user_notifications (user_id, notif_id, title, description, application_ref, is_read, is_dismissed, created_at)
+       VALUES ($1, $2, $3, $4, $5, false, false, NOW())
+       ON CONFLICT (user_id, notif_id) DO NOTHING`,
+      [userId, notifId, title, description, refNo]
+    );
+  } catch (err) {
+    console.warn('[AICS] Warning sending user notification:', err.message);
+  }
+}
+
+// 1. Submit New AICS Application
 exports.createApplication = async (req, res) => {
   const client = await db.connect();
   try {
+    await client.query('BEGIN');
     const {
       assistanceType,
       qcId,
@@ -83,727 +127,537 @@ exports.createApplication = async (req, res) => {
       documentLabels,
     } = req.body;
 
-    const finalFirstName = firstName || 'CLARISA MAE';
-    const finalLastName = lastName || 'DIMAL';
-    const finalAssistanceType = assistanceType || 'Educational Assistance';
+    const finalFirstName = firstName ? String(firstName).trim() : 'APPLICANT';
+    const finalLastName = lastName ? String(lastName).trim() : 'USER';
+    const finalAssistanceType = assistanceType || 'Medical Assistance';
 
     const targetQcId = qcId ? String(qcId).trim() : null;
     let baseRefNo = req.body.referenceNo || req.body.reference_no || targetQcId || generateReferenceNo(targetQcId);
     let referenceNo = baseRefNo;
 
-    // Clean up old applications and old appointments for this user & assistance type so re-application starts completely fresh as 'pending'
-    try {
-      if (targetQcId || referenceNo) {
-        await client.query(
-          `DELETE FROM aics_applications
-           WHERE (qc_id = $1 OR reference_no = $2 OR reference_no LIKE $3)
-             AND (LOWER(assistance_type) = LOWER($4) OR LOWER(assistance_type) LIKE '%med%' OR LOWER(assistance_type) LIKE '%gamot%')`,
-          [targetQcId || referenceNo, referenceNo, `${referenceNo}%`, finalAssistanceType]
-        );
-      }
-    } catch (delOldErr) {
-      console.warn('Old AICS cleanup error:', delOldErr.message);
+    // Check existing reference collision
+    const existing = await client.query('SELECT id FROM aics_applications WHERE reference_no = $1', [referenceNo]);
+    if (existing.rows.length > 0) {
+      referenceNo = `${baseRefNo}-${Math.floor(100 + Math.random() * 900)}`;
     }
 
-    let parsedAge = null;
-    if (age !== undefined && age !== null && String(age).trim() !== '') {
-      const num = parseInt(String(age).trim(), 10);
-      if (!isNaN(num)) parsedAge = num;
-    }
+    const parsedDetails = typeof details === 'string' ? JSON.parse(details) : (details || {});
 
-    let parsedDetails = {};
-    try {
-      parsedDetails = typeof details === 'string' ? JSON.parse(details) : (details || {});
-    } catch {
-      parsedDetails = {};
-    }
-
-    let parsedLabels = [];
-    try {
-      parsedLabels = typeof documentLabels === 'string' ? JSON.parse(documentLabels) : (documentLabels || []);
-    } catch {
-      parsedLabels = [];
-    }
-
-    await client.query('BEGIN');
-
-    const appResult = await client.query(
-      `INSERT INTO aics_applications
-        (reference_no, assistance_type, qc_id, first_name, middle_name, last_name, suffix,
-         nationality, birth_date, age, gender, civil_status, phone, email, address, details)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16)
-       RETURNING *`,
+    // Insert Application
+    const insertRes = await client.query(
+      `INSERT INTO aics_applications (
+        reference_no, assistance_type, qc_id, first_name, middle_name, last_name,
+        suffix, nationality, birth_date, age, gender, civil_status, phone, email,
+        address, details, status, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, 'pending', NOW(), NOW())
+      RETURNING *`,
       [
         referenceNo,
         finalAssistanceType,
-        targetQcId || null,
+        targetQcId,
         finalFirstName,
-        middleName || null,
+        middleName || '',
         finalLastName,
-        suffix || null,
-        nationality || null,
-        birthDate ? String(birthDate) : null,
-        parsedAge,
+        suffix || '',
+        nationality || 'Filipino',
+        birthDate || null,
+        age ? parseInt(age, 10) : null,
         gender || null,
         civilStatus || null,
         phone || null,
         email || null,
         address || null,
-        parsedDetails,
+        JSON.stringify(parsedDetails),
       ]
     );
 
-    const application = appResult.rows[0];
-    const files = req.files || [];
+    const newApp = insertRes.rows[0];
 
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const label = parsedLabels[i] || file.originalname;
-      let diskPath = null;
+    // Handle Uploaded Files
+    let labelsArray = [];
+    if (documentLabels) {
       try {
-        const aicsUploadsDir = path.join(__dirname, '..', 'uploads', 'aics');
-        if (!fs.existsSync(aicsUploadsDir)) fs.mkdirSync(aicsUploadsDir, { recursive: true });
-        const safeName = `${Date.now()}-${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
-        diskPath = path.join(aicsUploadsDir, safeName);
-        fs.writeFileSync(diskPath, file.buffer);
+        labelsArray = typeof documentLabels === 'string' ? JSON.parse(documentLabels) : documentLabels;
       } catch (e) {
-        console.warn('Could not write document to disk:', e);
+        labelsArray = Array.isArray(documentLabels) ? documentLabels : [documentLabels];
       }
+    }
 
-      await client.query(
-        `INSERT INTO aics_documents (application_id, document_label, original_filename, file_type, file_data, file_path)
-         VALUES ($1,$2,$3,$4,$5,$6)`,
-        [application.id, label, file.originalname, file.mimetype, file.buffer, diskPath]
-      );
+    if (req.files && req.files.length > 0) {
+      for (let i = 0; i < req.files.length; i++) {
+        const file = req.files[i];
+        const label = labelsArray[i] || file.fieldname || `Document ${i + 1}`;
+
+        let fileBuffer = null;
+        if (file.buffer) {
+          fileBuffer = file.buffer;
+        } else if (file.path && fs.existsSync(file.path)) {
+          fileBuffer = fs.readFileSync(file.path);
+        }
+
+        await client.query(
+          `INSERT INTO aics_documents (
+            application_id, document_label, original_filename, file_type, file_data, file_path, uploaded_at
+          ) VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
+          [
+            newApp.id,
+            label,
+            file.originalname || file.filename || 'document',
+            file.mimetype || 'application/octet-stream',
+            fileBuffer,
+            file.path || null,
+          ]
+        );
+      }
     }
 
     await client.query('COMMIT');
 
-    try {
-      const cleanType = (finalAssistanceType.replace(/\s*assistance/gi, '').trim() || 'Medical') + ' Assistance';
-      const fullName = [finalFirstName, middleName, finalLastName, suffix].filter(Boolean).join(' ').trim().toUpperCase() || 'BENEFICIARY';
+    // Notify User
+    const userIdentifier = targetQcId || email || referenceNo;
+    await sendUserNotification(
+      userIdentifier,
+      referenceNo,
+      'Naisumite ang AICS Application',
+      `Matagumpay na naisumite ang inyong AICS application (${finalAssistanceType}). Reference No: ${referenceNo}. Sinusuri na ito ng Admin.`
+    );
 
-      // Delete prior appointments and disbursements for this user & assistance type so old approved status is never retained
-      await db.query(
-        `DELETE FROM appointments
-         WHERE module = 'AICS'
-           AND (reference_no = $1 OR (reference_no = $2 AND $2 IS NOT NULL))
-           AND (concern = $3 OR LOWER(concern) LIKE '%med%' OR LOWER(concern) LIKE '%gamot%')`,
-        [referenceNo, targetQcId, cleanType]
-      ).catch(() => {});
-
-      await db.query(
-        `INSERT INTO appointments
-          (reference_no, module, applicant_name, concern, status, office_location, notes, created_at, updated_at)
-         VALUES ($1, 'AICS', $2, $3, 'pending', 'Quezon City Hall', 'Awtomatikong pumasok mula sa AICS aplikasyon para sa scheduling at assessment.', NOW(), NOW())`,
-        [referenceNo, fullName, cleanType]
-      ).catch(() => {});
-
-      await db.query(
-        `DELETE FROM financial_aid_disbursements
-         WHERE (application_ref = $1 OR (application_ref = $2 AND $2 IS NOT NULL) OR qc_id = $1 OR (qc_id = $2 AND $2 IS NOT NULL))
-           AND (LOWER(aid_type) LIKE '%med%' OR LOWER(aid_type) LIKE '%gamot%' OR LOWER(aid_type) = LOWER($3))`,
-        [referenceNo, targetQcId, finalAssistanceType]
-      ).catch(() => {});
-    } catch (apptErr) {
-      console.warn('AICS clean prior records warning:', apptErr.message);
+    if (logActivity) {
+      logActivity(
+        `${finalFirstName} ${finalLastName}`,
+        'User',
+        'SUBMIT_APPLICATION',
+        'AICS',
+        referenceNo,
+        `Submitted AICS application for ${finalAssistanceType}`
+      );
     }
 
-    try {
-      const { ensureBeneficiaryForUser } = require('./beneficiaryController');
-      ensureBeneficiaryForUser({
-        qcid: qcId,
-        fullName: `${finalFirstName} ${finalLastName}`.trim(),
-        firstName: finalFirstName,
-        middleName,
-        lastName: finalLastName,
-        suffix,
-        age: parsedAge,
-        sex: gender,
-        civilStatus,
-        birthDate,
-        address,
-        contactNo: phone,
-        email,
-        program: 'AICS',
-        applicationRef: referenceNo,
-        action: 'Application submitted',
-        remarks: `${finalAssistanceType} application submitted.`,
-        performedBy: `${finalFirstName} ${finalLastName}`.trim(),
-      }).catch(() => {});
-    } catch {}
-
-    res.status(201).json({
-      message: 'Matagumpay na na-submit ang application.',
-      application,
+    return res.status(201).json({
+      success: true,
+      message: 'Matagumpay na naisumite ang inyong AICS application!',
+      application: newApp,
+      referenceNo,
     });
   } catch (err) {
     await client.query('ROLLBACK');
-    console.error('Error submitting AICS application:', err);
-    res.status(500).json({ error: 'May naganap na error sa pag-submit ng application.', details: err.message });
+    console.error('Error in AICS createApplication:', err);
+    return res.status(500).json({ error: 'Server error sa pag-submit ng AICS application: ' + err.message });
   } finally {
     client.release();
   }
 };
 
-async function enrichApplicationWithSuffix(app) {
-  if (!app) return app;
-  if (app.suffix && String(app.suffix).trim()) return app;
-
-  try {
-
-    if (app.qc_id || app.email) {
-      const uRes = await db.query(
-        `SELECT suffix FROM users
-         WHERE (qcid_number = $1 OR ($2 <> '' AND LOWER(email) = LOWER($2)))
-           AND suffix IS NOT NULL AND suffix <> '' LIMIT 1`,
-        [app.qc_id || '', app.email || '']
-      );
-      if (uRes.rows.length > 0 && uRes.rows[0].suffix) {
-        app.suffix = uRes.rows[0].suffix;
-
-        db.query('UPDATE aics_applications SET suffix = $1 WHERE id = $2', [app.suffix, app.id]).catch(() => {});
-        return app;
-      }
-    }
-
-    const pRes = await db.query(
-      `SELECT suffix FROM pwd_senior_applications
-       WHERE (reference_number = $1 OR ($2 <> '' AND LOWER(email) = LOWER($2))
-              OR (LOWER(first_name) = LOWER($3) AND LOWER(last_name) = LOWER($4)))
-         AND suffix IS NOT NULL AND suffix <> '' LIMIT 1`,
-      [app.qc_id || '', app.email || '', app.first_name || '', app.last_name || '']
-    );
-    if (pRes.rows.length > 0 && pRes.rows[0].suffix) {
-      app.suffix = pRes.rows[0].suffix;
-      db.query('UPDATE aics_applications SET suffix = $1 WHERE id = $2', [app.suffix, app.id]).catch(() => {});
-      return app;
-    }
-  } catch (e) {
-
-  }
-  return app;
-}
-
+// 2. Fetch AICS Applications (User / Admin)
 exports.getApplications = async (req, res) => {
   try {
-    const { status, qcId, email } = req.query;
-    let query = 'SELECT * FROM aics_applications';
-    const conditions = [];
+    const { qcId, email, referenceNo, status, userIdentifier } = req.query;
+
+    let query = `
+      SELECT 
+        a.*,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', d.id,
+              'document_label', d.document_label,
+              'original_filename', d.original_filename,
+              'file_type', d.file_type,
+              'uploaded_at', d.uploaded_at
+            )
+          ) FILTER (WHERE d.id IS NOT NULL), '[]'
+        ) AS documents
+      FROM aics_applications a
+      LEFT JOIN aics_documents d ON a.id = d.application_id
+    `;
+
+    const whereClauses = [];
     const params = [];
 
-    if (qcId) {
-      params.push(`%${qcId}%`);
-      conditions.push(`(qc_id ILIKE $${params.length} OR reference_no ILIKE $${params.length})`);
+    if (referenceNo) {
+      params.push(referenceNo);
+      whereClauses.push(`a.reference_no = $${params.length}`);
+    } else if (qcId) {
+      params.push(qcId);
+      whereClauses.push(`(a.qc_id = $${params.length} OR a.reference_no ILIKE '%' || $${params.length} || '%')`);
+    } else if (email) {
+      params.push(email);
+      whereClauses.push(`a.email ILIKE $${params.length}`);
+    } else if (userIdentifier) {
+      params.push(userIdentifier);
+      whereClauses.push(`(a.qc_id = $${params.length} OR a.email ILIKE $${params.length} OR a.reference_no = $${params.length})`);
     }
-    if (email) {
-      params.push(`%${email.trim().toLowerCase()}%`);
-      conditions.push(`LOWER(email) LIKE $${params.length}`);
-    }
+
     if (status) {
       params.push(status);
-      conditions.push(`status = $${params.length}`);
+      whereClauses.push(`a.status = $${params.length}`);
     }
 
-    if (conditions.length > 0) {
-      query += ' WHERE ' + conditions.join(' AND ');
+    if (whereClauses.length > 0) {
+      query += ` WHERE ` + whereClauses.join(' AND ');
     }
-    query += ' ORDER BY created_at DESC';
+
+    query += ` GROUP BY a.id ORDER BY a.created_at DESC`;
 
     const result = await db.query(query, params);
-    const rows = result.rows.map((row) => ({
-      ...row,
-      reference_no: row.reference_no || row.qc_id || '110000116932100',
-    }));
-    res.json({ applications: rows });
+    return res.status(200).json(result.rows);
   } catch (err) {
-    console.error('Error in getApplications:', err);
-    res.status(500).json({ error: 'Hindi makuha ang listahan ng applications.', details: err.message });
+    console.error('Error fetching AICS applications:', err);
+    return res.status(500).json({ error: 'May error sa pagkuha ng AICS applications: ' + err.message });
   }
 };
 
+// 3. Get Application by Reference Number
 exports.getApplicationByReference = async (req, res) => {
   try {
     const { referenceNo } = req.params;
-
-    let appResult;
-
-    if (/^\d+$/.test(referenceNo) && parseInt(referenceNo, 10) < 1000000) {
-      appResult = await db.query('SELECT * FROM aics_applications WHERE id = $1', [parseInt(referenceNo, 10)]);
+    const query = `
+      SELECT 
+        a.*,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', d.id,
+              'document_label', d.document_label,
+              'original_filename', d.original_filename,
+              'file_type', d.file_type,
+              'uploaded_at', d.uploaded_at
+            )
+          ) FILTER (WHERE d.id IS NOT NULL), '[]'
+        ) AS documents
+      FROM aics_applications a
+      LEFT JOIN aics_documents d ON a.id = d.application_id
+      WHERE a.reference_no = $1
+      GROUP BY a.id
+    `;
+    const result = await db.query(query, [referenceNo]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'AICS Application not found' });
     }
-
-    if (!appResult || appResult.rows.length === 0) {
-      appResult = await db.query(
-        'SELECT * FROM aics_applications WHERE reference_no = $1',
-        [referenceNo]
-      );
-    }
-
-    if (!appResult || appResult.rows.length === 0) {
-      appResult = await db.query(
-        'SELECT * FROM aics_applications WHERE qc_id = $1 ORDER BY created_at DESC',
-        [referenceNo]
-      );
-    }
-
-    if (!appResult || appResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Walang nahanap na application.' });
-    }
-
-    const application = await enrichApplicationWithSuffix(appResult.rows[0]);
-
-    const docsResult = await db.query(
-      'SELECT id, document_label, original_filename, file_type, file_path, uploaded_at FROM aics_documents WHERE application_id = $1',
-      [application.id]
-    );
-
-    res.json({
-      application,
-      documents: docsResult.rows,
-    });
+    return res.status(200).json(result.rows[0]);
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'May error sa pagkuha ng application.' });
+    console.error('Error fetching AICS application by ref:', err);
+    return res.status(500).json({ error: 'Error fetching application: ' + err.message });
   }
 };
 
-exports.updateApplicationStatus = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status, rejectionReason, referralAgency, referralNotes, appointmentDate, appointmentVenue, applicantName } = req.body;
-
-    const validStatuses = [
-      'pending',
-      'submit_pending',
-      'waiting_approval',
-      'scheduled',
-      'under_review',
-      'approved',
-      'for_referral',
-      'referred',
-      'rejected',
-      'completed'
-    ];
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({ error: 'Invalid na status.' });
-    }
-
-    const cleanParam = String(id || '').trim();
-    const cleanNoDash = cleanParam.replace(/[^a-zA-Z0-9]/g, '');
-
-    let existingResult = await db.query(
-      `SELECT * FROM aics_applications
-       WHERE id::text = $1
-          OR reference_no = $1
-          OR qc_id = $1
-          OR REPLACE(REPLACE(COALESCE(reference_no, ''), '-', ''), ' ', '') = $2
-          OR REPLACE(REPLACE(COALESCE(qc_id, ''), '-', ''), ' ', '') = $2
-          OR ($3 <> '' AND LOWER(CONCAT(first_name, ' ', last_name)) = LOWER($3))`,
-      [cleanParam, cleanNoDash, applicantName || '']
-    ).catch(() => ({ rows: [] }));
-
-    if (existingResult.rows.length === 0) {
-      existingResult = await db.query(
-        'SELECT * FROM aics_applications WHERE reference_no ILIKE $1 OR qc_id ILIKE $1',
-        [`%${cleanParam}%`]
-      ).catch(() => ({ rows: [] }));
-    }
-
-    if (existingResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Walang nahanap na application.' });
-    }
-
-    const appRow = existingResult.rows[0];
-    const appId = appRow.id;
-
-    const currentDetails = appRow.details || {};
-    const updatedDetails = {
-      ...currentDetails,
-      ...(rejectionReason ? { rejectionReason } : {}),
-      ...(referralAgency ? { referralAgency } : {}),
-      ...(referralNotes ? { referralNotes } : {}),
-      ...(appointmentDate ? { appointmentDate } : {}),
-      ...(appointmentVenue ? { appointmentVenue } : {}),
-      statusHistory: [
-        ...(currentDetails.statusHistory || []),
-        { status, timestamp: new Date().toISOString() }
-      ]
-    };
-
-    const result = await db.query(
-      `UPDATE aics_applications SET status = $1, details = $2, updated_at = NOW() WHERE id = $3 RETURNING *`,
-      [status, updatedDetails, appId]
-    );
-
-    const app = result.rows[0];
-    const fullName = [app.first_name, app.middle_name, app.last_name, app.suffix].filter(Boolean).join(' ');
-
-    const rawType = (app.assistance_type || 'Medical').replace(/\s*assistance/gi, '').trim();
-    const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + ' Assistance';
-
-    if (status === 'waiting_approval' || status === 'for_scheduling' || status === 'under_review') {
-      const apptCheck = await db.query(
-        'SELECT id FROM appointments WHERE reference_no = $1 AND module = $2 AND concern = $3',
-        [app.reference_no, 'AICS', cleanType]
-      );
-      if (apptCheck.rows.length === 0) {
-        await db.query(
-          `INSERT INTO appointments
-            (reference_no, module, applicant_name, concern, status, office_location, notes)
-           VALUES ($1, 'AICS', $2, $3, 'pending', 'Quezon City Hall', 'Awtomatikong pumasok mula sa na-screen na AICS aplikasyon para sa scheduling.')
-           ON CONFLICT DO NOTHING`,
-          [app.reference_no, fullName.toUpperCase(), cleanType]
-        );
-      }
-    } else if (status === 'approved') {
-      // Approving the Medical Application case in /aics validates document eligibility.
-      // The Appointment in /appointments remains 'pending' (or 'scheduled' if date is set) so the Social Worker can set schedule and conduct the assessment interview.
-      const apptCheck = await db.query(
-        'SELECT id, status, scheduled_date FROM appointments WHERE reference_no = $1 AND module = $2 AND concern = $3',
-        [app.reference_no, 'AICS', cleanType]
-      );
-      if (apptCheck.rows.length === 0) {
-        await db.query(
-          `INSERT INTO appointments
-            (reference_no, module, applicant_name, concern, status, office_location, notes)
-           VALUES ($1, 'AICS', $2, $3, 'pending', 'Quezon City Hall', 'Na-aprubahan ang Medical Application requirements. Handa na para sa appointment scheduling.')
-           ON CONFLICT DO NOTHING`,
-          [app.reference_no, fullName.toUpperCase(), cleanType]
-        );
-      }
-    } else if (status === 'rejected') {
-      await db.query(`DELETE FROM appointments WHERE reference_no = $1`, [app.reference_no]);
-      await db.query(`DELETE FROM financial_aid_disbursements WHERE application_ref = $1`, [app.reference_no]);
-    }
-
-    await logActivity({
-      actor: 'Admin User',
-      actorRole: 'Social Worker',
-      action: status,
-      module: 'AICS',
-      referenceNo: app.reference_no,
-      subject: fullName,
-      detail: `${app.assistance_type} application updated to ${status}.`,
-    });
-
-    res.json({ message: 'Na-update ang status.', application: app });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'May error sa pag-update ng status.' });
-  }
-};
-
+// 4. Check Duplicate Person
 exports.checkDuplicatePerson = async (req, res) => {
   try {
-    const { assistanceType, firstName, middleName, lastName, suffix, birthDate, gender, address } = req.query;
-    if (!assistanceType || !firstName || !lastName || !birthDate) {
-      return res.status(400).json({ error: 'Kulang ang kinakailangang impormasyon para sa duplicate check.' });
+    const { qcId, firstName, lastName } = req.query;
+    if (qcId) {
+      const qRes = await db.query('SELECT id, status FROM aics_applications WHERE qc_id = $1 ORDER BY created_at DESC LIMIT 1', [qcId]);
+      if (qRes.rows.length > 0) {
+        return res.status(200).json({ isDuplicate: true, status: qRes.rows[0].status });
+      }
     }
-    const result = await db.query(
-      `SELECT * FROM aics_applications WHERE assistance_type = $1 AND status = 'pending'`,
-      [assistanceType]
-    );
-    const norm = (s) => (s || '').toString().trim().toLowerCase();
-
-    const normDate = (d) => {
-      if (!d) return '';
-      if (d instanceof Date) {
-
-        const y = d.getFullYear();
-        const m = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${y}-${m}-${day}`;
-      }
-
-      return d.toString().slice(0, 10);
-    };
-
-    const isDuplicate = result.rows.some((app) => {
-      const d = app.details || {};
-      let cFirst, cMiddle, cLast, cSuffix, cBirth, cGender, cAddress;
-      if (assistanceType === 'Funeral Assistance') {
-        cFirst = d.deceasedFirstName;
-        cMiddle = d.deceasedMiddleName;
-        cLast = d.deceasedLastName;
-        cSuffix = d.deceasedSuffix;
-        cBirth = d.deceasedBirthDate;
-        cGender = d.deceasedGender;
-        cAddress = d.deceasedAddress;
-      } else if (assistanceType === 'Educational Assistance') {
-        cFirst = d.beneficiaryFirstName;
-        cMiddle = d.beneficiaryMiddleName;
-        cLast = d.beneficiaryLastName;
-        cSuffix = d.beneficiarySuffix;
-        cBirth = d.beneficiaryBirthDate;
-        cGender = d.beneficiaryGender;
-        cAddress = d.beneficiaryAddress;
-      } else {
-        cFirst = app.first_name;
-        cMiddle = app.middle_name;
-        cLast = app.last_name;
-        cSuffix = app.suffix;
-        cBirth = app.birth_date;
-        cGender = app.gender;
-        cAddress = app.address;
-      }
-      return (
-        norm(cFirst) === norm(firstName) &&
-        norm(cMiddle) === norm(middleName) &&
-        norm(cLast) === norm(lastName) &&
-        norm(cSuffix) === norm(suffix) &&
-        normDate(cBirth) === normDate(birthDate) &&
-        norm(cGender) === norm(gender) &&
-        norm(cAddress) === norm(address)
+    if (firstName && lastName) {
+      const nRes = await db.query(
+        'SELECT id, status FROM aics_applications WHERE LOWER(first_name) = LOWER($1) AND LOWER(last_name) = LOWER($2) ORDER BY created_at DESC LIMIT 1',
+        [firstName.trim(), lastName.trim()]
       );
-    });
-    res.json({ duplicate: isDuplicate });
+      if (nRes.rows.length > 0) {
+        return res.status(200).json({ isDuplicate: true, status: nRes.rows[0].status });
+      }
+    }
+    return res.status(200).json({ isDuplicate: false });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'May error sa pag-check ng duplicate.' });
+    return res.status(500).json({ error: err.message });
   }
 };
 
+// 5. Get Document File
 exports.getDocumentFile = async (req, res) => {
   try {
     const { id } = req.params;
-    const numId = parseInt(id, 10);
-    if (isNaN(numId)) {
-      return res.status(404).json({ error: 'Invalid document ID.' });
-    }
-
-    const result = await db.query(
-      'SELECT file_data, file_type, file_path, original_filename, document_label FROM aics_documents WHERE id = $1',
-      [numId]
-    );
-
+    const result = await db.query('SELECT * FROM aics_documents WHERE id = $1', [id]);
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Walang nahanap na file.' });
+      return res.status(404).send('File not found');
     }
-
     const doc = result.rows[0];
-
-    if (doc.file_data && doc.file_data.length > 0) {
-      res.setHeader('Content-Type', doc.file_type || 'image/jpeg');
-      res.setHeader('Content-Disposition', `inline; filename="${doc.original_filename || 'document.jpg'}"`);
-      return res.end(doc.file_data);
-    }
-
-    if (doc.file_path && fs.existsSync(doc.file_path)) {
+    if (doc.file_data) {
+      res.setHeader('Content-Type', doc.file_type || 'application/octet-stream');
+      res.setHeader('Content-Disposition', `inline; filename="${doc.original_filename}"`);
+      return res.send(doc.file_data);
+    } else if (doc.file_path && fs.existsSync(doc.file_path)) {
       return res.sendFile(path.resolve(doc.file_path));
     }
-
-    const lbl = (doc.document_label || '').toLowerCase();
-    let sampleFile = 'sample_valid_id.png';
-    if (lbl.includes('authoriz') || lbl.includes('letter')) sampleFile = 'AUTHORIZATION  PERSONAL LETTER.jpg';
-    else if (lbl.includes('indigen')) sampleFile = 'BARANGAY CERTIFICATE OF INDIGENCY.jpg';
-    else if (lbl.includes('barangay')) sampleFile = 'BARANGAY CERTIFICATE.webp';
-    else if (lbl.includes('medical') || lbl.includes('abstract') || lbl.includes('clinical')) sampleFile = 'MEDICAL CERTIFICATE.jpg';
-    else if (lbl.includes('bill') || lbl.includes('soa') || lbl.includes('hospital')) sampleFile = 'PROOF OF CIRCUMSTANCE (ANY ONE).webp';
-    else if (lbl.includes('reseta') || lbl.includes('gamot') || lbl.includes('prescription')) sampleFile = 'RESETA NG GAMOT.jpg';
-    else if (lbl.includes('death')) sampleFile = 'sample_death_certificate.png';
-    else if (lbl.includes('burial') || lbl.includes('funeral')) sampleFile = 'sample_burial_contract.png';
-    else if (lbl.includes('birth') || lbl.includes('psa') || lbl.includes('minor')) sampleFile = 'BIRTH CERTIFICATE OF MINOR.jpg';
-    else if (lbl.includes('enroll') || lbl.includes('school')) sampleFile = 'CERTIFICATE OF ENROLLMENT.png';
-    else if (lbl.includes('disab') || lbl.includes('pwd')) sampleFile = 'CERTIFICATE OF DISABILITY.jpg';
-    else if (lbl.includes('qc id') || lbl.includes('pasyente')) sampleFile = 'QC ID NG PASYENTE.jpg';
-
-    const fallbackCandidates = [
-      path.join(__dirname, '..', '..', 'frontend', 'public', 'samples', sampleFile),
-      path.join(__dirname, '..', 'public', 'samples', sampleFile),
-      path.join(__dirname, '..', 'assets', sampleFile),
-    ];
-
-    for (const fb of fallbackCandidates) {
-      if (fs.existsSync(fb)) {
-        return res.sendFile(path.resolve(fb));
-      }
-    }
-
-    return res.status(404).json({ error: 'Walang nahanap na file data.' });
+    return res.status(404).send('File content unavailable');
   } catch (err) {
-    console.error('Error fetching document file:', err);
-    res.status(500).json({ error: 'May error sa pagkuha ng file.' });
+    return res.status(500).send('Error retrieving file: ' + err.message);
   }
 };
 
-exports.deleteApplication = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const cleanId = String(id || '').replace(/^aics-appt-/, '').replace(/^db-appt-/, '').trim();
-
-    const findRes = await db.query(
-      'SELECT id, reference_no, qc_id FROM aics_applications WHERE id::text = $1 OR reference_no = $1 OR qc_id = $1',
-      [cleanId]
-    );
-
-    if (findRes.rows.length > 0) {
-      for (const row of findRes.rows) {
-        await db.query('DELETE FROM aics_documents WHERE application_id = $1', [row.id]).catch(() => {});
-        await db.query('DELETE FROM appointments WHERE reference_no = $1 OR reference_no = $2', [row.reference_no, row.qc_id]).catch(() => {});
-        await db.query('DELETE FROM financial_aid_disbursements WHERE application_ref = $1 OR application_ref = $2', [row.reference_no, row.qc_id]).catch(() => {});
-        await db.query('DELETE FROM aics_applications WHERE id = $1', [row.id]);
-      }
-    } else {
-      await db.query('DELETE FROM aics_applications WHERE id::text = $1 OR reference_no = $1 OR qc_id = $1', [cleanId]);
-    }
-
-    res.json({ message: 'AICS application deleted successfully.' });
-  } catch (err) {
-    console.error('Error deleting AICS application:', err);
-    res.status(500).json({ error: 'Failed to delete AICS application', details: err.message });
-  }
-};
-
-exports.cleanupUserAics = async (req, res) => {
-  try {
-    const { nameOrRef } = req.params;
-    const term = `%${nameOrRef}%`;
-
-    const apps = await db.query(
-      `SELECT id, reference_no, qc_id FROM aics_applications
-       WHERE LOWER(first_name || ' ' || last_name) LIKE LOWER($1)
-          OR LOWER(first_name || ' ' || middle_name || ' ' || last_name) LIKE LOWER($1)
-          OR reference_no LIKE $1
-          OR qc_id LIKE $1`,
-      [term]
-    );
-
-    for (const app of apps.rows) {
-      await db.query('DELETE FROM aics_documents WHERE application_id = $1', [app.id]).catch(() => {});
-      await db.query('DELETE FROM appointments WHERE reference_no = $1 OR reference_no = $2', [app.reference_no, app.qc_id]).catch(() => {});
-      await db.query('DELETE FROM financial_aid_disbursements WHERE application_ref = $1 OR application_ref = $2', [app.reference_no, app.qc_id]).catch(() => {});
-      await db.query('DELETE FROM aics_applications WHERE id = $1', [app.id]);
-    }
-
-    res.json({ message: `Deleted ${apps.rows.length} AICS records for ${nameOrRef}.`, deletedCount: apps.rows.length });
-  } catch (err) {
-    console.error('Error clearing user AICS:', err);
-    res.status(500).json({ error: 'Failed to clear user AICS records', details: err.message });
-  }
-};
-
+// 6. Update Application Status (Admin Action Workflow)
+// Workflow steps:
+// a) 'initial_approved': Moves application to Appointments module (status: pending appointment). Keeps history in user portal.
+// b) 'approved' (in Appointment): Generates Guarantee Letter / Certificate (Medical Medicine vs Medical Bill), moves record to Financial Aid Payout module.
+// c) 'rejected': Rejects application with reason, sends user notification.
+// d) 'referred': Refers application to another agency/department.
+// e) 'payout_scheduled': Admin sets payout date, time, venue in Financial Aid module.
+// f) 'released': Payout cash released to user.
 exports.updateApplicationStatus = async (req, res) => {
+  const client = await db.connect();
   try {
+    await client.query('BEGIN');
     const { id } = req.params;
     const {
       status,
-      applicantName,
-      appointmentDate,
-      appointmentVenue,
       rejectionReason,
-      referralAgency,
-      referralNotes,
-      remarks,
+      referralDetails,
+      amount,
+      payoutDate,
+      payoutTime,
+      payoutVenue,
+      adminName,
     } = req.body;
 
-    const rawId = String(id || '').trim();
-    const cleanId = rawId.replace(/^aics-appt-/, '').replace(/^db-appt-/, '').trim();
-    const unhyphenated = cleanId.replace(/[^a-zA-Z0-9]/g, '');
-    const newStatus = String(status || 'approved').toLowerCase();
-
-    const appUpdate = await db.query(
-      `UPDATE aics_applications
-       SET status = $1,
-           updated_at = NOW()
-       WHERE id::text = $2
-          OR reference_no = $2
-          OR qc_id = $2
-          OR id::text = $3
-          OR reference_no = $3
-          OR qc_id = $3
-          OR REPLACE(reference_no, '-', '') = $4
-          OR REPLACE(qc_id, '-', '') = $4
-          OR ($5 != '' AND LOWER(first_name || ' ' || last_name) = LOWER($5))
-       RETURNING *`,
-      [newStatus, rawId, cleanId, unhyphenated, applicantName || '']
-    );
-
-    // Update details JSON with appointment info / referral info if provided
-    if (appUpdate.rows.length > 0 && (appointmentDate || rejectionReason || referralAgency || remarks)) {
-      const app = appUpdate.rows[0];
-      const details = app.details || {};
-      if (appointmentDate) details.appointmentDate = appointmentDate;
-      if (appointmentVenue) details.appointmentVenue = appointmentVenue;
-      if (rejectionReason) details.rejectionReason = rejectionReason;
-      if (referralAgency) details.referralAgency = referralAgency;
-      if (referralNotes) details.referralNotes = referralNotes;
-      if (remarks) details.remarks = remarks;
-
-      await db.query(
-        `UPDATE aics_applications SET details = $1, updated_at = NOW() WHERE id = $2`,
-        [details, app.id]
-      ).catch(() => {});
+    // Fetch existing application
+    const appRes = await client.query('SELECT * FROM aics_applications WHERE id = $1 OR reference_no = $1', [id]);
+    if (appRes.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({ error: 'AICS application not found' });
     }
 
-    // Sync appointments table status
-    const apptUpRes = await db.query(
-      `UPDATE appointments
-       SET status = $1,
-           updated_at = NOW()
-       WHERE (reference_no = $2
-          OR reference_no = $3
-          OR REPLACE(reference_no, '-', '') = $4
-          OR ($5 != '' AND applicant_name ILIKE $5))
-         AND module = 'AICS'
-       RETURNING *`,
-      [newStatus, rawId, cleanId, unhyphenated, applicantName ? `%${applicantName}%` : '']
-    ).catch(() => ({ rows: [] }));
+    const app = appRes.rows[0];
+    const applicantFullName = `${app.first_name || ''} ${app.middle_name || ''} ${app.last_name || ''} ${app.suffix || ''}`.replace(/\s+/g, ' ').trim();
+    const userIdentifier = app.qc_id || app.email || app.reference_no;
 
-    if (apptUpRes.rows.length === 0 && appUpdate.rows.length > 0) {
-      const appRow = appUpdate.rows[0];
-      const fullName = [appRow.first_name, appRow.middle_name, appRow.last_name, appRow.suffix].filter(Boolean).join(' ').trim().toUpperCase() || (applicantName || 'BENEFICIARY').toUpperCase();
-      const rawType = (appRow.assistance_type || 'Medical').replace(/\s*assistance/gi, '').trim();
-      const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + ' Assistance';
-      await db.query(
-        `INSERT INTO appointments
-          (reference_no, module, applicant_name, concern, status, office_location, notes)
-         VALUES ($1, 'AICS', $2, $3, $4, 'Quezon City Hall', 'Awtomatikong pumasok mula sa AICS status update.')`,
-        [appRow.reference_no || cleanId, fullName, cleanType, newStatus]
-      ).catch(() => {});
-    }
-
-    // Sync financial_aid_disbursements if approved
-    if (newStatus === 'approved' || newStatus === 'completed' || newStatus === 'for_release') {
-      const appRow = appUpdate.rows[0];
-      const targetRef = appRow?.reference_no || appRow?.qc_id || cleanId;
-      const targetName = [appRow?.first_name, appRow?.middle_name, appRow?.last_name, appRow?.suffix].filter(Boolean).join(' ').trim().toUpperCase() || (applicantName || 'BENEFICIARY').toUpperCase();
-      const rawType = (appRow?.assistance_type || 'Medical').replace(/\s*assistance/gi, '').trim();
-      const cleanType = (rawType.charAt(0).toUpperCase() + rawType.slice(1)) + ' Assistance';
-
-      const existingDisb = await db.query(
-        `SELECT id FROM financial_aid_disbursements
-         WHERE (application_ref = $1 OR application_ref = $2 OR REPLACE(application_ref, '-', '') = $3)
-            AND (assistance_type = $4 OR assistance_type ILIKE $5)`,
-        [rawId, targetRef, unhyphenated, cleanType, `%${rawType}%`]
-      );
-
-      if (existingDisb.rows.length === 0) {
-        const disbId = `DISB-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`;
-        await db.query(
-          `INSERT INTO financial_aid_disbursements (
-            disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
-            date_approved, status, venue, remarks
-          ) VALUES ($1, $2, $3, $4, $5, $6, 'PENDING', 'Quezon City Hall', 'Approved AICS assistance ready for release.')
-          ON CONFLICT DO NOTHING`,
-          [
-            disbId,
-            targetRef,
-            targetName,
-            cleanType,
-            5000,
-            new Date().toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' }),
-          ]
-        ).catch(() => {});
+    // Determine Certificate Type based on assistance type if approving
+    let certificateType = app.certificate_type || null;
+    const assistanceLower = (app.assistance_type || '').toLowerCase();
+    if (status === 'approved' || status === 'initial_approved') {
+      if (assistanceLower.includes('medicine') || assistanceLower.includes('gamot') || assistanceLower.includes('medical medicine')) {
+        certificateType = 'Medicine Certificate / Voucher';
+      } else {
+        certificateType = 'Guarantee Letter (Hospital/Medical Bill)';
       }
     }
 
-    res.json({
+    // Update AICS Application Status
+    const updateRes = await client.query(
+      `UPDATE aics_applications
+       SET status = COALESCE($1, status),
+           rejection_reason = COALESCE($2, rejection_reason),
+           referral_details = COALESCE($3, referral_details),
+           certificate_type = COALESCE($4, certificate_type),
+           amount = COALESCE($5, amount),
+           payout_date = COALESCE($6, payout_date),
+           payout_time = COALESCE($7, payout_time),
+           payout_venue = COALESCE($8, payout_venue),
+           updated_at = NOW()
+       WHERE id = $9
+       RETURNING *`,
+      [
+        status,
+        rejectionReason || null,
+        referralDetails || null,
+        certificateType,
+        amount ? parseFloat(amount) : null,
+        payoutDate || null,
+        payoutTime || null,
+        payoutVenue || null,
+        app.id,
+      ]
+    );
+
+    const updatedApp = updateRes.rows[0];
+
+    // --- WORKFLOW BRANCHES ---
+
+    // 1. INITIAL APPROVAL -> Transfer to Appointments module
+    if (status === 'initial_approved') {
+      // Create or update appointment record
+      await client.query(
+        `INSERT INTO appointments (
+          reference_no, module, applicant_name, concern, status, created_at, updated_at
+        ) VALUES ($1, 'AICS', $2, $3, 'pending', NOW(), NOW())
+        ON CONFLICT DO NOTHING`,
+        [app.reference_no, applicantFullName, app.assistance_type]
+      );
+
+      await sendUserNotification(
+        userIdentifier,
+        app.reference_no,
+        'Initial Validation Approved',
+        `Na-validate na ng Social Worker ang inyong AICS documents. Ang inyong application (${app.reference_no}) ay nakatakda na para sa interview appointment schedule.`
+      );
+    }
+
+    // 2. SOCIAL WORKER FINAL APPROVAL -> Transfer to Financial Aid / Payout Module
+    else if (status === 'approved') {
+      const disbId = `DISB-AICS-${app.id}-${Date.now().toString().slice(-4)}`;
+      const disbAmount = amount ? parseFloat(amount) : (app.amount && parseFloat(app.amount) > 0 ? parseFloat(app.amount) : 5000.00);
+
+      // Add to financial disbursements table
+      await client.query(
+        `INSERT INTO financial_aid_disbursements (
+          disbursement_id, application_ref, applicant_name, assistance_type, fixed_amount,
+          date_approved, status, appointment_date, appointment_time, venue, created_at, updated_at
+        ) VALUES ($1, $2, $3, $4, $5, TO_CHAR(NOW(), 'YYYY-MM-DD'), 'PENDING', $6, $7, $8, NOW(), NOW())
+        ON CONFLICT (disbursement_id) DO UPDATE SET
+          status = EXCLUDED.status,
+          fixed_amount = EXCLUDED.fixed_amount,
+          updated_at = NOW()`,
+        [
+          disbId,
+          app.reference_no,
+          applicantFullName,
+          app.assistance_type,
+          disbAmount,
+          payoutDate || app.payout_date || null,
+          payoutTime || app.payout_time || null,
+          payoutVenue || app.payout_venue || 'Quezon City Hall',
+        ]
+      );
+
+      // Update appointment status to completed/approved
+      await client.query(
+        `UPDATE appointments SET status = 'completed', updated_at = NOW() WHERE reference_no = $1 AND module = 'AICS'`,
+        [app.reference_no]
+      );
+
+      const certMsg = certificateType === 'Medicine Certificate / Voucher'
+        ? 'Maaari niyo nang i-download ang inyong Medicine Voucher / Certificate sa User Portal.'
+        : 'Maaari niyo nang i-download at i-print ang inyong Official Guarantee Letter sa User Portal.';
+
+      await sendUserNotification(
+        userIdentifier,
+        app.reference_no,
+        'AICS Application Approved!',
+        `Inaprubahan na ang inyong AICS Application (${app.reference_no}). ${certMsg}`
+      );
+    }
+
+    // 3. REJECTED
+    else if (status === 'rejected') {
+      await client.query(
+        `UPDATE appointments SET status = 'rejected', updated_at = NOW() WHERE reference_no = $1 AND module = 'AICS'`,
+        [app.reference_no]
+      );
+
+      const reasonStr = rejectionReason ? ` Dahilan: ${rejectionReason}` : '';
+      await sendUserNotification(
+        userIdentifier,
+        app.reference_no,
+        'AICS Application Disapproved',
+        `Hindi naaprubahan ang inyong AICS Application (${app.reference_no}).${reasonStr}`
+      );
+    }
+
+    // 4. REFERRED
+    else if (status === 'referred') {
+      await client.query(
+        `UPDATE appointments SET status = 'referred', updated_at = NOW() WHERE reference_no = $1 AND module = 'AICS'`,
+        [app.reference_no]
+      );
+
+      const refStr = referralDetails ? ` Inilipat sa: ${referralDetails}` : '';
+      await sendUserNotification(
+        userIdentifier,
+        app.reference_no,
+        'AICS Application Referred',
+        `Ang inyong AICS Application (${app.reference_no}) ay inilipat sa kaugnay na ahensya.${refStr}`
+      );
+    }
+
+    // 5. PAYOUT SCHEDULED
+    else if (status === 'payout_scheduled') {
+      await client.query(
+        `UPDATE financial_aid_disbursements 
+         SET status = 'PAYOUT SCHEDULED', appointment_date = $1, appointment_time = $2, venue = $3, updated_at = NOW()
+         WHERE application_ref = $4`,
+        [payoutDate, payoutTime, payoutVenue || 'Quezon City Hall', app.reference_no]
+      );
+
+      await sendUserNotification(
+        userIdentifier,
+        app.reference_no,
+        'Payout Schedule Set',
+        `Naitakda na ang inyong AICS Payout sa ${payoutDate || ''} (${payoutTime || ''}) sa ${payoutVenue || 'Quezon City Hall'}. Magdala ng valid ID.`
+      );
+    }
+
+    // 6. RELEASED
+    else if (status === 'released') {
+      await client.query(
+        `UPDATE financial_aid_disbursements 
+         SET status = 'RELEASED', released_date = TO_CHAR(NOW(), 'YYYY-MM-DD'), released_by = $1, updated_at = NOW()
+         WHERE application_ref = $2`,
+        [adminName || 'Social Welfare Cashier', app.reference_no]
+      );
+
+      await sendUserNotification(
+        userIdentifier,
+        app.reference_no,
+        'Financial Aid Released',
+        `Matagumpay na na-release ang inyong AICS assistance/payout para sa Reference No: ${app.reference_no}.`
+      );
+    }
+
+    await client.query('COMMIT');
+
+    if (logActivity) {
+      logActivity(
+        adminName || 'Admin',
+        'Admin',
+        `UPDATE_AICS_STATUS_${(status || '').toUpperCase()}`,
+        'AICS',
+        app.reference_no,
+        `Updated AICS status to ${status} for ${applicantFullName}`
+      );
+    }
+
+    return res.status(200).json({
       success: true,
-      message: `AICS application status updated to ${newStatus}.`,
-      application: appUpdate.rows[0] || null,
+      message: `Matagumpay na na-update ang status sa '${status}'.`,
+      application: updatedApp,
     });
   } catch (err) {
+    await client.query('ROLLBACK');
     console.error('Error updating AICS status:', err);
-    res.status(500).json({ success: false, error: 'Failed to update AICS status.', details: err.message });
+    return res.status(500).json({ error: 'Error updating status: ' + err.message });
+  } finally {
+    client.release();
+  }
+};
+
+// 7. Cleanup / Delete User Applications
+exports.cleanupUserAics = async (req, res) => {
+  try {
+    const { nameOrRef } = req.params;
+    if (!nameOrRef) return res.status(400).json({ error: 'Parameter required' });
+
+    const result = await db.query(
+      `DELETE FROM aics_applications 
+       WHERE reference_no ILIKE $1 
+          OR qc_id ILIKE $1 
+          OR email ILIKE $1 
+          OR CONCAT(first_name, ' ', last_name) ILIKE $1
+       RETURNING id, reference_no`,
+      [`%${nameOrRef}%`]
+    );
+
+    return res.status(200).json({
+      success: true,
+      message: `Nalinis ang ${result.rowCount} AICS applications.`,
+      deleted: result.rows,
+    });
+  } catch (err) {
+    return res.status(500).json({ error: 'Error in cleanup: ' + err.message });
+  }
+};
+
+// 8. Delete Single Application
+exports.deleteApplication = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await db.query('DELETE FROM aics_applications WHERE id = $1 OR reference_no = $1 RETURNING id, reference_no', [id]);
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Application not found' });
+    }
+    return res.status(200).json({ success: true, message: 'Application deleted successfully', deleted: result.rows[0] });
+  } catch (err) {
+    return res.status(500).json({ error: 'Error deleting application: ' + err.message });
   }
 };

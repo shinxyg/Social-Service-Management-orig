@@ -15,5 +15,8 @@ docker-compose*.yml
 nginx.conf*
 start.sh
 
+# Uploads
+backend/uploads/
+
 # Editor directories
 .vscode/
