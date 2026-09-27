@@ -533,73 +533,53 @@ exports.releaseDisbursement = async (req, res) => {
         ]
       ).catch(() => {});
 
-      await db.query(
-        `UPDATE appointments
-         SET status = 'completed', updated_at = NOW()
-         WHERE reference_no = $1
-            OR reference_no = $2
-            OR REPLACE(reference_no, '-', '') = $3`,
-        [d.application_ref, cleanId, unhyphenated]
-      ).catch(() => {});
+      const appRefClean = (d.application_ref || cleanId || '').trim();
+      if (appRefClean && appRefClean.length > 2) {
+        const unhyphen = appRefClean.replace(/[^a-zA-Z0-9]/g, '');
 
-      await db.query(
-        `UPDATE aics_applications
-         SET status = 'released', updated_at = NOW()
-         WHERE reference_no = $1
-            OR qc_id = $1
-            OR reference_no = $2
-            OR qc_id = $2
-            OR REPLACE(reference_no, '-', '') = $3
-            OR REPLACE(qc_id, '-', '') = $3`,
-        [d.application_ref, cleanId, unhyphenated]
-      ).catch(() => {});
+        await db.query(
+          `UPDATE appointments
+           SET status = 'completed', updated_at = NOW()
+           WHERE reference_no = $1
+              OR (LENGTH($2) > 2 AND REPLACE(reference_no, '-', '') = $2)`,
+          [appRefClean, unhyphen]
+        ).catch(() => {});
 
-      const nameParts = (d.applicant_name || '').trim().split(/\s+/);
-      const fName = nameParts[0] || '';
-      const lName = nameParts[nameParts.length - 1] || '';
+        await db.query(
+          `UPDATE aics_applications
+           SET status = 'released', updated_at = NOW()
+           WHERE reference_no = $1
+              OR qc_id = $1
+              OR (LENGTH($2) > 2 AND (REPLACE(reference_no, '-', '') = $2 OR REPLACE(qc_id, '-', '') = $2))`,
+          [appRefClean, unhyphen]
+        ).catch(() => {});
 
-      await db.query(
-        `UPDATE solo_parent_child_welfare_applications
-         SET application_status = 'released', updated_at = NOW()
-         WHERE reference_number = $1
-            OR reference_number = $2
-            OR REPLACE(reference_number, '-', '') = $3
-            OR (first_name ILIKE $4 AND last_name ILIKE $5)`,
-        [d.application_ref, cleanId, unhyphenated, `%${fName}%`, `%${lName}%`]
-      ).catch(() => {});
+        await db.query(
+          `UPDATE solo_parent_child_welfare_applications
+           SET application_status = 'released', updated_at = NOW()
+           WHERE reference_number = $1
+              OR (LENGTH($2) > 2 AND REPLACE(reference_number, '-', '') = $2)`,
+          [appRefClean, unhyphen]
+        ).catch(() => {});
 
-      await db.query(
-        `UPDATE pwd_senior_applications
-         SET status = 'released', approved_date = COALESCE(approved_date, $6)
-         WHERE reference_number = $1
-            OR reference_number = $2
-            OR REPLACE(reference_number, '-', '') = $3
-            OR (first_name ILIKE $4 AND last_name ILIKE $5)`,
-        [d.application_ref, cleanId, unhyphenated, `%${fName}%`, `%${lName}%`, finalDate]
-      ).catch(() => {});
+        await db.query(
+          `UPDATE pwd_senior_applications
+           SET status = 'released', approved_date = COALESCE(approved_date, $3)
+           WHERE reference_number = $1
+              OR (LENGTH($2) > 2 AND REPLACE(reference_number, '-', '') = $2)`,
+          [appRefClean, unhyphen, finalDate]
+        ).catch(() => {});
 
-      await db.query(
-        `UPDATE livelihood_applications
-         SET application_status = 'released', updated_at = NOW()
-         WHERE reference_number = $1
-            OR reference_number = $2
-            OR REPLACE(reference_number, '-', '') = $3
-            OR (first_name ILIKE $4 AND last_name ILIKE $5)`,
-        [d.application_ref, cleanId, unhyphenated, `%${fName}%`, `%${lName}%`]
-      ).catch(() => {});
-
-      await db.query(
-        `UPDATE livelihood_applications
-         SET assistance = jsonb_set(
-               COALESCE(assistance, '{}'::jsonb),
-               '{assistance_status}', '"released"'
-             ),
-             updated_at = NOW()
-         WHERE reference_number = $1
-            OR reference_number = $2
-            OR REPLACE(reference_number, '-', '') = $3`,
-        [d.application_ref, cleanId, unhyphenated]
-      ).catch(() => {});
+        await db.query(
+          `UPDATE livelihood_applications
+           SET application_status = 'released',
+               assistance = jsonb_set(COALESCE(assistance, '{}'::jsonb), '{assistance_status}', '"released"'),
+               updated_at = NOW()
+           WHERE reference_number = $1
+              OR (LENGTH($2) > 2 AND REPLACE(reference_number, '-', '') = $2)`,
+          [appRefClean, unhyphen]
+        ).catch(() => {});
+      }
 
       await logActivity({
         actor: finalOfficer,
