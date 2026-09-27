@@ -362,10 +362,17 @@ function ScheduleModal({ appointment, onClose, onSave }: ScheduleModalProps) {
 }
 
 export function getApptEffectiveStatus(a: AppointmentRequest): AppointmentStatus {
-  // 1. Explicit admin decisions or DB application/appointment status
   const normalizedStatus = String(a.status || "").toLowerCase()
   const normalizedDecision = String(a.decision || "").toLowerCase()
 
+  // 1. Explicit rejected / referred decisions
+  if (normalizedDecision === "referred" || normalizedStatus === "referred") return "referred"
+  if (normalizedDecision === "rejected" || normalizedStatus === "rejected") return "rejected"
+
+  // 2. Pending schedule: If no schedule date has been set yet, it MUST remain pending schedule!
+  if (!a.scheduledDate) return "pending"
+
+  // 3. Explicit approved status once scheduled
   if (
     normalizedDecision === "approved" ||
     normalizedStatus === "approved" ||
@@ -376,13 +383,7 @@ export function getApptEffectiveStatus(a: AppointmentRequest): AppointmentStatus
     return "approved"
   }
 
-  if (normalizedDecision === "referred" || normalizedStatus === "referred") return "referred"
-  if (normalizedDecision === "rejected" || normalizedStatus === "rejected") return "rejected"
-
-  // 2. Pending schedule: If no schedule date has been set yet, it is pending
-  if (!a.scheduledDate) return "pending"
-
-  // 3. Time-based status: Scheduled before date/time, Under Review on/after date/time
+  // 4. Time-based status: Scheduled before date/time, Under Review on/after date/time
   const isDue = isAppointmentDue(a.scheduledDate, a.scheduledTime)
   return isDue ? "under_review" : "scheduled"
 }

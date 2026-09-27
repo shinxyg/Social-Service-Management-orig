@@ -146,11 +146,23 @@ async function syncAndCleanAppointments() {
       WHERE (module = 'AICS' OR module IS NULL) AND (reference_no LIKE 'CW-%' OR reference_no LIKE 'SP-%')
     `).catch(() => {});
 
+    // 2. Strict Deduplication: Keep ONLY 1 appointment record per applicant/concern or reference_no
     await db.query(`
       DELETE FROM appointments a
       USING appointments b
-      WHERE (a.status = 'pending' AND b.status IN ('approved', 'completed', 'scheduled', 'referred') AND (LOWER(a.reference_no) = LOWER(b.reference_no) OR LOWER(REPLACE(a.reference_no, '-', '')) = LOWER(REPLACE(b.reference_no, '-', ''))) AND a.id <> b.id)
-         OR (a.status = b.status AND a.id < b.id AND (LOWER(a.reference_no) = LOWER(b.reference_no) OR LOWER(REPLACE(a.reference_no, '-', '')) = LOWER(REPLACE(b.reference_no, '-', ''))) AND a.module = b.module AND LOWER(COALESCE(a.concern, '')) = LOWER(COALESCE(b.concern, '')));
+      WHERE a.id < b.id 
+        AND (
+          (LOWER(a.reference_no) = LOWER(b.reference_no) AND a.reference_no IS NOT NULL AND a.reference_no <> '')
+          OR (LOWER(TRIM(a.applicant_name)) = LOWER(TRIM(b.applicant_name)) AND LOWER(TRIM(a.concern)) = LOWER(TRIM(b.concern)))
+        );
+    `).catch(() => {});
+
+    await db.query(`
+      DELETE FROM pwd_senior_applications a
+      USING pwd_senior_applications b
+      WHERE a.id < b.id 
+        AND LOWER(a.reference_number) = LOWER(b.reference_number)
+        AND a.reference_number IS NOT NULL AND a.reference_number <> '';
     `).catch(() => {});
 
     await db.query(`
@@ -170,9 +182,9 @@ async function syncAndCleanAppointments() {
         UPPER(TRIM(CONCAT_WS(' ', a.first_name, a.middle_name, a.last_name, a.suffix))) AS applicant_name,
         INITCAP(REPLACE(a.assistance_type, ' assistance', '')) || ' Assistance' AS concern,
         CASE 
-          WHEN a.status IN ('approved', 'completed', 'for_release', 'released') THEN 'approved'
+          WHEN a.details->>'appointmentDate' IS NOT NULL AND a.details->>'appointmentDate' <> '' AND a.status IN ('approved', 'completed', 'for_release', 'released') THEN 'approved'
+          WHEN a.details->>'appointmentDate' IS NOT NULL AND a.details->>'appointmentDate' <> '' THEN 'scheduled'
           WHEN a.status IN ('for_referral', 'referred') THEN 'referred'
-          WHEN a.status IN ('scheduled', 'under_review') OR (a.details->>'appointmentDate' IS NOT NULL AND a.details->>'appointmentDate' <> '') THEN 'scheduled'
           ELSE 'pending'
         END AS status,
         NULLIF(a.details->>'appointmentDate', '') AS scheduled_date,
@@ -191,6 +203,7 @@ async function syncAndCleanAppointments() {
           SELECT 1 FROM appointments app 
           WHERE LOWER(app.reference_no) = LOWER(COALESCE(NULLIF(TRIM(a.reference_no), ''), a.qc_id))
              OR LOWER(REPLACE(app.reference_no, '-', '')) = LOWER(REPLACE(COALESCE(NULLIF(TRIM(a.reference_no), ''), a.qc_id), '-', ''))
+             OR (LOWER(TRIM(app.applicant_name)) = LOWER(TRIM(CONCAT_WS(' ', a.first_name, a.middle_name, a.last_name, a.suffix))) AND LOWER(TRIM(app.concern)) = LOWER(TRIM(INITCAP(REPLACE(a.assistance_type, ' assistance', '')) || ' Assistance')))
         );
     `).catch(() => {});
 
@@ -201,11 +214,7 @@ async function syncAndCleanAppointments() {
         'Livelihood',
         UPPER(TRIM(CONCAT_WS(' ', l.first_name, l.last_name))),
         'Livelihood Capital Assistance',
-        CASE 
-          WHEN l.application_status IN ('approved', 'completed', 'for_release', 'released') THEN 'approved'
-          WHEN l.application_status IN ('under_review', 'scheduled') THEN 'scheduled'
-          ELSE 'pending'
-        END AS status,
+        'pending' AS status,
         'Quezon City Hall - SSDD Livelihood Center',
         'Awtomatikong pumasok mula sa na-aprubahang Livelihood Capital allocation para sa appointment scheduling.',
         COALESCE(l.created_at, NOW()),
@@ -216,7 +225,10 @@ async function syncAndCleanAppointments() {
           SELECT 1 FROM deleted_appointments d WHERE LOWER(d.reference_no) = LOWER(l.reference_number)
         )
         AND NOT EXISTS (
-          SELECT 1 FROM appointments app WHERE LOWER(app.reference_no) = LOWER(l.reference_number) OR LOWER(REPLACE(app.reference_no, '-', '')) = LOWER(REPLACE(l.reference_number, '-', ''))
+          SELECT 1 FROM appointments app 
+          WHERE LOWER(app.reference_no) = LOWER(l.reference_number) 
+             OR LOWER(REPLACE(app.reference_no, '-', '')) = LOWER(REPLACE(l.reference_number, '-', ''))
+             OR (LOWER(TRIM(app.applicant_name)) = LOWER(TRIM(CONCAT_WS(' ', l.first_name, l.last_name))) AND LOWER(TRIM(app.concern)) = 'livelihood capital assistance')
         );
     `).catch(() => {});
 
@@ -227,11 +239,7 @@ async function syncAndCleanAppointments() {
         CASE WHEN p.category ILIKE '%pwd%' THEN 'PWD' ELSE 'Senior Citizen' END,
         UPPER(TRIM(CONCAT_WS(' ', p.first_name, p.middle_name, p.last_name, p.suffix))),
         CASE WHEN p.category ILIKE '%pwd%' THEN 'PWD Social Assistance' ELSE 'Senior Social Assistance' END,
-        CASE 
-          WHEN p.status IN ('approved', 'completed', 'for_release', 'released') THEN 'approved'
-          WHEN p.status IN ('under_review', 'scheduled') THEN 'scheduled'
-          ELSE 'pending'
-        END AS status,
+        'pending' AS status,
         'Quezon City Hall - PDAO Room 102',
         'Awtomatikong pumasok mula sa PWD/Senior Social Assistance aplikasyon.',
         COALESCE(p.submitted_at, p.created_at, NOW()),
@@ -242,7 +250,10 @@ async function syncAndCleanAppointments() {
           SELECT 1 FROM deleted_appointments d WHERE LOWER(d.reference_no) = LOWER(p.reference_number)
         )
         AND NOT EXISTS (
-          SELECT 1 FROM appointments app WHERE LOWER(app.reference_no) = LOWER(p.reference_number) OR LOWER(REPLACE(app.reference_no, '-', '')) = LOWER(REPLACE(p.reference_number, '-', ''))
+          SELECT 1 FROM appointments app 
+          WHERE LOWER(app.reference_no) = LOWER(p.reference_number) 
+             OR LOWER(REPLACE(app.reference_no, '-', '')) = LOWER(REPLACE(p.reference_number, '-', ''))
+             OR (LOWER(TRIM(app.applicant_name)) = LOWER(TRIM(CONCAT_WS(' ', p.first_name, p.middle_name, p.last_name, p.suffix))) AND LOWER(TRIM(app.concern)) = LOWER(TRIM(CASE WHEN p.category ILIKE '%pwd%' THEN 'PWD Social Assistance' ELSE 'Senior Social Assistance' END)))
         );
     `).catch(() => {});
 
@@ -253,7 +264,7 @@ async function syncAndCleanAppointments() {
         'Solo Parent',
         UPPER(TRIM(CONCAT_WS(' ', s.first_name, s.middle_name, s.last_name, s.suffix))),
         CASE WHEN (s.application_type ILIKE '%edu%' OR s.reference_number ILIKE '%SP-EDU%') THEN 'Solo Parent Educational Assistance' ELSE 'Solo Parent Financial Subsidy' END,
-        CASE WHEN s.application_status IN ('approved', 'completed', 'for_release', 'released') THEN 'approved' ELSE 'pending' END,
+        'pending' AS status,
         'Quezon City Hall - SSDD Solo Parent Welfare Section',
         'Awtomatikong pumasok mula sa Solo Parent aplikasyon.',
         COALESCE(s.created_at, NOW()),
@@ -265,7 +276,10 @@ async function syncAndCleanAppointments() {
           SELECT 1 FROM deleted_appointments d WHERE LOWER(d.reference_no) = LOWER(s.reference_number)
         )
         AND NOT EXISTS (
-          SELECT 1 FROM appointments app WHERE LOWER(app.reference_no) = LOWER(s.reference_number) OR LOWER(REPLACE(app.reference_no, '-', '')) = LOWER(REPLACE(s.reference_number, '-', ''))
+          SELECT 1 FROM appointments app 
+          WHERE LOWER(app.reference_no) = LOWER(s.reference_number) 
+             OR LOWER(REPLACE(app.reference_no, '-', '')) = LOWER(REPLACE(s.reference_number, '-', ''))
+             OR (LOWER(TRIM(app.applicant_name)) = LOWER(TRIM(CONCAT_WS(' ', s.first_name, s.middle_name, s.last_name, s.suffix))) AND LOWER(TRIM(app.concern)) = LOWER(TRIM(CASE WHEN (s.application_type ILIKE '%edu%' OR s.reference_number ILIKE '%SP-EDU%') THEN 'Solo Parent Educational Assistance' ELSE 'Solo Parent Financial Subsidy' END)))
         );
     `).catch(() => {});
 
@@ -276,7 +290,7 @@ async function syncAndCleanAppointments() {
         'Child Welfare',
         COALESCE(NULLIF(UPPER(TRIM(CONCAT_WS(' ', s.guardian_first_name, s.guardian_last_name))), ''), UPPER(TRIM(s.child_name)), 'BENEFICIARY'),
         COALESCE(NULLIF(s.category_title, ''), 'Child Welfare Support'),
-        CASE WHEN s.application_status IN ('approved', 'completed', 'for_release', 'released', 'interview_scheduled') THEN 'approved' ELSE 'pending' END,
+        'pending' AS status,
         'SSDD Child Protection & Counseling Center (Room 205)',
         'Awtomatikong pumasok mula sa Child Welfare aplikasyon para sa scheduling.',
         COALESCE(s.created_at, NOW()),
@@ -288,7 +302,21 @@ async function syncAndCleanAppointments() {
           SELECT 1 FROM deleted_appointments d WHERE LOWER(d.reference_no) = LOWER(s.reference_number)
         )
         AND NOT EXISTS (
-          SELECT 1 FROM appointments app WHERE LOWER(app.reference_no) = LOWER(s.reference_number) OR LOWER(REPLACE(app.reference_no, '-', '')) = LOWER(REPLACE(s.reference_number, '-', ''))
+          SELECT 1 FROM appointments app 
+          WHERE LOWER(app.reference_no) = LOWER(s.reference_number) 
+             OR LOWER(REPLACE(app.reference_no, '-', '')) = LOWER(REPLACE(s.reference_number, '-', ''))
+             OR (LOWER(TRIM(app.applicant_name)) = LOWER(TRIM(COALESCE(NULLIF(UPPER(TRIM(CONCAT_WS(' ', s.guardian_first_name, s.guardian_last_name))), ''), UPPER(TRIM(s.child_name)), 'BENEFICIARY')))) AND LOWER(TRIM(app.concern)) = LOWER(TRIM(COALESCE(NULLIF(s.category_title, ''), 'Child Welfare Support'))))
+        );
+    `).catch(() => {});
+
+    // Final deduplication sweep
+    await db.query(`
+      DELETE FROM appointments a
+      USING appointments b
+      WHERE a.id < b.id 
+        AND (
+          (LOWER(a.reference_no) = LOWER(b.reference_no) AND a.reference_no IS NOT NULL AND a.reference_no <> '')
+          OR (LOWER(TRIM(a.applicant_name)) = LOWER(TRIM(b.applicant_name)) AND LOWER(TRIM(a.concern)) = LOWER(TRIM(b.concern)))
         );
     `).catch(() => {});
 
