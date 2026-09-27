@@ -755,31 +755,10 @@ export default function Appointments() {
       try {
         let appts: AppointmentRequest[] = []
 
-        let localScheduledMap: Record<string, any> = {}
+        // Load scheduled map preserved across sessions
         try {
           const raw = localStorage.getItem("all_appointments_scheduled")
           if (raw) localScheduledMap = JSON.parse(raw)
-        } catch {}
-
-        // Sanitize legacy contaminated keys in localScheduledMap
-        try {
-          let cleaned = false
-          for (const key of Object.keys(localScheduledMap)) {
-            const lk = key.toLowerCase()
-            if (
-              lk.includes("110000262304143") ||
-              lk.includes("66") ||
-              /^\d{10,}$/.test(key) ||
-              key.startsWith("appt_1100") ||
-              !localScheduledMap[key]?.savedInSession
-            ) {
-              delete localScheduledMap[key]
-              cleaned = true
-            }
-          }
-          if (cleaned) {
-            localStorage.setItem("all_appointments_scheduled", JSON.stringify(localScheduledMap))
-          }
         } catch {}
 
         let dismissedSet = new Set<string>()
@@ -1446,10 +1425,10 @@ export default function Appointments() {
           module: targetAppt.module,
         }
         localScheduledMap[targetAppt.id] = schedObj
+        localScheduledMap[targetAppt.referenceNo] = schedObj
+        localScheduledMap[`appt_${targetAppt.referenceNo}`] = schedObj
         localScheduledMap[`${targetAppt.referenceNo}_${targetAppt.concern}`] = schedObj
         localScheduledMap[`${targetAppt.module}_${targetAppt.referenceNo}`] = schedObj
-        delete localScheduledMap[targetAppt.referenceNo]
-        delete localScheduledMap[`appt_${targetAppt.referenceNo}`]
         localStorage.setItem("all_appointments_scheduled", JSON.stringify(localScheduledMap))
       } catch {}
 

@@ -125,12 +125,6 @@ async function syncAndCleanAppointments() {
     `).catch(() => {});
 
     await db.query(`
-      UPDATE appointments
-      SET reference_no = 'AICS-MED-2026-116932'
-      WHERE LOWER(COALESCE(concern, '')) LIKE '%medical%' AND reference_no = '110000262304143';
-    `).catch(() => {});
-
-    await db.query(`
       DELETE FROM appointments a
       USING appointments b
       WHERE (a.status = 'pending' AND b.status IN ('approved', 'completed', 'scheduled', 'referred') AND LOWER(a.reference_no) = LOWER(b.reference_no) AND a.id <> b.id)
@@ -143,13 +137,6 @@ async function syncAndCleanAppointments() {
          OR LOWER(COALESCE(concern, '')) LIKE '%booklet%'
          OR (module IN ('PWD', 'Senior Citizen') AND LOWER(COALESCE(concern, '')) NOT LIKE '%assist%')
          OR (module = 'Solo Parent' AND LOWER(COALESCE(concern, '')) NOT LIKE '%assist%' AND LOWER(COALESCE(concern, '')) NOT LIKE '%subsid%' AND LOWER(COALESCE(concern, '')) NOT LIKE '%payout%')
-    `).catch(() => {});
-
-    await db.query(`
-      UPDATE appointments
-      SET status = 'pending', scheduled_date = NULL, scheduled_time = NULL
-      WHERE (scheduled_date = '2026-09-19' OR scheduled_date ILIKE '%Sep 19%' OR scheduled_date = '2026-09-15' OR scheduled_date ILIKE '%Sep 15%')
-        AND status NOT IN ('approved', 'completed', 'rejected', 'referred')
     `).catch(() => {});
 
     // 4. Set-based Bulk Inserts for fast execution (1 statement per module)
