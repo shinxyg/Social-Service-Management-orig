@@ -215,9 +215,6 @@ export default function ApplyPWDSenior() {
   const [showModal, setShowModal] = useState(false)
   const [understood, setUnderstood] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
-  const [isBlocked, setIsBlocked] = useState(initialBlockedState.isBlocked && !bypassedBlock)
-  const [blockedApp, setBlockedApp] = useState<any>(bypassedBlock ? null : initialBlockedState.blockedApp)
-  const [hasApprovedApp, setHasApprovedApp] = useState(bypassedBlock ? false : initialBlockedState.hasApprovedApp)
 
   const [bypassedBlock, setBypassedBlock] = useState(() => {
     try {
@@ -231,6 +228,10 @@ export default function ApplyPWDSenior() {
     }
   })
   const bypassedBlockRef = useRef(bypassedBlock)
+
+  const [isBlocked, setIsBlocked] = useState(initialBlockedState.isBlocked && !bypassedBlock)
+  const [blockedApp, setBlockedApp] = useState<any>(bypassedBlock ? null : initialBlockedState.blockedApp)
+  const [hasApprovedApp, setHasApprovedApp] = useState(bypassedBlock ? false : initialBlockedState.hasApprovedApp)
 
   useEffect(() => {
     let isMounted = true
