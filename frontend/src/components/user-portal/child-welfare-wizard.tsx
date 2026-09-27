@@ -15,8 +15,6 @@ import {
   RotateCcw,
 } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
-import { DataPrivacyConsent } from "../ui/data-privacy-consent"
-import { SubmitPrivacyOverlayModal } from "../ui/submit-privacy-overlay-modal"
 import { getCurrentUserProfile } from "../../utils/userProfile"
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 import { API_BASE, getAuthHeaders, getAuthToken } from "../../config/api"
@@ -833,7 +831,6 @@ export default function ChildWelfareApplicationWizard({
   const [submissionStage, setSubmissionStage] = useState<"form" | "matching" | "pending">("form")
   const [appStatus, setAppStatus] = useState<"pending" | "approved" | "rejected">("pending")
   const [reference, setReference] = useState("")
-  const [privacyAgreed, setPrivacyAgreed] = useState(false)
   const [isReapplying, setIsReapplying] = useState(() => {
     try {
       const progKey = initialProgramKey || "educational-assistance"
@@ -1083,7 +1080,7 @@ export default function ChildWelfareApplicationWizard({
   const step3Valid = requiredDocItems.every((d) => (uploadedFiles[d.id] || []).length > 0)
 
   const canGoNext =
-    step === 1 ? step1Valid : step === 2 ? step2Valid : step === 3 ? step3Valid : privacyAgreed
+    step === 1 ? step1Valid : step === 2 ? step2Valid : step === 3 ? step3Valid : true
 
   const handleNext = () => {
     if (!canGoNext) {
@@ -2579,15 +2576,6 @@ export default function ChildWelfareApplicationWizard({
                     : "By clicking \"Submit Application\", you confirm that all information provided is true and complete. Your application will be reviewed by Quezon City SSDD social workers."}
                 </p>
               </div>
-
-              <div className="mt-4">
-                <DataPrivacyConsent
-                  checked={privacyAgreed}
-                  onChange={setPrivacyAgreed}
-                  moduleName="Child Welfare Assistance Program"
-                  error={attemptedNext && !privacyAgreed ? "Mandatory: You must agree to the Data Privacy Policy to submit your application." : undefined}
-                />
-              </div>
             </div>
           )}
         </div>
@@ -2630,7 +2618,7 @@ export default function ChildWelfareApplicationWizard({
           ) : (
             <button
               type="button"
-              onClick={() => setShowConfirmModal(true)}
+              onClick={handleSubmit}
               className="px-8 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white cursor-pointer shadow-xs"
             >
               <span>{selectedProgram.submitButtonText || t("submitApplicationUpper") || "SUBMIT APPLICATION"}</span>
@@ -2657,16 +2645,6 @@ export default function ChildWelfareApplicationWizard({
           onClose={() => setPreviewDocModal(null)}
         />
       )}
-      
-      <SubmitPrivacyOverlayModal
-        isOpen={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
-        moduleName="Child Welfare Assistance Program"
-        onConfirmSubmit={() => {
-          setShowConfirmModal(false)
-          handleSubmit()
-        }}
-      />
 
       {showWorkflowModal && (
         <EducationalAssistanceWorkflowGuide

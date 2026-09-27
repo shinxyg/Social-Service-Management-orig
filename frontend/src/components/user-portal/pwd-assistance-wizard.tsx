@@ -18,7 +18,6 @@ import {
 } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
-import { SubmitPrivacyOverlayModal } from "../ui/submit-privacy-overlay-modal"
 import { API_BASE } from "../../config/api"
 import { fetchPwdSeniorApplications } from "../../utils/cachedApiFetch"
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
@@ -607,7 +606,6 @@ export default function PWDSocialAssistanceWizard({
   const [attemptedNext, setAttemptedNext] = useState(false)
   const [cameraDoc, setCameraDoc] = useState<RequiredDocument | null>(null)
   const [previewDocModal, setPreviewDocModal] = useState<{ title: string; file: File } | null>(null)
-  const [showConfirmModal, setShowConfirmModal] = useState(false)
   const [submissionStage, setSubmissionStage] = useState<"form" | "matching" | "pending">("form")
   const [reference, setReference] = useState("")
   const [latestSubmittedApp, setLatestSubmittedApp] = useState<any | null>(null)
@@ -2139,7 +2137,7 @@ export default function PWDSocialAssistanceWizard({
               onClick={() => {
                 setAttemptedNext(true)
                 if (!canGoNext) return
-                setShowConfirmModal(true)
+                handleFinalSubmit()
               }}
               disabled={!canGoNext}
               className={`px-8 py-2.5 rounded-lg text-xs font-bold transition-colors shadow-sm flex items-center gap-2 ${
@@ -2153,19 +2151,6 @@ export default function PWDSocialAssistanceWizard({
           )}
         </div>
       </div>
-
-      {}
-      <SubmitPrivacyOverlayModal
-        isOpen={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
-        onConfirm={() => {
-          setShowConfirmModal(false)
-          handleFinalSubmit()
-        }}
-        title="Review Before Submission & Data Privacy Notice"
-        description="Please check all details and accept our Data Privacy Policy (RA 10173) before submitting your PWD assistance application."
-        confirmText="YES, SUBMIT APPLICATION"
-      />
 
       
       {}

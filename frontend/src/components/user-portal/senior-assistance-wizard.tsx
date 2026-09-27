@@ -24,7 +24,6 @@ import {
 } from "lucide-react"
 import { useLanguage } from "../ui/language-context"
 import DocumentCameraModal from "../ui/document-camera-modal"
-import { SubmitPrivacyOverlayModal } from "../ui/submit-privacy-overlay-modal"
 import { API_BASE } from "../../config/api"
 import { fetchPwdSeniorApplications } from "../../utils/cachedApiFetch"
 import { notifyApplicationChange } from "../../utils/realtimeSync"
@@ -2197,7 +2196,7 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
               onClick={() => {
                 setAttemptedNext(true)
                 if (!isStep4Valid) return
-                setShowConfirmModal(true)
+                handleFinalSubmit()
               }}
               disabled={!isStep4Valid}
               className={`px-8 py-2.5 rounded-lg text-xs font-bold transition-colors shadow-sm flex items-center gap-2 ${
@@ -2211,19 +2210,6 @@ export default function SeniorSocialAssistanceWizard({ onBack, userProfile: prop
           )}
         </div>
       </div>
-
-      <SubmitPrivacyOverlayModal
-        isOpen={showConfirmModal}
-        onClose={() => setShowConfirmModal(false)}
-        onConfirm={() => {
-          setShowConfirmModal(false)
-          handleFinalSubmit()
-        }}
-        isSubmitting={isSubmitting}
-        title="Review Before Submission & Data Privacy Notice"
-        description="Please check all details and accept our Data Privacy Policy before submitting your senior assistance application."
-        confirmText="YES, SUBMIT APPLICATION"
-      />
 
       <DocumentCameraModal
         isOpen={Boolean(cameraDoc)}

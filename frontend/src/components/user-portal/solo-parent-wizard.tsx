@@ -17,8 +17,6 @@ import {
 } from "lucide-react"
 
 import DocumentCameraModal from "../ui/document-camera-modal"
-import { DataPrivacyConsent } from "../ui/data-privacy-consent"
-import { SubmitPrivacyOverlayModal } from "../ui/submit-privacy-overlay-modal"
 import { API_BASE, getAuthHeaders } from "../../config/api"
 import { getCurrentUserProfile, getLoggedInUserQcid } from "../../utils/userProfile"
 import { notifyApplicationChange } from "../../utils/realtimeSync"
@@ -1820,14 +1818,6 @@ export default function SoloParentApplicationWizard({
                 </div>
               </AccordionSection>
 
-              {/* Privacy Consent */}
-              <div className="pt-2">
-                <DataPrivacyConsent
-                  checked={privacyAgreed}
-                  onChange={setPrivacyAgreed}
-                  required
-                />
-              </div>
             </div>
           )}
         </div>
@@ -1855,8 +1845,8 @@ export default function SoloParentApplicationWizard({
           ) : (
             <button
               type="button"
-              disabled={!privacyAgreed || submitting}
-              onClick={() => setShowSubmitModal(true)}
+              disabled={submitting}
+              onClick={handleSubmit}
               className="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold text-xs uppercase tracking-wide transition-colors cursor-pointer shadow-xs flex items-center gap-2"
             >
               {submitting && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -1877,16 +1867,6 @@ export default function SoloParentApplicationWizard({
           }
         }}
       />
-
-      {/* Submit Confirmation Modal */}
-      {showSubmitModal && (
-        <SubmitPrivacyOverlayModal
-          isOpen={showSubmitModal}
-          onClose={() => setShowSubmitModal(false)}
-          onConfirm={handleSubmit}
-          isSubmitting={submitting}
-        />
-      )}
     </div>
   )
 }

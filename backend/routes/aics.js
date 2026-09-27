@@ -11,8 +11,9 @@ router.post('/applications', (req, res, next) => {
     next();
   });
 }, aicsController.createApplication);
+
 router.get('/applications', aicsController.getApplications);
-router.get('/applications/check-duplicate', aicsController.checkDuplicatePerson); 
+router.get('/applications/check-duplicate', aicsController.checkDuplicatePerson);
 router.get('/applications/:referenceNo', aicsController.getApplicationByReference);
 router.get('/documents/:id/file', aicsController.getDocumentFile);
 router.patch('/applications/:id/status', aicsController.updateApplicationStatus);
