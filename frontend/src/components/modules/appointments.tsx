@@ -755,6 +755,7 @@ export default function Appointments() {
       try {
         let appts: AppointmentRequest[] = []
 
+        let localScheduledMap: Record<string, any> = {}
         // Load scheduled map preserved across sessions
         try {
           const raw = localStorage.getItem("all_appointments_scheduled")
