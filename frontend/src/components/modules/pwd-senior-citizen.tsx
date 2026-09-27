@@ -17,9 +17,6 @@ import {
 import { API_BASE } from "../../config/api"
 import {
   pushUserNotification,
-  getSavedDisbursements,
-  saveDisbursements,
-  type SyncedDisbursementRecord,
 } from "../../utils/financialAidSync"
 import { notifyApplicationChange, subscribeToRealtimeChanges } from "../../utils/realtimeSync"
 import MaskedText from "../ui/masked-text"
@@ -1699,7 +1696,7 @@ interface ApplicationCardProps {
   onShowCard?: (app: ApplicationSubmission) => void
 }
 
-function ApplicationCard({ app, onView, onShowCard }: ApplicationCardProps) {
+function ApplicationCard({ app, onView }: ApplicationCardProps) {
   const subLabel = subLabelForApp(app)
   const isSeniorBooklet = !isPWD(app) && (
     String(app.type || "").toLowerCase().includes("booklet") ||
@@ -2731,7 +2728,7 @@ export default function PWDSeniorCitizen() {
         app.id === id || (id && app.id === id) || (refNo && app.referenceNumber === refNo && String(app.type || "").toLowerCase() === String(targetApp.type || "").toLowerCase())
           ? {
             ...app,
-            status: "approved",
+            status: nextStatus,
             assignedIdNumber: nextIdNumber,
             approvedBy: "Social Worker Admin",
             approvedDate: approvedDate,
