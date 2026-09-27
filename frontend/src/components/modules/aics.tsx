@@ -240,6 +240,10 @@ export default function AICS() {
       const combinedMap = new Map<string, AicsApplication>()
       localApps.forEach(app => {
         if (!app) return
+        const isDummy = String(app.first_name || '').toUpperCase().includes('JEFFERSON') ||
+                        String(app.qc_id || '').includes('110000262304143') ||
+                        String(app.reference_no || '').includes('110000262304143')
+        if (isDummy) return
         const key = app.reference_no || app.referenceNo || String(app.id) || app.qc_id
         if (key) {
           combinedMap.set(key, {

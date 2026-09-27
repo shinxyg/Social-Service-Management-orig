@@ -55,12 +55,23 @@ export default function AICSUser() {
   const [userApps, setUserApps] = useState<any[]>([])
 
   useEffect(() => {
+    // Purge old mock/dummy records from localStorage
+    try {
+      ['aics_applications', 'all_aics_applications', 'user_aics_applications'].forEach((key) => {
+        const raw = localStorage.getItem(key)
+        if (raw && (raw.includes('JEFFERSON') || raw.includes('110000262304143'))) {
+          localStorage.removeItem(key)
+        }
+      })
+    } catch {}
+
     const loadApps = async () => {
       try {
         const prof = getCurrentUserProfile()
         const qcId = prof?.qcId || prof?.qcidNumber || prof?.qcidNo || ""
         const email = prof?.email || ""
-        const res = await fetch(`${API_BASE}/api/aics/applications?email=${encodeURIComponent(email)}&qcId=${encodeURIComponent(qcId)}`)
+        const cleanBase = API_BASE.replace(/\/+$/, "").replace(/\/api\/aics$/i, "").replace(/\/api$/i, "")
+        const res = await fetch(`${cleanBase}/api/aics/applications?email=${encodeURIComponent(email)}&qcId=${encodeURIComponent(qcId)}`)
         if (res.ok) {
           const data = await res.json()
           setUserApps(data.applications || [])
