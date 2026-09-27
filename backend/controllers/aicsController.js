@@ -142,6 +142,7 @@ exports.createApplication = async (req, res) => {
     }
 
     const parsedDetails = typeof details === 'string' ? JSON.parse(details) : (details || {});
+    const parsedAge = (age && !isNaN(parseInt(age, 10))) ? parseInt(age, 10) : null;
 
     // Insert Application
     const insertRes = await client.query(
@@ -161,7 +162,7 @@ exports.createApplication = async (req, res) => {
         suffix || '',
         nationality || 'Filipino',
         birthDate || null,
-        age ? parseInt(age, 10) : null,
+        parsedAge,
         gender || null,
         civilStatus || null,
         phone || null,

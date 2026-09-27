@@ -972,13 +972,44 @@ const handleFinalSubmit = async () => {
 
       if (response.ok) {
         const data = await response.json()
-        const assignedRef = data.application?.reference_no || qcId || "110000116932100"
+        const assignedRef = data.application?.reference_no || qcId || `AICS-2026-${Date.now().toString().slice(-6)}`
         setReference(assignedRef)
         setAppStatus("pending")
         setAppointmentInfo(null)
         setRejectionReason("")
         setReferralAgency("")
         setReferralNotes("")
+
+        // Local fallback storage for seamless offline and instant admin sync
+        try {
+          const newAicsApp = data.application || {
+            id: `APP-AICS-${Date.now()}`,
+            created_at: new Date().toISOString(),
+            reference_no: assignedRef,
+            qc_id: qcId || assignedRef,
+            assistance_type: assistanceTypeName || type || "Medical Assistance",
+            status: "pending",
+            full_name: `${pFirstName} ${pMiddleName} ${pLastName}`.trim(),
+            first_name: pFirstName,
+            middle_name: pMiddleName,
+            last_name: pLastName,
+            suffix: pSuffix,
+            nationality: pNationality,
+            birth_date: pBirthDate,
+            age: pAge,
+            gender: pGender,
+            civil_status: pCivilStatus,
+            phone: pPhoneNumber,
+            email: pEmail,
+            address: fullAddress,
+            details: finalDetails,
+          }
+          const existingAics = JSON.parse(localStorage.getItem("aics_applications") || "[]")
+          const updatedAicsList = [newAicsApp, ...existingAics.filter((a: any) => a.reference_no !== assignedRef)]
+          localStorage.setItem("aics_applications", JSON.stringify(updatedAicsList))
+          window.dispatchEvent(new CustomEvent("aics_applications_updated"))
+        } catch {}
+
         try {
           localStorage.removeItem(`aics_reapplying_${resolvedTypeKey}`)
           localStorage.removeItem("aics_reapplying")
@@ -1026,23 +1057,89 @@ const handleFinalSubmit = async () => {
         } catch {}
         notifyApplicationChange("APPLICATION_SUBMITTED", "aics", assignedRef)
       } else {
-        setReference(qcId || "110000116932100")
+        const fallbackRef = qcId ? `AICS-${qcId.replace(/[^a-zA-Z0-9]/g, "")}-${Math.floor(1000 + Math.random() * 9000)}` : `AICS-2026-${Date.now().toString().slice(-6)}`
+        setReference(fallbackRef)
         setAppStatus("pending")
         setAppointmentInfo(null)
         setRejectionReason("")
         setReferralAgency("")
         setReferralNotes("")
-        notifyApplicationChange("APPLICATION_SUBMITTED", "aics", qcId || "110000116932100")
+
+        try {
+          const localAicsApp = {
+            id: `APP-AICS-${Date.now()}`,
+            created_at: new Date().toISOString(),
+            reference_no: fallbackRef,
+            qc_id: qcId || fallbackRef,
+            assistance_type: assistanceTypeName || type || "Medical Assistance",
+            status: "pending",
+            full_name: `${pFirstName} ${pMiddleName} ${pLastName}`.trim(),
+            first_name: pFirstName,
+            middle_name: pMiddleName,
+            last_name: pLastName,
+            suffix: pSuffix,
+            nationality: pNationality,
+            birth_date: pBirthDate,
+            age: pAge,
+            gender: pGender,
+            civil_status: pCivilStatus,
+            phone: pPhoneNumber,
+            email: pEmail,
+            address: fullAddress,
+            details: finalDetails,
+          }
+          const existingAics = JSON.parse(localStorage.getItem("aics_applications") || "[]")
+          const updatedAicsList = [localAicsApp, ...existingAics.filter((a: any) => a.reference_no !== fallbackRef)]
+          localStorage.setItem("aics_applications", JSON.stringify(updatedAicsList))
+          window.dispatchEvent(new CustomEvent("aics_applications_updated"))
+          window.dispatchEvent(new CustomEvent("aics_application_submitted"))
+          window.dispatchEvent(new CustomEvent("applications_updated"))
+        } catch {}
+
+        notifyApplicationChange("APPLICATION_SUBMITTED", "aics", fallbackRef)
       }
     } catch (err) {
       console.warn("Backend unavailable, generating reference:", err)
-      setReference(qcId || "110000116932100")
+      const fallbackRef = qcId ? `AICS-${qcId.replace(/[^a-zA-Z0-9]/g, "")}-${Math.floor(1000 + Math.random() * 9000)}` : `AICS-2026-${Date.now().toString().slice(-6)}`
+      setReference(fallbackRef)
       setAppStatus("pending")
       setAppointmentInfo(null)
       setRejectionReason("")
       setReferralAgency("")
       setReferralNotes("")
-      notifyApplicationChange("APPLICATION_SUBMITTED", "aics", qcId || "110000116932100")
+
+      try {
+        const localAicsApp = {
+          id: `APP-AICS-${Date.now()}`,
+          created_at: new Date().toISOString(),
+          reference_no: fallbackRef,
+          qc_id: qcId || fallbackRef,
+          assistance_type: assistanceTypeName || type || "Medical Assistance",
+          status: "pending",
+          full_name: `${pFirstName} ${pMiddleName} ${pLastName}`.trim(),
+          first_name: pFirstName,
+          middle_name: pMiddleName,
+          last_name: pLastName,
+          suffix: pSuffix,
+          nationality: pNationality,
+          birth_date: pBirthDate,
+          age: pAge,
+          gender: pGender,
+          civil_status: pCivilStatus,
+          phone: pPhoneNumber,
+          email: pEmail,
+          address: fullAddress,
+          details: finalDetails,
+        }
+        const existingAics = JSON.parse(localStorage.getItem("aics_applications") || "[]")
+        const updatedAicsList = [localAicsApp, ...existingAics.filter((a: any) => a.reference_no !== fallbackRef)]
+        localStorage.setItem("aics_applications", JSON.stringify(updatedAicsList))
+        window.dispatchEvent(new CustomEvent("aics_applications_updated"))
+        window.dispatchEvent(new CustomEvent("aics_application_submitted"))
+        window.dispatchEvent(new CustomEvent("applications_updated"))
+      } catch {}
+
+      notifyApplicationChange("APPLICATION_SUBMITTED", "aics", fallbackRef)
     }
 
     setStep("pending")

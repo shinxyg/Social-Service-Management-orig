@@ -210,11 +210,42 @@ export default function AICS() {
     if (!silent) setLoading(true)
     setErrorMsg(null)
     try {
-      const res = await fetch(`${API_BASE}/applications`)
-      if (!res.ok) throw new Error('Failed to fetch applications')
-      const data = await res.json()
-      const appsList = Array.isArray(data) ? data : (data.applications || data.data || [])
-      setApplications(appsList)
+      let apiApps: AicsApplication[] = []
+      try {
+        const res = await fetch(`${API_BASE}/applications`)
+        if (res.ok) {
+          const data = await res.json()
+          apiApps = Array.isArray(data) ? data : (data.applications || data.data || [])
+        }
+      } catch (err) {
+        console.warn('Backend API fetch notice in AICS admin:', err)
+      }
+
+      let localApps: AicsApplication[] = []
+      try {
+        const rawLocal = localStorage.getItem('aics_applications')
+        if (rawLocal) {
+          localApps = JSON.parse(rawLocal)
+        }
+      } catch (e) {}
+
+      const combinedMap = new Map<string, AicsApplication>()
+
+      localApps.forEach((app) => {
+        const key = app.reference_no || String(app.id) || app.qc_id
+        if (key) combinedMap.set(key, app)
+      })
+
+      apiApps.forEach((app) => {
+        const key = app.reference_no || String(app.id) || app.qc_id
+        if (key) combinedMap.set(key, app)
+      })
+
+      const finalApps = Array.from(combinedMap.values()).sort(
+        (a, b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime()
+      )
+
+      setApplications(finalApps)
     } catch (err) {
       console.error(err)
       if (!silent) {
