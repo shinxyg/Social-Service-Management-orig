@@ -685,12 +685,37 @@ export default function AICSServiceWizard({
         body: formData,
       })
 
+      let finalRef = generatedRef
+      let appDataObj: any = null
       if (res.ok) {
         const data = await res.json()
-        setReferenceNo(data.application?.reference_no || generatedRef)
+        finalRef = data.application?.reference_no || generatedRef
+        appDataObj = data.application
+        setReferenceNo(finalRef)
       } else {
         setReferenceNo(generatedRef)
       }
+
+      const newApp = appDataObj || {
+        id: Date.now(),
+        reference_no: finalRef,
+        assistance_type: serviceTitle,
+        qc_id: qcidNo || null,
+        first_name: firstName || "APPLICANT",
+        last_name: lastName || "USER",
+        middle_name: middleName || "",
+        suffix: suffix || "",
+        status: "pending",
+        created_at: new Date().toISOString()
+      }
+
+      try {
+        const rawLocal = localStorage.getItem("aics_applications")
+        const localApps = rawLocal ? JSON.parse(rawLocal) : []
+        const filteredLocal = Array.isArray(localApps) ? localApps.filter((a: any) => a.reference_no !== finalRef) : []
+        filteredLocal.unshift(newApp)
+        localStorage.setItem("aics_applications", JSON.stringify(filteredLocal))
+      } catch {}
     } catch (err) {
       console.warn("Backend unavailable, saving offline reference:", err)
       setReferenceNo(generatedRef)
@@ -721,7 +746,9 @@ export default function AICSServiceWizard({
         const existingRaw = localStorage.getItem("all_financial_disbursements")
         const existingList = existingRaw ? JSON.parse(existingRaw) : []
         const updatedList = [newDisbursement, ...existingList.filter((item: any) => item.applicationRef !== generatedRef)]
+        localStorage.setItem("all_financial_disbursements", JSON.stringify(updatedList))
         window.dispatchEvent(new CustomEvent("aics_application_submitted"))
+        window.dispatchEvent(new CustomEvent("aics_applications_updated"))
       } catch (errDisb) {
         console.warn("Could not save auto-disbursement entry:", errDisb)
       }

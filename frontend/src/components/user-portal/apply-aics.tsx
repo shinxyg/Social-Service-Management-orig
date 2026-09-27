@@ -980,6 +980,27 @@ const handleFinalSubmit = async () => {
         setReferralAgency("")
         setReferralNotes("")
 
+        const newAppRecord = data.application || {
+          id: Date.now(),
+          reference_no: assignedRef,
+          assistance_type: selectedType,
+          qc_id: qcId,
+          first_name: firstName || "APPLICANT",
+          last_name: lastName || "USER",
+          middle_name: middleName || "",
+          suffix: suffix || "",
+          status: "pending",
+          created_at: new Date().toISOString()
+        }
+
+        try {
+          const rawLocal = localStorage.getItem("aics_applications")
+          const localApps = rawLocal ? JSON.parse(rawLocal) : []
+          const filteredLocal = Array.isArray(localApps) ? localApps.filter((a: any) => a.reference_no !== assignedRef) : []
+          filteredLocal.unshift(newAppRecord)
+          localStorage.setItem("aics_applications", JSON.stringify(filteredLocal))
+        } catch {}
+
         try {
           localStorage.removeItem(`aics_reapplying_${resolvedTypeKey}`)
           localStorage.removeItem("aics_reapplying")
@@ -1024,6 +1045,7 @@ const handleFinalSubmit = async () => {
           localStorage.removeItem("appointments")
           window.dispatchEvent(new CustomEvent('appointments_updated'))
           window.dispatchEvent(new CustomEvent('aics_application_submitted'))
+          window.dispatchEvent(new CustomEvent('aics_applications_updated'))
         } catch {}
         notifyApplicationChange("APPLICATION_SUBMITTED", "aics", assignedRef)
       } else {

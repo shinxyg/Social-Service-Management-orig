@@ -210,13 +210,70 @@ export default function AICS() {
     if (!silent) setLoading(true)
     setErrorMsg(null)
     try {
-      const res = await fetch(`${API_BASE}/applications`)
-      if (!res.ok) throw new Error('Failed to fetch applications from database')
-      const data = await res.json()
-      const appsList: AicsApplication[] = Array.isArray(data) ? data : (data.applications || data.data || [])
-      setApplications(appsList)
+      let apiApps: AicsApplication[] = []
+      try {
+        const res = await fetch(`${API_BASE}/api/aics/applications?role=admin&isAdmin=true`)
+        if (res.ok) {
+          const data = await res.json()
+          apiApps = Array.isArray(data) ? data : (data.applications || data.data || [])
+        }
+      } catch (errApi) {
+        console.warn('API fetch warning:', errApi)
+      }
+
+      if (apiApps.length === 0) {
+        try {
+          const res2 = await fetch(`${API_BASE}/applications?role=admin&isAdmin=true`)
+          if (res2.ok) {
+            const data2 = await res2.json()
+            apiApps = Array.isArray(data2) ? data2 : (data2.applications || data2.data || [])
+          }
+        } catch {}
+      }
+
+      // Merge with any client submissions stored locally
+      const localSources = ['aics_applications', 'all_aics_applications', 'user_aics_applications']
+      let localApps: any[] = []
+      localSources.forEach(key => {
+        try {
+          const raw = localStorage.getItem(key)
+          if (raw) {
+            const parsed = JSON.parse(raw)
+            if (Array.isArray(parsed)) localApps.push(...parsed)
+            else if (typeof parsed === 'object') localApps.push(parsed)
+          }
+        } catch {}
+      })
+
+      const combinedMap = new Map<string, AicsApplication>()
+      localApps.forEach(app => {
+        if (!app) return
+        const key = app.reference_no || app.referenceNo || String(app.id) || app.qc_id
+        if (key) {
+          combinedMap.set(key, {
+            ...app,
+            reference_no: app.reference_no || app.referenceNo || key,
+            assistance_type: app.assistance_type || app.assistanceType || app.service || 'Medical Assistance',
+            first_name: app.first_name || app.firstName || 'APPLICANT',
+            last_name: app.last_name || app.lastName || 'USER',
+            middle_name: app.middle_name || app.middleName || '',
+            suffix: app.suffix || '',
+            status: app.status || 'pending',
+            created_at: app.created_at || app.submittedAt || app.dateSubmitted || new Date().toISOString()
+          })
+        }
+      })
+
+      apiApps.forEach(app => {
+        if (!app) return
+        const key = app.reference_no || app.referenceNo || String(app.id) || app.qc_id
+        if (key) combinedMap.set(key, app)
+      })
+
+      const finalApps = Array.from(combinedMap.values())
+      setApplications(finalApps)
     } catch (err) {
-      console.error('Error fetching applications from DB:', err)
+      console.error('Error fetching applications:', err)
       if (!silent) {
         setErrorMsg('Hindi makuha ang listahan ng applications mula sa database. Siguraduhing tumatakbo ang backend server.')
       }
