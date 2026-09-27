@@ -19,9 +19,6 @@ export function getApiBase(): string {
       window.location.hostname === "127.0.0.1");
 
   if (!url) {
-    if (isLocal) {
-      return "http://localhost:5000";
-    }
     return "https://backend-production-1736.up.railway.app";
   }
 
