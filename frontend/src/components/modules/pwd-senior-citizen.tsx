@@ -1763,19 +1763,7 @@ function ApplicationCard({ app, onView, onShowCard }: ApplicationCardProps) {
           <div className="flex items-center gap-1.5">
             <StatusBadge status={app.status} />
           </div>
-          {onShowCard && app.status === "approved" && !isSeniorBooklet && !isAssistance && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                onShowCard(app)
-              }}
-              className="gw-btn-ghost px-2.5 py-1.5 text-xs text-blue-700 hover:text-blue-800 border-blue-200 bg-blue-50/60 inline-flex items-center gap-1 cursor-pointer"
-            >
-              <IdCard className="h-3.5 w-3.5 text-blue-600" />
-              View ID
-            </button>
-          )}
+
         </div>
       </div>
     </div>
@@ -1921,16 +1909,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allApplic
                   <CategoryTag category={app.category} />
                   <span className="gw-tag gw-tag--ghost max-w-64 truncate">{subLabel}</span>
                   <StatusBadge status={app.status} />
-                  {onShowCard && app.status === "approved" && !isAssistance && !isSeniorBooklet && (
-                    <button
-                      type="button"
-                      onClick={() => onShowCard(app)}
-                      className="px-3 py-1 text-xs rounded-lg font-bold bg-blue-600 hover:bg-blue-700 text-white inline-flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
-                    >
-                      <IdCard className="h-3.5 w-3.5" />
-                      View ID Card
-                    </button>
-                  )}
+
                 </div>
               </div>
             </div>
@@ -2578,16 +2557,7 @@ function DetailedView({ app, onClose, onApprove, onReject, onShowCard, allApplic
                 </button>
               </>
             )}
-            {onShowCard && (app.status === "approved" || app.status === "under_review") && !isAssistance && !isSeniorBooklet && (
-              <button
-                type="button"
-                onClick={() => onShowCard(app)}
-                className="px-4 h-10 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-lg inline-flex items-center gap-1.5 cursor-pointer transition-colors shadow-2xs"
-              >
-                <IdCard className="h-4 w-4 text-blue-600" />
-                View ID Card
-              </button>
-            )}
+
           </div>
         </div>
       </div>

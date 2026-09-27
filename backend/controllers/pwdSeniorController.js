@@ -489,8 +489,8 @@ exports.createApplication = async (req, res) => {
 
     try {
       await db.query(
-        `DELETE FROM pwd_senior_applications WHERE (reference_number = $1 OR email = $2) AND category = $3 AND status = 'rejected'`,
-        [newApp.referenceNumber, newApp.email, newApp.category]
+        `DELETE FROM pwd_senior_applications WHERE (id = $1 OR reference_number = $2 OR (email = $3 AND email != '')) AND status = 'rejected'`,
+        [newApp.id, newApp.referenceNumber, newApp.email]
       );
       await db.query(
         `INSERT INTO pwd_senior_applications (

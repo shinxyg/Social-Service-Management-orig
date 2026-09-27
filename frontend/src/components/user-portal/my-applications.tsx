@@ -3700,16 +3700,7 @@ export default function MyApplications() {
                 </div>
 
                 {}
-                <div className="pt-2 border-t border-slate-200 dark:border-slate-800 flex justify-end">
-                  <button
-                    type="button"
-                    onClick={() => setIdCardApp(selectedApp)}
-                    className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
-                  >
-                    <IdCard className="w-4 h-4" />
-                    <span>View ID (Front &amp; Back)</span>
-                  </button>
-                </div>
+
               </div>
             )
           }
@@ -4621,20 +4612,7 @@ export default function MyApplications() {
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-2 md:justify-end shrink-0 pt-1 md:pt-0">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              setIdCardApp(app)
-                            }}
-                            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
-                            title="View Official Digital ID Card"
-                          >
-                            <IdCard className="w-3.5 h-3.5" />
-                            <span>View ID</span>
-                          </button>
-                        </div>
+
                       </div>
                     )
                   }
@@ -4739,18 +4717,7 @@ export default function MyApplications() {
                           </div>
 
                           <div className="flex items-center gap-2 sm:justify-end shrink-0 pt-1 sm:pt-0">
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation()
-                                setIdCardApp(app)
-                              }}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
-                              title="View Official Digital PWD ID Card"
-                            >
-                              <IdCard className="w-3.5 h-3.5" />
-                              <span>View ID</span>
-                            </button>
+
                             <a
                               href="/portal/financial-aid"
                               onClick={(e) => {

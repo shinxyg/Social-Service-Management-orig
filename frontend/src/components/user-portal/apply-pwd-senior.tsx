@@ -237,6 +237,20 @@ export default function ApplyPWDSenior() {
 
     const checkActiveApp = async () => {
       try {
+        const isReapp =
+          bypassedBlockRef.current ||
+          bypassedBlock ||
+          localStorage.getItem("pwd_senior_reapplying") === "true" ||
+          localStorage.getItem(`pwd_senior_reapplying_${urlCategory || "pwd"}_${urlType || "new"}`) === "true"
+        if (isReapp) {
+          if (isMounted) {
+            setIsBlocked(false)
+            setBlockedApp(null)
+            setHasApprovedApp(false)
+          }
+          return
+        }
+
         const currentQcid = getLoggedInUserQcid() || "110000572516915"
         const userProf = getCurrentUserProfile()
 
@@ -261,7 +275,7 @@ export default function ApplyPWDSenior() {
         } catch {}
 
         const finalRes = evaluateActiveAppBlockedState(allApps, urlCategory, urlType, userProf, currentQcid)
-        if (isMounted) {
+        if (isMounted && !bypassedBlockRef.current) {
           setIsBlocked(finalRes.isBlocked)
           setBlockedApp(finalRes.blockedApp)
           setHasApprovedApp(finalRes.hasApprovedApp)
@@ -598,7 +612,7 @@ export default function ApplyPWDSenior() {
                   {language === "en" ? "Apply for Replacement / Lost ID" : language === "bis" ? "Pag-apply para sa Replacement / Nawala nga ID" : "Mag-apply para sa Replacement / Nawalang ID"}
                 </button>
               </>
-            ) : isAppRejected ? (
+            ) : true ? (
 
               <button
                 type="button"
