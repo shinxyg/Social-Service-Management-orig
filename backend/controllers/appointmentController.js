@@ -59,48 +59,10 @@ async function syncAndCleanAppointments() {
     `).catch(() => {});
 
     await db.query(`
-      DELETE FROM appointments
-      WHERE module IN ('PWD', 'Senior Citizen') AND reference_no IN (
-        SELECT reference_number FROM pwd_senior_applications WHERE status IN ('rejected', 'denied', 'disapproved', 'pending', 'submit_pending')
-      )
-    `).catch(() => {});
-
-    await db.query(`
-      DELETE FROM appointments
-      WHERE module IN ('PWD', 'Senior Citizen')
-        AND NOT EXISTS (SELECT 1 FROM pwd_senior_applications p WHERE p.reference_number = appointments.reference_no)
-    `).catch(() => {});
-
-    await db.query(`
-      DELETE FROM appointments
-      WHERE module = 'AICS'
-        AND NOT EXISTS (SELECT 1 FROM aics_applications a WHERE a.reference_no = appointments.reference_no OR a.qc_id = appointments.reference_no)
-    `).catch(() => {});
-
-    await db.query(`
-      DELETE FROM appointments
-      WHERE module = 'Livelihood' AND reference_no IN (
-        SELECT reference_number FROM livelihood_applications WHERE application_status IN ('rejected', 'disapproved')
-      )
-    `).catch(() => {});
-
-    await db.query(`
-      DELETE FROM appointments
-      WHERE module = 'Child Welfare' AND reference_no IN (
-        SELECT reference_number FROM solo_parent_child_welfare_applications WHERE module_type = 'CHILD_WELFARE' AND application_status IN ('rejected', 'disapproved')
-      )
-    `).catch(() => {});
-
-    await db.query(`
-      DELETE FROM appointments
-      WHERE status IN ('rejected', 'denied', 'disapproved')
-    `).catch(() => {});
-
-    await db.query(`
       DELETE FROM appointments a
       USING appointments b
-      WHERE (a.status = 'pending' AND b.status IN ('approved', 'completed', 'scheduled', 'referred') AND LOWER(a.reference_no) = LOWER(b.reference_no) AND a.id <> b.id)
-         OR (a.status = b.status AND a.id < b.id AND LOWER(a.reference_no) = LOWER(b.reference_no) AND a.module = b.module AND LOWER(COALESCE(a.concern, '')) = LOWER(COALESCE(b.concern, '')));
+      WHERE (a.status = 'pending' AND b.status IN ('approved', 'completed', 'scheduled', 'referred') AND (LOWER(a.reference_no) = LOWER(b.reference_no) OR LOWER(REPLACE(a.reference_no, '-', '')) = LOWER(REPLACE(b.reference_no, '-', ''))) AND a.id <> b.id)
+         OR (a.status = b.status AND a.id < b.id AND (LOWER(a.reference_no) = LOWER(b.reference_no) OR LOWER(REPLACE(a.reference_no, '-', '')) = LOWER(REPLACE(b.reference_no, '-', ''))) AND a.module = b.module AND LOWER(COALESCE(a.concern, '')) = LOWER(COALESCE(b.concern, '')));
     `).catch(() => {});
 
     await db.query(`
@@ -735,6 +697,11 @@ exports.updateAppointmentStatus = async (req, res) => {
       : cleanId.startsWith('PWD') ? 'PWD'
       : cleanId.startsWith('SENIOR') ? 'Senior Citizen'
       : targetModule || 'AICS';
+
+    await db.query(
+      `DELETE FROM deleted_appointments WHERE reference_no = $1 OR reference_no = $2 OR REPLACE(reference_no, '-', '') = $3`,
+      [rawId, cleanId, unhyphenated]
+    ).catch(() => {});
 
     // 1. Update appointments table STRICTLY for this appointment (by id or by reference_no)
     const apptUpdate = await db.query(
