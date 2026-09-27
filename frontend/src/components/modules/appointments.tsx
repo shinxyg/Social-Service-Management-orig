@@ -362,13 +362,25 @@ function ScheduleModal({ appointment, onClose, onSave }: ScheduleModalProps) {
 }
 
 export function getApptEffectiveStatus(a: AppointmentRequest): AppointmentStatus {
-  // 1. Pending schedule: If no schedule date has been set yet, it is ALWAYS pending!
-  if (!a.scheduledDate) return "pending"
+  // 1. Explicit admin decisions or DB application/appointment status
+  const normalizedStatus = String(a.status || "").toLowerCase()
+  const normalizedDecision = String(a.decision || "").toLowerCase()
 
-  // 2. Explicit admin decisions made during appointment assessment (only valid once scheduled)
-  if (a.decision === "approved" || a.status === "approved" || a.status === "completed") return "approved"
-  if (a.decision === "referred" || a.status === "referred") return "referred"
-  if (a.decision === "rejected" || a.status === "rejected") return "rejected"
+  if (
+    normalizedDecision === "approved" ||
+    normalizedStatus === "approved" ||
+    normalizedStatus === "completed" ||
+    normalizedStatus === "for_release" ||
+    normalizedStatus === "released"
+  ) {
+    return "approved"
+  }
+
+  if (normalizedDecision === "referred" || normalizedStatus === "referred") return "referred"
+  if (normalizedDecision === "rejected" || normalizedStatus === "rejected") return "rejected"
+
+  // 2. Pending schedule: If no schedule date has been set yet, it is pending
+  if (!a.scheduledDate) return "pending"
 
   // 3. Time-based status: Scheduled before date/time, Under Review on/after date/time
   const isDue = isAppointmentDue(a.scheduledDate, a.scheduledTime)
@@ -879,9 +891,6 @@ export default function Appointments() {
                     return false
                   }
                   if (status === 'rejected' || status === 'denied' || status === 'disapproved') {
-                    return false
-                  }
-                  if (String(a.applicant_name || '').toUpperCase().includes('JEFFERSON') && (concern.includes('senior') || String(a.module || '').toLowerCase().includes('senior'))) {
                     return false
                   }
                   return true

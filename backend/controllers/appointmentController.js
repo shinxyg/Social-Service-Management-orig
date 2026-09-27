@@ -51,12 +51,6 @@ async function syncAndCleanAppointments() {
       WHERE (module = 'AICS' OR module IS NULL) AND (reference_no LIKE 'CW-%' OR reference_no LIKE 'SP-%')
     `).catch(() => {});
 
-    // 2. Remove legacy dummy test records
-    await db.query(`
-      DELETE FROM appointments
-      WHERE applicant_name ILIKE '%JEFFERSON%'
-         OR reference_no ILIKE '%110000262304143%'
-    `).catch(() => {});
 
     await db.query(`
       DELETE FROM appointments a
