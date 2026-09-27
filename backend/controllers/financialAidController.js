@@ -136,7 +136,6 @@ exports.getDisbursements = async (req, res) => {
        WHERE f.application_ref NOT LIKE 'CW-%'
          AND f.assistance_type NOT ILIKE '%child%'
          AND f.assistance_type NOT ILIKE '%welfare%'
-         AND f.applicant_name NOT ILIKE '%JEFFERSON%'
          AND NOT (
            f.assistance_type ILIKE '%Intake%'
            OR f.assistance_type ILIKE '%Assessment%'
@@ -185,7 +184,6 @@ exports.getUserDisbursements = async (req, res) => {
          ORDER BY reference_no, created_at DESC
        ) a ON f.application_ref = a.reference_no
        WHERE (f.application_ref = $1 OR f.applicant_name ILIKE $2)
-         AND f.applicant_name NOT ILIKE '%JEFFERSON%'
          AND f.application_ref NOT LIKE 'CW-%'
          AND f.assistance_type NOT ILIKE '%child%'
          AND f.assistance_type NOT ILIKE '%protective%'

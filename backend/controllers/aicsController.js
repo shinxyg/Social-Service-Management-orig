@@ -72,15 +72,7 @@ async function initAicsTable() {
       CREATE INDEX IF NOT EXISTS idx_aics_documents_app_id ON aics_documents(application_id);
     `);
 
-    // Auto-cleanup old dummy test records
-    await db.query(`
-      DELETE FROM aics_applications 
-      WHERE (first_name ILIKE '%JEFFERSON%' AND last_name ILIKE '%LEE%') 
-         OR qc_id ILIKE '%110000262304143%'
-         OR reference_no ILIKE '%110000262304143%'
-    `).catch(() => {});
-
-    console.log('[DB] aics_applications & aics_documents schema verified and cleaned.');
+    console.log('[DB] aics_applications & aics_documents schema verified.');
   } catch (err) {
     console.warn('[DB] Could not initialize aics tables:', err.message);
   }
