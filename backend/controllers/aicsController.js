@@ -399,6 +399,9 @@ exports.getApplicationByReference = async (req, res) => {
     let app = null;
     let docs = [];
 
+    const targetRef = String(referenceNo || '').trim();
+    const cleanNoDash = targetRef.replace(/[^a-zA-Z0-9]/g, '');
+
     try {
       const query = `
         SELECT 
@@ -416,10 +419,18 @@ exports.getApplicationByReference = async (req, res) => {
           ) AS documents
         FROM aics_applications a
         LEFT JOIN aics_documents d ON a.id = d.application_id
-        WHERE a.reference_no = $1 OR CAST(a.id AS VARCHAR) = $1 OR a.qc_id = $1
+        WHERE a.reference_no ILIKE $1
+           OR CAST(a.id AS VARCHAR) = $1
+           OR a.qc_id ILIKE $1
+           OR a.reference_no ILIKE '%' || $1 || '%'
+           OR $1 ILIKE '%' || a.reference_no || '%'
+           OR (length($2) > 5 AND REPLACE(COALESCE(a.reference_no, ''), '-', '') ILIKE '%' || $2 || '%')
+           OR (length($2) > 5 AND REPLACE(COALESCE(a.qc_id, ''), '-', '') ILIKE '%' || $2 || '%')
         GROUP BY a.id
+        ORDER BY a.created_at DESC
+        LIMIT 1
       `;
-      const result = await db.query(query, [referenceNo]);
+      const result = await db.query(query, [targetRef, cleanNoDash]);
       if (result.rows.length > 0) {
         app = result.rows[0];
         docs = app.documents || [];
@@ -430,7 +441,14 @@ exports.getApplicationByReference = async (req, res) => {
 
     if (!app) {
       const match = memoryAicsApplications.find(
-        (a) => a.reference_no === referenceNo || String(a.id) === referenceNo || a.qc_id === referenceNo
+        (a) => {
+          const r1 = String(a.reference_no || '').toLowerCase();
+          const q1 = String(a.qc_id || '').toLowerCase();
+          const r2 = targetRef.toLowerCase();
+          const c1 = r1.replace(/[^a-zA-Z0-9]/g, '');
+          const c2 = r2.replace(/[^a-zA-Z0-9]/g, '');
+          return r1 === r2 || String(a.id) === targetRef || q1 === r2 || r1.includes(r2) || r2.includes(r1) || (c1 && c2 && (c1.includes(c2) || c2.includes(c1)));
+        }
       );
       if (match) {
         app = match;

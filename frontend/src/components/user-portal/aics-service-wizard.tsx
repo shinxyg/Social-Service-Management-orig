@@ -604,10 +604,13 @@ export default function AICSServiceWizard({
     if (isSubmitting) return
 
     setIsSubmitting(true)
-    const generatedRef = qcIdNumber || getLoggedInUserQcid() || "110000572516915"
+    const randDigit = Math.floor(1000 + Math.random() * 9000)
+    const cleanQc = qcIdNumber ? qcIdNumber.replace(/[^a-zA-Z0-9-]/g, '') : ''
+    const generatedRef = referenceNo || (cleanQc ? `AICS-${cleanQc}-${randDigit}` : `AICS-2026-${Date.now().toString().slice(-6)}${randDigit}`)
 
     try {
       const formData = new FormData()
+      formData.append("referenceNo", generatedRef)
       formData.append("assistanceType", serviceTitle)
       formData.append("qcId", qcIdNumber)
       formData.append("firstName", firstName)

@@ -852,7 +852,12 @@ const handleFinalSubmit = async () => {
       ? "Transportation Assistance"
       : "Medical Assistance"
 
+    const randDigit = Math.floor(1000 + Math.random() * 9000)
+    const cleanQc = qcId ? qcId.replace(/[^a-zA-Z0-9-]/g, '') : ''
+    const targetRef = reference || (cleanQc ? `AICS-${cleanQc}-${randDigit}` : `AICS-2026-${Date.now().toString().slice(-6)}${randDigit}`)
+
     const formData = new FormData()
+    formData.append("referenceNo", targetRef)
     formData.append("assistanceType", assistanceTypeName)
     formData.append("qcId", qcId)
     formData.append("firstName", pFirstName)
