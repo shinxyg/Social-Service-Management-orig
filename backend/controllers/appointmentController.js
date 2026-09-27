@@ -45,20 +45,19 @@ function resolveFixedAmount(concern) {
 
 async function syncAndCleanAppointments() {
   try {
-    // 0. Ensure deleted_appointments table has UNIQUE constraint & setup trigger on appointments table
+    // 0. Ensure deleted_appointments table and all optional columns exist in PostgreSQL DB
     await db.query(`
       CREATE TABLE IF NOT EXISTS deleted_appointments (
         id SERIAL PRIMARY KEY,
-        appointment_id INTEGER,
-        reference_no VARCHAR(100) UNIQUE,
-        module VARCHAR(100),
-        applicant_name VARCHAR(255),
-        concern VARCHAR(255),
-        status VARCHAR(50),
-        deleted_by VARCHAR(150),
+        reference_no VARCHAR(100),
         deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
       );
-      ALTER TABLE deleted_appointments ADD CONSTRAINT deleted_appointments_ref_no_key UNIQUE (reference_no);
+      ALTER TABLE deleted_appointments ADD COLUMN IF NOT EXISTS applicant_name VARCHAR(255);
+      ALTER TABLE deleted_appointments ADD COLUMN IF NOT EXISTS module VARCHAR(100);
+      ALTER TABLE deleted_appointments ADD COLUMN IF NOT EXISTS concern VARCHAR(255);
+      ALTER TABLE deleted_appointments ADD COLUMN IF NOT EXISTS status VARCHAR(50);
+      ALTER TABLE deleted_appointments ADD COLUMN IF NOT EXISTS deleted_by VARCHAR(150);
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_deleted_appts_ref_no ON deleted_appointments(reference_no) WHERE reference_no IS NOT NULL;
     `).catch(() => {});
 
     await db.query(`
@@ -66,8 +65,8 @@ async function syncAndCleanAppointments() {
       RETURNS TRIGGER AS $$
       BEGIN
         IF OLD.reference_no IS NOT NULL AND OLD.reference_no <> '' THEN
-          INSERT INTO deleted_appointments (reference_no, applicant_name, module, concern)
-          VALUES (OLD.reference_no, OLD.applicant_name, OLD.module, OLD.concern)
+          INSERT INTO deleted_appointments (reference_no)
+          VALUES (OLD.reference_no)
           ON CONFLICT (reference_no) DO NOTHING;
         END IF;
         RETURN OLD;
@@ -82,8 +81,8 @@ async function syncAndCleanAppointments() {
 
     // Clean up orphaned appointments where source application was deleted from module tables
     await db.query(`
-      INSERT INTO deleted_appointments (reference_no, module, applicant_name, concern)
-      SELECT a.reference_no, a.module, a.applicant_name, a.concern
+      INSERT INTO deleted_appointments (reference_no)
+      SELECT a.reference_no
       FROM appointments a
       WHERE a.module IN ('PWD', 'Senior Citizen')
         AND a.reference_no IS NOT NULL AND a.reference_no <> ''
@@ -101,8 +100,8 @@ async function syncAndCleanAppointments() {
           WHERE LOWER(p.reference_number) = LOWER(a.reference_no)
         );
 
-      INSERT INTO deleted_appointments (reference_no, module, applicant_name, concern)
-      SELECT a.reference_no, a.module, a.applicant_name, a.concern
+      INSERT INTO deleted_appointments (reference_no)
+      SELECT a.reference_no
       FROM appointments a
       WHERE a.module = 'AICS'
         AND a.reference_no IS NOT NULL AND a.reference_no <> ''
@@ -120,8 +119,8 @@ async function syncAndCleanAppointments() {
           WHERE LOWER(COALESCE(NULLIF(TRIM(aics.reference_no), ''), aics.qc_id)) = LOWER(a.reference_no)
         );
 
-      INSERT INTO deleted_appointments (reference_no, module, applicant_name, concern)
-      SELECT a.reference_no, a.module, a.applicant_name, a.concern
+      INSERT INTO deleted_appointments (reference_no)
+      SELECT a.reference_no
       FROM appointments a
       WHERE a.module IN ('Solo Parent', 'Child Welfare')
         AND a.reference_no IS NOT NULL AND a.reference_no <> ''
