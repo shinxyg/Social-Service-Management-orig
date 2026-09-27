@@ -980,36 +980,6 @@ const handleFinalSubmit = async () => {
         setReferralAgency("")
         setReferralNotes("")
 
-        // Local fallback storage for seamless offline and instant admin sync
-        try {
-          const newAicsApp = data.application || {
-            id: `APP-AICS-${Date.now()}`,
-            created_at: new Date().toISOString(),
-            reference_no: assignedRef,
-            qc_id: qcId || assignedRef,
-            assistance_type: assistanceTypeName || type || "Medical Assistance",
-            status: "pending",
-            full_name: `${pFirstName} ${pMiddleName} ${pLastName}`.trim(),
-            first_name: pFirstName,
-            middle_name: pMiddleName,
-            last_name: pLastName,
-            suffix: pSuffix,
-            nationality: pNationality,
-            birth_date: pBirthDate,
-            age: pAge,
-            gender: pGender,
-            civil_status: pCivilStatus,
-            phone: pPhoneNumber,
-            email: pEmail,
-            address: fullAddress,
-            details: finalDetails,
-          }
-          const existingAics = JSON.parse(localStorage.getItem("aics_applications") || "[]")
-          const updatedAicsList = [newAicsApp, ...existingAics.filter((a: any) => a.reference_no !== assignedRef)]
-          localStorage.setItem("aics_applications", JSON.stringify(updatedAicsList))
-          window.dispatchEvent(new CustomEvent("aics_applications_updated"))
-        } catch {}
-
         try {
           localStorage.removeItem(`aics_reapplying_${resolvedTypeKey}`)
           localStorage.removeItem("aics_reapplying")
@@ -1065,37 +1035,8 @@ const handleFinalSubmit = async () => {
         setReferralAgency("")
         setReferralNotes("")
 
-        try {
-          const localAicsApp = {
-            id: `APP-AICS-${Date.now()}`,
-            created_at: new Date().toISOString(),
-            reference_no: fallbackRef,
-            qc_id: qcId || fallbackRef,
-            assistance_type: assistanceTypeName || type || "Medical Assistance",
-            status: "pending",
-            full_name: `${pFirstName} ${pMiddleName} ${pLastName}`.trim(),
-            first_name: pFirstName,
-            middle_name: pMiddleName,
-            last_name: pLastName,
-            suffix: pSuffix,
-            nationality: pNationality,
-            birth_date: pBirthDate,
-            age: pAge,
-            gender: pGender,
-            civil_status: pCivilStatus,
-            phone: pPhoneNumber,
-            email: pEmail,
-            address: fullAddress,
-            details: finalDetails,
-          }
-          const existingAics = JSON.parse(localStorage.getItem("aics_applications") || "[]")
-          const updatedAicsList = [localAicsApp, ...existingAics.filter((a: any) => a.reference_no !== fallbackRef)]
-          localStorage.setItem("aics_applications", JSON.stringify(updatedAicsList))
-          window.dispatchEvent(new CustomEvent("aics_applications_updated"))
-          window.dispatchEvent(new CustomEvent("aics_application_submitted"))
-          window.dispatchEvent(new CustomEvent("applications_updated"))
-        } catch {}
-
+        window.dispatchEvent(new CustomEvent("aics_application_submitted"))
+        window.dispatchEvent(new CustomEvent("applications_updated"))
         notifyApplicationChange("APPLICATION_SUBMITTED", "aics", fallbackRef)
       }
     } catch (err) {
@@ -1108,37 +1049,8 @@ const handleFinalSubmit = async () => {
       setReferralAgency("")
       setReferralNotes("")
 
-      try {
-        const localAicsApp = {
-          id: `APP-AICS-${Date.now()}`,
-          created_at: new Date().toISOString(),
-          reference_no: fallbackRef,
-          qc_id: qcId || fallbackRef,
-          assistance_type: assistanceTypeName || type || "Medical Assistance",
-          status: "pending",
-          full_name: `${pFirstName} ${pMiddleName} ${pLastName}`.trim(),
-          first_name: pFirstName,
-          middle_name: pMiddleName,
-          last_name: pLastName,
-          suffix: pSuffix,
-          nationality: pNationality,
-          birth_date: pBirthDate,
-          age: pAge,
-          gender: pGender,
-          civil_status: pCivilStatus,
-          phone: pPhoneNumber,
-          email: pEmail,
-          address: fullAddress,
-          details: finalDetails,
-        }
-        const existingAics = JSON.parse(localStorage.getItem("aics_applications") || "[]")
-        const updatedAicsList = [localAicsApp, ...existingAics.filter((a: any) => a.reference_no !== fallbackRef)]
-        localStorage.setItem("aics_applications", JSON.stringify(updatedAicsList))
-        window.dispatchEvent(new CustomEvent("aics_applications_updated"))
-        window.dispatchEvent(new CustomEvent("aics_application_submitted"))
-        window.dispatchEvent(new CustomEvent("applications_updated"))
-      } catch {}
-
+      window.dispatchEvent(new CustomEvent("aics_application_submitted"))
+      window.dispatchEvent(new CustomEvent("applications_updated"))
       notifyApplicationChange("APPLICATION_SUBMITTED", "aics", fallbackRef)
     }
 

@@ -721,24 +721,6 @@ export default function AICSServiceWizard({
         const existingRaw = localStorage.getItem("all_financial_disbursements")
         const existingList = existingRaw ? JSON.parse(existingRaw) : []
         const updatedList = [newDisbursement, ...existingList.filter((item: any) => item.applicationRef !== generatedRef)]
-        localStorage.setItem("all_financial_disbursements", JSON.stringify(updatedList))
-        window.dispatchEvent(new Event("financial_disbursements_updated"))
-
-        const newAicsApp = {
-          id: `APP-AICS-${Date.now()}`,
-          created_at: new Date().toISOString(),
-          reference_no: generatedRef,
-          qc_id: qcIdNumber || generatedRef,
-          assistance_type: serviceTitle,
-          status: "pending",
-          full_name: `${firstName} ${middleName} ${lastName}`.trim(),
-          first_name: firstName,
-          last_name: lastName,
-          email: email,
-        }
-        const existingAics = JSON.parse(localStorage.getItem("aics_applications") || "[]")
-        localStorage.setItem("aics_applications", JSON.stringify([newAicsApp, ...existingAics]))
-        window.dispatchEvent(new CustomEvent("aics_applications_updated"))
         window.dispatchEvent(new CustomEvent("aics_application_submitted"))
       } catch (errDisb) {
         console.warn("Could not save auto-disbursement entry:", errDisb)
