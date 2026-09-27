@@ -45,12 +45,106 @@ function resolveFixedAmount(concern) {
 
 async function syncAndCleanAppointments() {
   try {
+    // 0. Ensure deleted_appointments table has UNIQUE constraint & setup trigger on appointments table
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS deleted_appointments (
+        id SERIAL PRIMARY KEY,
+        appointment_id INTEGER,
+        reference_no VARCHAR(100) UNIQUE,
+        module VARCHAR(100),
+        applicant_name VARCHAR(255),
+        concern VARCHAR(255),
+        status VARCHAR(50),
+        deleted_by VARCHAR(150),
+        deleted_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+      );
+      ALTER TABLE deleted_appointments ADD CONSTRAINT deleted_appointments_ref_no_key UNIQUE (reference_no);
+    `).catch(() => {});
+
+    await db.query(`
+      CREATE OR REPLACE FUNCTION trg_record_deleted_appointment()
+      RETURNS TRIGGER AS $$
+      BEGIN
+        IF OLD.reference_no IS NOT NULL AND OLD.reference_no <> '' THEN
+          INSERT INTO deleted_appointments (reference_no, applicant_name, module, concern)
+          VALUES (OLD.reference_no, OLD.applicant_name, OLD.module, OLD.concern)
+          ON CONFLICT (reference_no) DO NOTHING;
+        END IF;
+        RETURN OLD;
+      END;
+      $$ LANGUAGE plpgsql;
+
+      DROP TRIGGER IF EXISTS trigger_appointment_deleted ON appointments;
+      CREATE TRIGGER trigger_appointment_deleted
+      AFTER DELETE ON appointments
+      FOR EACH ROW EXECUTE FUNCTION trg_record_deleted_appointment();
+    `).catch(() => {});
+
+    // Clean up orphaned appointments where source application was deleted from module tables
+    await db.query(`
+      INSERT INTO deleted_appointments (reference_no, module, applicant_name, concern)
+      SELECT a.reference_no, a.module, a.applicant_name, a.concern
+      FROM appointments a
+      WHERE a.module IN ('PWD', 'Senior Citizen')
+        AND a.reference_no IS NOT NULL AND a.reference_no <> ''
+        AND NOT EXISTS (
+          SELECT 1 FROM pwd_senior_applications p
+          WHERE LOWER(p.reference_number) = LOWER(a.reference_no)
+        )
+      ON CONFLICT (reference_no) DO NOTHING;
+
+      DELETE FROM appointments a
+      WHERE a.module IN ('PWD', 'Senior Citizen')
+        AND a.reference_no IS NOT NULL AND a.reference_no <> ''
+        AND NOT EXISTS (
+          SELECT 1 FROM pwd_senior_applications p
+          WHERE LOWER(p.reference_number) = LOWER(a.reference_no)
+        );
+
+      INSERT INTO deleted_appointments (reference_no, module, applicant_name, concern)
+      SELECT a.reference_no, a.module, a.applicant_name, a.concern
+      FROM appointments a
+      WHERE a.module = 'AICS'
+        AND a.reference_no IS NOT NULL AND a.reference_no <> ''
+        AND NOT EXISTS (
+          SELECT 1 FROM aics_applications aics
+          WHERE LOWER(COALESCE(NULLIF(TRIM(aics.reference_no), ''), aics.qc_id)) = LOWER(a.reference_no)
+        )
+      ON CONFLICT (reference_no) DO NOTHING;
+
+      DELETE FROM appointments a
+      WHERE a.module = 'AICS'
+        AND a.reference_no IS NOT NULL AND a.reference_no <> ''
+        AND NOT EXISTS (
+          SELECT 1 FROM aics_applications aics
+          WHERE LOWER(COALESCE(NULLIF(TRIM(aics.reference_no), ''), aics.qc_id)) = LOWER(a.reference_no)
+        );
+
+      INSERT INTO deleted_appointments (reference_no, module, applicant_name, concern)
+      SELECT a.reference_no, a.module, a.applicant_name, a.concern
+      FROM appointments a
+      WHERE a.module IN ('Solo Parent', 'Child Welfare')
+        AND a.reference_no IS NOT NULL AND a.reference_no <> ''
+        AND NOT EXISTS (
+          SELECT 1 FROM solo_parent_child_welfare_applications s
+          WHERE LOWER(s.reference_number) = LOWER(a.reference_no)
+        )
+      ON CONFLICT (reference_no) DO NOTHING;
+
+      DELETE FROM appointments a
+      WHERE a.module IN ('Solo Parent', 'Child Welfare')
+        AND a.reference_no IS NOT NULL AND a.reference_no <> ''
+        AND NOT EXISTS (
+          SELECT 1 FROM solo_parent_child_welfare_applications s
+          WHERE LOWER(s.reference_number) = LOWER(a.reference_no)
+        );
+    `).catch(() => {});
+
     // 1. Clean up erroneous AICS appointments that belong to Child Welfare or Solo Parent
     await db.query(`
       DELETE FROM appointments
       WHERE (module = 'AICS' OR module IS NULL) AND (reference_no LIKE 'CW-%' OR reference_no LIKE 'SP-%')
     `).catch(() => {});
-
 
     await db.query(`
       DELETE FROM appointments a
