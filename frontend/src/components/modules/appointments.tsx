@@ -1581,25 +1581,6 @@ export default function Appointments() {
   const [selectedAgency, setSelectedAgency] = useState('PCSO')
   const [referralNotes, setReferralNotes] = useState('Total financial requirement exceeds local budget capacity. Endorsed for assistance.')
 
-function to24HourTime(timeStr?: string): string {
-  if (!timeStr) return "09:00"
-  const s = String(timeStr).trim()
-  const match12 = s.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)?$/i)
-  if (match12) {
-    let hours = parseInt(match12[1], 10)
-    const minutes = match12[2]
-    const ampm = (match12[3] || "").toUpperCase()
-    if (ampm === "PM" && hours < 12) hours += 12
-    if (ampm === "AM" && hours === 12) hours = 0
-    return `${String(hours).padStart(2, "0")}:${minutes}`
-  }
-  const match24 = s.match(/^(\d{1,2}):(\d{2})$/)
-  if (match24) {
-    return `${String(match24[1]).padStart(2, "0")}:${match24[2]}`
-  }
-  return "09:00"
-}
-
 function to12HourTime(timeStr?: string): string {
   if (!timeStr) return "09:00 AM"
   const s = String(timeStr).trim()
@@ -1618,10 +1599,10 @@ function to12HourTime(timeStr?: string): string {
   const [approvingAppt, setApprovingAppt] = useState<AppointmentRequest | null>(null)
   const [approvalDate, setApprovalDate] = useState<string>("")
   const [approvalTime, setApprovalTime] = useState<string>("09:00")
-  const [approvalOfficeLocation, setApprovalOfficeLocation] = useState<string>(
+  const [approvalOfficeLocation] = useState<string>(
     "SSDD Civic Center E, 2nd Floor, Quezon City Hall Compound, Mayaman St., Brgy. Central, Quezon City (Public Assistance Division - PAD)"
   )
-  const [approvalNotes, setApprovalNotes] = useState<string>("")
+  const [approvalNotes] = useState<string>("")
 
   const [rejectingAppt, setRejectingAppt] = useState<AppointmentRequest | null>(null)
   const [selectedRejectReasonId, setSelectedRejectReasonId] = useState("cooldown")
