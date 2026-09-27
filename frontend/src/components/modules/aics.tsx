@@ -58,12 +58,14 @@ interface AicsDocument {
   original_filename: string
   file_path?: string
   file_type: string
-  uploaded_at: string
+  dataUrl?: string
+  uploaded_at?: string
 }
 
 interface AicsApplication {
   id: number
   reference_no: string
+  referenceNo?: string
   assistance_type: string
   qc_id: string | null
   first_name: string
