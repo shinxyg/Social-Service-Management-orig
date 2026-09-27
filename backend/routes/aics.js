@@ -15,6 +15,7 @@ router.post('/applications', (req, res, next) => {
 router.get('/applications', aicsController.getApplications);
 router.get('/applications/check-duplicate', aicsController.checkDuplicatePerson);
 router.get('/applications/:referenceNo', aicsController.getApplicationByReference);
+router.get('/:referenceNo', aicsController.getApplicationByReference);
 router.get('/documents/:id/file', aicsController.getDocumentFile);
 router.patch('/applications/:id/status', aicsController.updateApplicationStatus);
 router.delete('/applications/cleanup-user/:nameOrRef', aicsController.cleanupUserAics);
