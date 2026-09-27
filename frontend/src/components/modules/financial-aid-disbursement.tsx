@@ -20,7 +20,6 @@ import {
   type SyncedDisbursementRecord,
   getSavedDisbursements,
   saveDisbursements,
-  checkAndAutoReleaseScheduledDisbursements,
   getDeletedDisbursementKeys,
   isIdOrDocumentService,
   isNonCashOrGLService,
@@ -443,7 +442,7 @@ export default function FinancialAidDisbursement() {
           resAicsSettled,
           resPwdSettled,
           resLivSettled,
-          resCwSettled,
+          _resCwSettled,
           resApptsSettled,
           resSoloSettled,
         ] = await Promise.allSettled([
