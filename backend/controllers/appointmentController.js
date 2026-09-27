@@ -538,16 +538,15 @@ exports.scheduleAppointment = async (req, res) => {
     const targetModule = String(apptModule || '').trim();
     const targetConcern = String(concern || '').trim();
 
-    let formattedDate = scheduledDate || null;
-    if (scheduledDate) {
-      try {
-        const d = new Date(scheduledDate);
-        if (!isNaN(d.getTime())) {
-          formattedDate = d.toLocaleDateString('en-PH', { month: 'long', day: 'numeric', year: 'numeric' });
-        }
-      } catch {}
-    }
+    const finalDate = scheduledDate || null;
     const finalTime = scheduledTime || '09:00 AM';
+    const finalLocation = officeLocation || 'Quezon City Hall';
+
+    // Un-dismiss reference from deleted_appointments if setting a schedule
+    await db.query(
+      `DELETE FROM deleted_appointments WHERE reference_no = $1 OR reference_no = $2 OR REPLACE(reference_no, '-', '') = $3`,
+      [rawId, cleanId, cleanNoDash]
+    ).catch(() => {});
 
     const result = await db.query(
       `UPDATE appointments
@@ -558,13 +557,12 @@ exports.scheduleAppointment = async (req, res) => {
            notes = COALESCE($4, notes),
            updated_at = NOW()
        WHERE id::text = $5
-          OR (
-            (reference_no = $5 OR REPLACE(reference_no, '-', '') = $6)
-            AND ($7 = '' OR module ILIKE $7)
-            AND ($8 = '' OR concern ILIKE $8)
-          )
+          OR id::text = $6
+          OR reference_no = $5
+          OR reference_no = $6
+          OR REPLACE(reference_no, '-', '') = $7
        RETURNING *`,
-      [formattedDate, finalTime, officeLocation || 'Quezon City Hall', notes, cleanId, cleanNoDash, targetModule, targetConcern ? `%${targetConcern}%` : '']
+      [finalDate, finalTime, finalLocation, notes || null, rawId, cleanId, cleanNoDash]
     );
 
     let appt;
@@ -579,38 +577,58 @@ exports.scheduleAppointment = async (req, res) => {
           targetModule || 'AICS',
           applicantName || 'BENEFICIARY',
           targetConcern || 'Social Assistance',
-          formattedDate,
-          scheduledTime,
-          officeLocation || 'Quezon City Hall',
+          finalDate,
+          finalTime,
+          finalLocation,
           notes || null,
         ]
-      );
-      appt = insertRes.rows[0];
+      ).catch((err) => console.warn('Insert on schedule fallback warning:', err.message));
+      appt = insertRes?.rows?.[0];
     } else {
       appt = result.rows[0];
     }
 
-    // Only update aics_applications if module is AICS
-    if ((appt?.module || targetModule).toUpperCase() === 'AICS' || targetConcern.toLowerCase().includes('medical')) {
-      try {
-        await db.query(
-          `UPDATE aics_applications
-           SET status = 'under_review',
-               details = COALESCE(details, '{}'::jsonb) || jsonb_build_object(
-                 'appointmentDate', $1::text,
-                 'appointmentTime', $2::text,
-                 'appointmentVenue', $3::text
-               ),
-               updated_at = NOW()
-           WHERE reference_no = $4 OR id::text = $4 OR REPLACE(REPLACE(COALESCE(reference_no, ''), '-', ''), ' ', '') = REPLACE(REPLACE($4, '-', ''), ' ', '') OR REPLACE(REPLACE(COALESCE(qc_id, ''), '-', ''), ' ', '') = REPLACE(REPLACE($4, '-', ''), ' ', '')`,
-          [formattedDate, scheduledTime, officeLocation || 'Quezon City Hall', cleanId]
-        );
-      } catch (aicsSyncErr) {
-        console.warn('Could not update aics_applications status to under_review:', aicsSyncErr.message);
-      }
+    if (appt) {
+      await syncAppointmentWithDisbursement(appt).catch(() => {});
     }
 
-    res.json({ message: 'Appointment scheduled and synced with case review.', appointment: appt });
+    // Update all related module tables in parallel
+    await Promise.allSettled([
+      db.query(
+        `UPDATE aics_applications
+         SET status = 'under_review',
+             details = COALESCE(details, '{}'::jsonb) || jsonb_build_object(
+               'appointmentDate', $1::text,
+               'appointmentTime', $2::text,
+               'appointmentVenue', $3::text
+             ),
+             updated_at = NOW()
+         WHERE reference_no = $4 OR qc_id = $4 OR id::text = $4 OR REPLACE(reference_no, '-', '') = $5`,
+        [finalDate, finalTime, finalLocation, cleanId, cleanNoDash]
+      ),
+      db.query(
+        `UPDATE pwd_senior_applications
+         SET scheduled_date = $1,
+             scheduled_time = $2,
+             office_location = $3,
+             notes = COALESCE($4, notes),
+             updated_at = NOW()
+         WHERE reference_number = $5 OR id::text = $5 OR REPLACE(reference_number, '-', '') = $6`,
+        [finalDate, finalTime, finalLocation, notes || null, cleanId, cleanNoDash]
+      ),
+      db.query(
+        `UPDATE solo_parent_child_welfare_applications
+         SET scheduled_date = $1,
+             scheduled_time = $2,
+             office_location = $3,
+             notes = COALESCE($4, notes),
+             updated_at = NOW()
+         WHERE reference_number = $5 OR id::text = $5 OR REPLACE(reference_number, '-', '') = $6`,
+        [finalDate, finalTime, finalLocation, notes || null, cleanId, cleanNoDash]
+      ),
+    ]);
+
+    res.json({ success: true, message: 'Appointment scheduled and synced with case review.', appointment: appt });
   } catch (err) {
     console.error('Error scheduling appointment:', err);
     res.status(500).json({ error: 'Failed to schedule appointment.', details: err.message });
