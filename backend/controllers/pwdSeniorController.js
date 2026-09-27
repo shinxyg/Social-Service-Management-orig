@@ -72,17 +72,6 @@ async function initPwdSeniorTable() {
       ALTER TABLE pwd_senior_applications ADD COLUMN IF NOT EXISTS created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP;
     `);
     console.log('[DB] pwd_senior_applications table ready.');
-
-    await db.query(`
-      DELETE FROM pwd_senior_applications
-      WHERE id IN ('APP-PWD-2026-001', 'APP-PWD-2026-002', 'APP-PWD-2026-003')
-         OR reference_number IN ('PWD-QC-2026-4891', 'PWD-QC-2026-3109', 'PWD-QC-2026-5520')
-         OR category ILIKE '%solo%'
-         OR category ILIKE '%child%'
-         OR reference_number ILIKE 'SP%'
-         OR reference_number ILIKE 'SPED%'
-         OR reference_number ILIKE 'SPSU%'
-    `);
   } catch (err) {
     console.warn('[DB] Could not initialize pwd_senior_applications table, using fallback memory store:', err.message);
   }

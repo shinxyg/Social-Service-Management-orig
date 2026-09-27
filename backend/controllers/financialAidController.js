@@ -105,171 +105,6 @@ async function autoReleaseScheduledDisbursements() {
 
 exports.getDisbursements = async (req, res) => {
   try {
-    autoReleaseScheduledDisbursements().catch(() => {});
-
-    // Clean up corrupted test disbursement DISB-2026-9929 and any orphaned senior disbursements/appointments with no application
-    try {
-      await db.query(`
-        DELETE FROM financial_aid_disbursements
-        WHERE disbursement_id = 'DISB-2026-9929'
-           OR (assistance_type ILIKE '%Senior%' AND application_ref NOT IN (
-             SELECT reference_number FROM pwd_senior_applications WHERE category ILIKE '%senior%' AND reference_number IS NOT NULL
-           ));
-      `);
-      await db.query(`
-        DELETE FROM appointments
-        WHERE reference_no = 'DISB-2026-9929'
-           OR reference_no ILIKE '%9929%'
-           OR ((module = 'Senior Citizen' OR concern ILIKE '%Senior%') AND reference_no NOT IN (
-             SELECT reference_number FROM pwd_senior_applications WHERE category ILIKE '%senior%' AND reference_number IS NOT NULL
-           ));
-      `);
-    } catch (_) {}
-
-    try {
-      await db.query(`
-        DELETE FROM financial_aid_disbursements
-        WHERE application_ref IN (
-          SELECT reference_no FROM appointments WHERE status IN ('rejected', 'disapproved')
-        ) OR application_ref IN (
-          SELECT reference_no FROM aics_applications WHERE status IN ('rejected', 'disapproved')
-        )
-      `);
-    } catch (_) {}
-
-    try {
-      const jeffTerm = '%jefferson%';
-      const refTerm = '%110000262304143%';
-
-      await db.query(`
-        DELETE FROM financial_aid_disbursements
-        WHERE applicant_name ILIKE $1
-           OR application_ref ILIKE $2
-           OR application_ref ILIKE '%SP-EDU%'
-           OR application_ref ILIKE '%SP-SUB%'
-           OR application_ref ILIKE '%PWD-SOC%'
-           OR application_ref ILIKE '%AICS-MED%';
-      `, [jeffTerm, refTerm]).catch(() => {});
-
-      await db.query(`
-        DELETE FROM appointments
-        WHERE applicant_name ILIKE $1
-           OR reference_no ILIKE $2
-           OR reference_no ILIKE '%SP-EDU%'
-           OR reference_no ILIKE '%SP-SUB%'
-           OR reference_no ILIKE '%PWD-SOC%'
-           OR reference_no ILIKE '%AICS-MED%';
-      `, [jeffTerm, refTerm]).catch(() => {});
-
-      await db.query(`
-        DELETE FROM solo_parent_child_welfare_applications
-        WHERE first_name ILIKE $1
-           OR last_name ILIKE $1
-           OR reference_number ILIKE $2
-           OR qcid_number ILIKE $2
-           OR reference_number ILIKE '%SP-EDU%'
-           OR reference_number ILIKE '%SP-SUB%';
-      `, [jeffTerm, refTerm]).catch(() => {});
-
-      await db.query(`
-        DELETE FROM pwd_senior_applications
-        WHERE first_name ILIKE $1
-           OR last_name ILIKE $1
-           OR reference_number ILIKE $2;
-      `, [jeffTerm, refTerm]).catch(() => {});
-
-      await db.query(`
-        DELETE FROM aics_applications
-        WHERE first_name ILIKE $1
-           OR last_name ILIKE $1
-           OR reference_no ILIKE $2
-           OR qc_id ILIKE $2;
-      `, [jeffTerm, refTerm]).catch(() => {});
-
-      await db.query(`
-        DELETE FROM livelihood_applications
-        WHERE first_name ILIKE $1
-           OR last_name ILIKE $1
-           OR reference_number ILIKE $2;
-      `, [jeffTerm, refTerm]).catch(() => {});
-    } catch (_) {}
-
-    try {
-      await db.query(`
-        DELETE FROM financial_aid_disbursements
-        WHERE assistance_type ILIKE '%ID Card%' OR assistance_type ILIKE '%Issuance%'
-      `);
-    } catch (_) {}
-
-    try {
-      await db.query(`
-        UPDATE financial_aid_disbursements
-        SET fixed_amount = 5000
-        WHERE (fixed_amount = 1000 OR fixed_amount IS NULL)
-          AND (
-            assistance_type ILIKE '%nutrition%'
-            OR assistance_type ILIKE '%child%'
-            OR assistance_type ILIKE '%medical%'
-            OR (assistance_type ILIKE '%solo%' AND assistance_type NOT ILIKE '%subsidy%')
-            OR assistance_type ILIKE '%emergency%'
-          )
-      `);
-    } catch (_) {}
-
-    try {
-      await db.query(`
-        UPDATE financial_aid_disbursements
-        SET assistance_type = 'Solo Parent Educational Assistance',
-            fixed_amount = 5000,
-            remarks = 'Approved Solo Parent Educational Assistance (₱5,000 Annual Grant).'
-        WHERE (application_ref ILIKE '%SP-EDU%' OR disbursement_id = 'DISB-2026-6957' OR application_ref = 'SP-EDU-2026-806957')
-          AND assistance_type NOT ILIKE '%educational%';
-      `);
-    } catch (_) {}
-
-    try {
-      await db.query(`
-        UPDATE financial_aid_disbursements
-        SET assistance_type = 'Solo Parent Educational Assistance'
-        WHERE assistance_type ILIKE '%Solo Parent Educational%' OR application_ref ILIKE '%SP-EDU%';
-      `);
-      await db.query(`
-        DELETE FROM financial_aid_disbursements f1
-        USING financial_aid_disbursements f2
-        WHERE f1.id < f2.id AND (
-          f1.application_ref = f2.application_ref
-          OR f1.disbursement_id = f2.disbursement_id
-          OR (LOWER(TRIM(f1.applicant_name)) = LOWER(TRIM(f2.applicant_name)) AND LOWER(TRIM(f1.assistance_type)) = LOWER(TRIM(f2.assistance_type)))
-        );
-      `);
-    } catch (_) {}
-
-    try {
-      await db.query(`
-        UPDATE financial_aid_disbursements 
-        SET application_ref = 'PWD-SOC-2026-262304' 
-        WHERE (application_ref = '110000262304143' OR application_ref ILIKE '%262304143%')
-          AND assistance_type ILIKE '%PWD%';
-      `);
-    } catch (_) {}
-
-
-
-    try {
-      await db.query(`
-        DELETE FROM financial_aid_disbursements 
-        WHERE application_ref LIKE 'CW-%' 
-           OR assistance_type ILIKE '%child%' 
-           OR assistance_type ILIKE '%protective%' 
-           OR assistance_type ILIKE '%welfare%'
-           OR assistance_type ILIKE '%intake%'
-           OR assistance_type ILIKE '%assessment%'
-           OR assistance_type ILIKE '%interview%'
-           OR assistance_type ILIKE '%custody%'
-           OR assistance_type ILIKE '%silungan%'
-      `);
-    } catch (_) {}
-
     const result = await db.query(
       `SELECT DISTINCT ON (f.disbursement_id)
          f.id,
@@ -324,15 +159,6 @@ exports.getDisbursements = async (req, res) => {
 exports.getUserDisbursements = async (req, res) => {
   try {
     const { refOrQcId } = req.params;
-
-    await db.query(`
-      DELETE FROM financial_aid_disbursements 
-      WHERE applicant_name ILIKE '%JEFFERSON%'
-         OR application_ref LIKE 'CW-%' 
-         OR assistance_type ILIKE '%child%' 
-         OR assistance_type ILIKE '%protective%' 
-         OR assistance_type ILIKE '%welfare%'
-    `).catch(() => {});
 
     const result = await db.query(
       `SELECT
@@ -615,23 +441,7 @@ exports.deleteDisbursement = async (req, res) => {
       [rawId, cleanId]
     );
 
-    if (appRef) {
-      await Promise.allSettled([
-        db.query(`DELETE FROM solo_parent_child_welfare_applications WHERE (module_type = 'CHILD_WELFARE') AND (reference_number = $1 OR id::text = $1)`, [appRef]),
-        db.query(`DELETE FROM pwd_senior_applications WHERE reference_number = $1 OR id::text = $1`, [appRef]),
-        db.query(`DELETE FROM livelihood_applications WHERE reference_number = $1 OR id::text = $1`, [appRef]),
-        db.query(`DELETE FROM aics_applications WHERE reference_no = $1 OR reference_number = $1 OR id::text = $1`, [appRef]),
-        db.query(`DELETE FROM appointments WHERE reference_no = $1`, [appRef]),
-      ]);
-    }
-
-    if (applicantName) {
-      await Promise.allSettled([
-        db.query(`DELETE FROM appointments WHERE applicant_name ILIKE $1`, [applicantName]),
-      ]);
-    }
-
-    res.json({ message: 'Disbursement and associated records deleted successfully.' });
+    res.json({ message: 'Disbursement entry deleted successfully.' });
   } catch (err) {
     console.error('Error deleting disbursement:', err);
     res.status(500).json({ error: 'Failed to delete disbursement.' });
@@ -650,15 +460,7 @@ exports.deleteUserDisbursements = async (req, res) => {
       [term]
     );
 
-    await Promise.allSettled([
-      db.query(`DELETE FROM solo_parent_child_welfare_applications WHERE (module_type = 'CHILD_WELFARE') AND (reference_number ILIKE $1 OR guardian_first_name ILIKE $1 OR guardian_last_name ILIKE $1)`, [term]),
-      db.query(`DELETE FROM pwd_senior_applications WHERE reference_number ILIKE $1 OR first_name ILIKE $1 OR last_name ILIKE $1`, [term]),
-      db.query(`DELETE FROM livelihood_applications WHERE reference_number ILIKE $1 OR first_name ILIKE $1 OR last_name ILIKE $1`, [term]),
-      db.query(`DELETE FROM aics_applications WHERE reference_no ILIKE $1 OR reference_number ILIKE $1 OR first_name ILIKE $1 OR last_name ILIKE $1`, [term]),
-      db.query(`DELETE FROM appointments WHERE reference_no ILIKE $1 OR applicant_name ILIKE $1`, [term]),
-    ]);
-
-    res.json({ message: `Deleted ${result.rowCount} disbursements and associated applications.` });
+    res.json({ message: `Deleted ${result.rowCount} disbursements.` });
   } catch (err) {
     console.error('Error clearing disbursements:', err);
     res.status(500).json({ error: 'Failed to clear disbursements.' });

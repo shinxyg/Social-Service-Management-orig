@@ -215,9 +215,9 @@ export default function ApplyPWDSenior() {
   const [showModal, setShowModal] = useState(false)
   const [understood, setUnderstood] = useState(false)
   const [currentStep, setCurrentStep] = useState(1)
-  const [isBlocked, setIsBlocked] = useState(initialBlockedState.isBlocked)
-  const [blockedApp, setBlockedApp] = useState<any>(initialBlockedState.blockedApp)
-  const [hasApprovedApp, setHasApprovedApp] = useState(initialBlockedState.hasApprovedApp)
+  const [isBlocked, setIsBlocked] = useState(initialBlockedState.isBlocked && !bypassedBlock)
+  const [blockedApp, setBlockedApp] = useState<any>(bypassedBlock ? null : initialBlockedState.blockedApp)
+  const [hasApprovedApp, setHasApprovedApp] = useState(bypassedBlock ? false : initialBlockedState.hasApprovedApp)
 
   const [bypassedBlock, setBypassedBlock] = useState(() => {
     try {
@@ -241,7 +241,8 @@ export default function ApplyPWDSenior() {
           bypassedBlockRef.current ||
           bypassedBlock ||
           localStorage.getItem("pwd_senior_reapplying") === "true" ||
-          localStorage.getItem(`pwd_senior_reapplying_${urlCategory || "pwd"}_${urlType || "new"}`) === "true"
+          localStorage.getItem(`pwd_senior_reapplying_${urlCategory || "pwd"}_${urlType || "new"}`) === "true" ||
+          (typeof window !== "undefined" && window.location.search.includes("reapply=true"))
         if (isReapp) {
           if (isMounted) {
             setIsBlocked(false)
