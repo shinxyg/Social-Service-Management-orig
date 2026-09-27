@@ -79,64 +79,26 @@ async function syncAndCleanAppointments() {
       FOR EACH ROW EXECUTE FUNCTION trg_record_deleted_appointment();
     `).catch(() => {});
 
-    // Clean up orphaned appointments where source application was deleted from module tables
+    // Un-dismiss any appointments that belong to an active application in module tables
     await db.query(`
-      INSERT INTO deleted_appointments (reference_no)
-      SELECT a.reference_no
-      FROM appointments a
-      WHERE a.module IN ('PWD', 'Senior Citizen')
-        AND a.reference_no IS NOT NULL AND a.reference_no <> ''
-        AND NOT EXISTS (
-          SELECT 1 FROM pwd_senior_applications p
-          WHERE LOWER(p.reference_number) = LOWER(a.reference_no)
-        )
-      ON CONFLICT (reference_no) DO NOTHING;
-
-      DELETE FROM appointments a
-      WHERE a.module IN ('PWD', 'Senior Citizen')
-        AND a.reference_no IS NOT NULL AND a.reference_no <> ''
-        AND NOT EXISTS (
-          SELECT 1 FROM pwd_senior_applications p
-          WHERE LOWER(p.reference_number) = LOWER(a.reference_no)
-        );
-
-      INSERT INTO deleted_appointments (reference_no)
-      SELECT a.reference_no
-      FROM appointments a
-      WHERE a.module = 'AICS'
-        AND a.reference_no IS NOT NULL AND a.reference_no <> ''
-        AND NOT EXISTS (
-          SELECT 1 FROM aics_applications aics
-          WHERE LOWER(COALESCE(NULLIF(TRIM(aics.reference_no), ''), aics.qc_id)) = LOWER(a.reference_no)
-        )
-      ON CONFLICT (reference_no) DO NOTHING;
-
-      DELETE FROM appointments a
-      WHERE a.module = 'AICS'
-        AND a.reference_no IS NOT NULL AND a.reference_no <> ''
-        AND NOT EXISTS (
-          SELECT 1 FROM aics_applications aics
-          WHERE LOWER(COALESCE(NULLIF(TRIM(aics.reference_no), ''), aics.qc_id)) = LOWER(a.reference_no)
-        );
-
-      INSERT INTO deleted_appointments (reference_no)
-      SELECT a.reference_no
-      FROM appointments a
-      WHERE a.module IN ('Solo Parent', 'Child Welfare')
-        AND a.reference_no IS NOT NULL AND a.reference_no <> ''
-        AND NOT EXISTS (
-          SELECT 1 FROM solo_parent_child_welfare_applications s
-          WHERE LOWER(s.reference_number) = LOWER(a.reference_no)
-        )
-      ON CONFLICT (reference_no) DO NOTHING;
-
-      DELETE FROM appointments a
-      WHERE a.module IN ('Solo Parent', 'Child Welfare')
-        AND a.reference_no IS NOT NULL AND a.reference_no <> ''
-        AND NOT EXISTS (
-          SELECT 1 FROM solo_parent_child_welfare_applications s
-          WHERE LOWER(s.reference_number) = LOWER(a.reference_no)
-        );
+      DELETE FROM deleted_appointments d
+      WHERE EXISTS (
+        SELECT 1 FROM pwd_senior_applications p
+        WHERE LOWER(p.reference_number) = LOWER(d.reference_no)
+           OR LOWER(p.id::text) = LOWER(d.reference_no)
+      ) OR EXISTS (
+        SELECT 1 FROM aics_applications a
+        WHERE LOWER(COALESCE(NULLIF(TRIM(a.reference_no), ''), a.qc_id)) = LOWER(d.reference_no)
+           OR LOWER(a.id::text) = LOWER(d.reference_no)
+      ) OR EXISTS (
+        SELECT 1 FROM solo_parent_child_welfare_applications s
+        WHERE LOWER(s.reference_number) = LOWER(d.reference_no)
+           OR LOWER(s.id::text) = LOWER(d.reference_no)
+      ) OR EXISTS (
+        SELECT 1 FROM livelihood_applications l
+        WHERE LOWER(l.reference_number) = LOWER(d.reference_no)
+           OR LOWER(l.id::text) = LOWER(d.reference_no)
+      );
     `).catch(() => {});
 
     // 1. Clean up erroneous AICS appointments that belong to Child Welfare or Solo Parent
