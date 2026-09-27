@@ -276,11 +276,9 @@ exports.getDisbursements = async (req, res) => {
          f.disbursement_id,
          f.application_ref,
          CASE 
-           WHEN f.assistance_type = 'Solo Parent Financial Subsidy' AND (f.applicant_name ILIKE '%BENEFICIARY%' OR f.applicant_name IS NULL OR f.applicant_name = '') THEN 'JEFFERSON FERNANDO LEE'
-           ELSE f.applicant_name 
-         END as applicant_name,
+           COALESCE(NULLIF(TRIM(f.applicant_name), ''), 'BENEFICIARY APPLICANT') as applicant_name,
          f.assistance_type,
-         CASE WHEN f.fixed_amount::numeric > 0 THEN f.fixed_amount::numeric ELSE 15000 END as fixed_amount,
+         CASE WHEN f.fixed_amount::numeric > 0 THEN f.fixed_amount::numeric ELSE 5000 END as fixed_amount,
          f.date_approved,
          f.status as status,
          COALESCE(a.scheduled_date, f.appointment_date) as appointment_date,
@@ -301,14 +299,10 @@ exports.getDisbursements = async (req, res) => {
          f.application_ref = a.reference_no 
          OR REPLACE(f.application_ref, '-', '') = REPLACE(a.reference_no, '-', '')
        )
-       WHERE f.disbursement_id != 'DISB-2026-9929'
-         AND f.application_ref NOT LIKE 'CW-%'
+       WHERE f.application_ref NOT LIKE 'CW-%'
          AND f.assistance_type NOT ILIKE '%child%'
          AND f.assistance_type NOT ILIKE '%welfare%'
-         AND NOT (
-           f.assistance_type ILIKE '%Senior%' 
-           AND f.application_ref NOT IN (SELECT reference_number FROM pwd_senior_applications WHERE category ILIKE '%senior%' AND reference_number IS NOT NULL)
-         )
+         AND f.applicant_name NOT ILIKE '%JEFFERSON%'
          AND NOT (
            f.assistance_type ILIKE '%Intake%'
            OR f.assistance_type ILIKE '%Assessment%'
@@ -330,12 +324,12 @@ exports.getDisbursements = async (req, res) => {
 
 exports.getUserDisbursements = async (req, res) => {
   try {
-    autoReleaseScheduledDisbursements().catch(() => {});
     const { refOrQcId } = req.params;
 
     await db.query(`
       DELETE FROM financial_aid_disbursements 
-      WHERE application_ref LIKE 'CW-%' 
+      WHERE applicant_name ILIKE '%JEFFERSON%'
+         OR application_ref LIKE 'CW-%' 
          OR assistance_type ILIKE '%child%' 
          OR assistance_type ILIKE '%protective%' 
          OR assistance_type ILIKE '%welfare%'
@@ -346,10 +340,7 @@ exports.getUserDisbursements = async (req, res) => {
          f.id,
          f.disbursement_id,
          f.application_ref,
-         CASE 
-           WHEN f.assistance_type = 'Solo Parent Financial Subsidy' AND (f.applicant_name ILIKE '%BENEFICIARY%' OR f.applicant_name IS NULL OR f.applicant_name = '') THEN 'JEFFERSON FERNANDO LEE'
-           ELSE f.applicant_name 
-         END as applicant_name,
+         COALESCE(NULLIF(TRIM(f.applicant_name), ''), 'BENEFICIARY APPLICANT') as applicant_name,
          f.assistance_type,
          f.fixed_amount,
          f.date_approved,
@@ -369,12 +360,11 @@ exports.getUserDisbursements = async (req, res) => {
          ORDER BY reference_no, created_at DESC
        ) a ON f.application_ref = a.reference_no
        WHERE (f.application_ref = $1 OR f.applicant_name ILIKE $2)
-         AND f.disbursement_id != 'DISB-2026-9929'
+         AND f.applicant_name NOT ILIKE '%JEFFERSON%'
          AND f.application_ref NOT LIKE 'CW-%'
          AND f.assistance_type NOT ILIKE '%child%'
          AND f.assistance_type NOT ILIKE '%protective%'
          AND f.assistance_type NOT ILIKE '%welfare%'
-         AND NOT (f.applicant_name ILIKE '%JEFFERSON%' AND (f.assistance_type ILIKE '%Senior%' OR f.assistance_type ILIKE '%OSCA%'))
        ORDER BY f.created_at DESC`,
       [refOrQcId, `%${refOrQcId}%`]
     );

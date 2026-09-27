@@ -371,8 +371,9 @@ export default function FinancialAidDisbursement() {
       try {
         const ref = record.applicationRef || record.disbursementId
         const dbCleanId = record.id.replace(/^db-/, "").replace(/^remote-/, "")
+        const cleanBase = API_BASE.replace(/\/+$/, "").replace(/\/api\/aics$/i, "").replace(/\/api$/i, "")
         await Promise.allSettled([
-          fetch(`${API_BASE}/api/financial-aid/${encodeURIComponent(dbCleanId)}/release`, {
+          fetch(`${cleanBase}/api/financial-aid/${encodeURIComponent(dbCleanId)}/release`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -382,7 +383,7 @@ export default function FinancialAidDisbursement() {
               releasedDate: releaseDateStr,
             }),
           }),
-          ref ? fetch(`${API_BASE}/api/financial-aid/${encodeURIComponent(ref)}/release`, {
+          ref ? fetch(`${cleanBase}/api/financial-aid/${encodeURIComponent(ref)}/release`, {
             method: "PUT",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -392,12 +393,12 @@ export default function FinancialAidDisbursement() {
               releasedDate: releaseDateStr,
             }),
           }) : Promise.resolve(),
-          ref ? fetch(`${API_BASE}/api/aics/applications/${encodeURIComponent(ref)}/status`, {
+          ref ? fetch(`${cleanBase}/api/aics/applications/${encodeURIComponent(ref)}/status`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ status: "released" }),
           }) : Promise.resolve(),
-          ref ? fetch(`${API_BASE}/api/appointments/${encodeURIComponent(ref)}/complete`, {
+          ref ? fetch(`${cleanBase}/api/appointments/${encodeURIComponent(ref)}/complete`, {
             method: "PUT",
           }) : Promise.resolve(),
         ])
@@ -416,8 +417,7 @@ export default function FinancialAidDisbursement() {
       if (isSyncing) return
       isSyncing = true
       try {
-
-        checkAndAutoReleaseScheduledDisbursements()
+        // 100% Manual - no auto-release trigger
 
         const deletedKeys = getDeletedDisbursementKeys()
         const localDisbursements = getSavedDisbursements()
