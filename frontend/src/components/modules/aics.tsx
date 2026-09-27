@@ -212,23 +212,13 @@ export default function AICS() {
     try {
       let apiApps: AicsApplication[] = []
       try {
-        const res = await fetch(`${API_BASE}/api/aics/applications?role=admin&isAdmin=true`)
+        const res = await fetch(`${API_BASE}/applications?role=admin&isAdmin=true`)
         if (res.ok) {
           const data = await res.json()
           apiApps = Array.isArray(data) ? data : (data.applications || data.data || [])
         }
       } catch (errApi) {
         console.warn('API fetch warning:', errApi)
-      }
-
-      if (apiApps.length === 0) {
-        try {
-          const res2 = await fetch(`${API_BASE}/applications?role=admin&isAdmin=true`)
-          if (res2.ok) {
-            const data2 = await res2.json()
-            apiApps = Array.isArray(data2) ? data2 : (data2.applications || data2.data || [])
-          }
-        } catch {}
       }
 
       // Merge with any client submissions stored locally
