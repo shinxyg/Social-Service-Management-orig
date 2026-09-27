@@ -51,39 +51,11 @@ async function syncAndCleanAppointments() {
       WHERE (module = 'AICS' OR module IS NULL) AND (reference_no LIKE 'CW-%' OR reference_no LIKE 'SP-%')
     `).catch(() => {});
 
-    // 2. Auto-repair any existing appointments rows contaminated with legacy hardcoded 'JEFFERSON FERNANDO LEE' name
-    await db.query(`
-      UPDATE appointments a
-      SET applicant_name = UPPER(TRIM(CONCAT_WS(' ', s.guardian_first_name, s.guardian_last_name)))
-      FROM solo_parent_child_welfare_applications s
-      WHERE a.reference_no = s.reference_number
-        AND a.applicant_name ILIKE '%JEFFERSON FERNANDO LEE%'
-        AND s.guardian_first_name IS NOT NULL AND s.guardian_first_name <> ''
-    `).catch(() => {});
-
-    await db.query(`
-      UPDATE appointments a
-      SET applicant_name = UPPER(TRIM(CONCAT_WS(' ', s.first_name, s.middle_name, s.last_name)))
-      FROM solo_parent_child_welfare_applications s
-      WHERE a.reference_no = s.reference_number
-        AND a.applicant_name ILIKE '%JEFFERSON FERNANDO LEE%'
-        AND s.first_name IS NOT NULL AND s.first_name <> ''
-    `).catch(() => {});
-
-    // 3. Clean up unapproved / rejected records
+    // 2. Remove legacy dummy test records
     await db.query(`
       DELETE FROM appointments
-      WHERE module = 'AICS' AND (
-        reference_no IN (SELECT reference_no FROM aics_applications WHERE status IN ('rejected', 'denied', 'disapproved', 'cancelled'))
-        OR reference_no IN (SELECT qc_id FROM aics_applications WHERE status IN ('rejected', 'denied', 'disapproved', 'cancelled') AND qc_id IS NOT NULL AND qc_id <> '')
-      )
-    `).catch(() => {});
-
-    await db.query(`
-      UPDATE aics_applications
-      SET status = 'scheduled', updated_at = NOW()
-      WHERE (details->>'appointmentDate' IS NOT NULL AND details->>'appointmentDate' <> '')
-        AND status IN ('pending', 'submit_pending', 'waiting_approval')
+      WHERE applicant_name ILIKE '%JEFFERSON%'
+         OR reference_no ILIKE '%110000262304143%'
     `).catch(() => {});
 
     await db.query(`

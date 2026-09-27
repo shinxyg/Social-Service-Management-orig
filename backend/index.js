@@ -302,17 +302,4 @@ app.listen(PORT, '0.0.0.0', async () => {
   console.log(`🚀 Backend server running on http://0.0.0.0:${PORT}`);
 
   await initDb();
-
-  let isReleasing = false;
-  setInterval(async () => {
-    if (isReleasing) return;
-    try {
-      isReleasing = true;
-      await autoReleaseScheduledDisbursements();
-    } catch (err) {
-      console.warn('Disbursement worker warning:', err.message);
-    } finally {
-      isReleasing = false;
-    }
-  }, 30000);
 });
