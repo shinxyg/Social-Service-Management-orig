@@ -100,7 +100,7 @@ async function syncAndCleanAppointments() {
       DELETE FROM appointments a
       USING appointments b
       WHERE (a.status = 'pending' AND b.status IN ('approved', 'completed', 'scheduled', 'referred') AND LOWER(a.reference_no) = LOWER(b.reference_no) AND a.id <> b.id)
-         OR (a.id < b.id AND LOWER(a.reference_no) = LOWER(b.reference_no) AND a.module = b.module AND LOWER(COALESCE(a.concern, '')) = LOWER(COALESCE(b.concern, '')));
+         OR (a.status = b.status AND a.id < b.id AND LOWER(a.reference_no) = LOWER(b.reference_no) AND a.module = b.module AND LOWER(COALESCE(a.concern, '')) = LOWER(COALESCE(b.concern, '')));
     `).catch(() => {});
 
     await db.query(`
@@ -140,6 +140,7 @@ async function syncAndCleanAppointments() {
         AND NOT EXISTS (
           SELECT 1 FROM appointments app 
           WHERE LOWER(app.reference_no) = LOWER(COALESCE(NULLIF(TRIM(a.reference_no), ''), a.qc_id))
+             OR LOWER(REPLACE(app.reference_no, '-', '')) = LOWER(REPLACE(COALESCE(NULLIF(TRIM(a.reference_no), ''), a.qc_id), '-', ''))
         );
     `).catch(() => {});
 
@@ -150,7 +151,11 @@ async function syncAndCleanAppointments() {
         'Livelihood',
         UPPER(TRIM(CONCAT_WS(' ', l.first_name, l.last_name))),
         'Livelihood Capital Assistance',
-        'pending',
+        CASE 
+          WHEN l.application_status IN ('approved', 'completed', 'for_release', 'released') THEN 'approved'
+          WHEN l.application_status IN ('under_review', 'scheduled') THEN 'scheduled'
+          ELSE 'pending'
+        END AS status,
         'Quezon City Hall - SSDD Livelihood Center',
         'Awtomatikong pumasok mula sa na-aprubahang Livelihood Capital allocation para sa appointment scheduling.',
         COALESCE(l.created_at, NOW()),
@@ -161,7 +166,7 @@ async function syncAndCleanAppointments() {
           SELECT 1 FROM deleted_appointments d WHERE LOWER(d.reference_no) = LOWER(l.reference_number)
         )
         AND NOT EXISTS (
-          SELECT 1 FROM appointments app WHERE app.reference_no = l.reference_number AND app.module = 'Livelihood'
+          SELECT 1 FROM appointments app WHERE LOWER(app.reference_no) = LOWER(l.reference_number) OR LOWER(REPLACE(app.reference_no, '-', '')) = LOWER(REPLACE(l.reference_number, '-', ''))
         );
     `).catch(() => {});
 
@@ -172,7 +177,11 @@ async function syncAndCleanAppointments() {
         CASE WHEN p.category ILIKE '%pwd%' THEN 'PWD' ELSE 'Senior Citizen' END,
         UPPER(TRIM(CONCAT_WS(' ', p.first_name, p.middle_name, p.last_name, p.suffix))),
         CASE WHEN p.category ILIKE '%pwd%' THEN 'PWD Social Assistance' ELSE 'Senior Social Assistance' END,
-        'pending',
+        CASE 
+          WHEN p.status IN ('approved', 'completed', 'for_release', 'released') THEN 'approved'
+          WHEN p.status IN ('under_review', 'scheduled') THEN 'scheduled'
+          ELSE 'pending'
+        END AS status,
         'Quezon City Hall - PDAO Room 102',
         'Awtomatikong pumasok mula sa PWD/Senior Social Assistance aplikasyon.',
         COALESCE(p.submitted_at, p.created_at, NOW()),
@@ -183,7 +192,7 @@ async function syncAndCleanAppointments() {
           SELECT 1 FROM deleted_appointments d WHERE LOWER(d.reference_no) = LOWER(p.reference_number)
         )
         AND NOT EXISTS (
-          SELECT 1 FROM appointments app WHERE LOWER(app.reference_no) = LOWER(p.reference_number)
+          SELECT 1 FROM appointments app WHERE LOWER(app.reference_no) = LOWER(p.reference_number) OR LOWER(REPLACE(app.reference_no, '-', '')) = LOWER(REPLACE(p.reference_number, '-', ''))
         );
     `).catch(() => {});
 
@@ -206,7 +215,7 @@ async function syncAndCleanAppointments() {
           SELECT 1 FROM deleted_appointments d WHERE LOWER(d.reference_no) = LOWER(s.reference_number)
         )
         AND NOT EXISTS (
-          SELECT 1 FROM appointments app WHERE app.reference_no = s.reference_number
+          SELECT 1 FROM appointments app WHERE LOWER(app.reference_no) = LOWER(s.reference_number) OR LOWER(REPLACE(app.reference_no, '-', '')) = LOWER(REPLACE(s.reference_number, '-', ''))
         );
     `).catch(() => {});
 
@@ -229,7 +238,7 @@ async function syncAndCleanAppointments() {
           SELECT 1 FROM deleted_appointments d WHERE LOWER(d.reference_no) = LOWER(s.reference_number)
         )
         AND NOT EXISTS (
-          SELECT 1 FROM appointments app WHERE app.reference_no = s.reference_number
+          SELECT 1 FROM appointments app WHERE LOWER(app.reference_no) = LOWER(s.reference_number) OR LOWER(REPLACE(app.reference_no, '-', '')) = LOWER(REPLACE(s.reference_number, '-', ''))
         );
     `).catch(() => {});
 
