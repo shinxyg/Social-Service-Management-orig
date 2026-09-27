@@ -204,6 +204,30 @@ exports.createApplication = async (req, res) => {
 
     const newApp = insertRes.rows[0];
 
+    // Un-dismiss reference in deleted_appointments so it shows up in Admin Appointments immediately
+    await client.query(
+      `DELETE FROM deleted_appointments WHERE LOWER(reference_no) = LOWER($1)`,
+      [referenceNo]
+    ).catch(() => {});
+
+    // Insert pending appointment record into appointments
+    const fullName = `${finalFirstName} ${middleName || ''} ${finalLastName} ${suffix || ''}`.replace(/\s+/g, ' ').trim().toUpperCase();
+    const apptConcern = `${finalAssistanceType.replace(/\s*assistance/gi, '').trim()} Assistance`;
+
+    await client.query(
+      `INSERT INTO appointments (reference_no, module, applicant_name, concern, status, office_location, notes, created_at, updated_at)
+       VALUES ($1, 'AICS', $2, $3, 'pending', 'Quezon City Hall', 'Awtomatikong pumasok mula sa AICS aplikasyon para sa scheduling at assessment.', NOW(), NOW())
+       ON CONFLICT (reference_no) DO UPDATE SET status = 'pending', updated_at = NOW()`,
+      [referenceNo, fullName, apptConcern]
+    ).catch(async () => {
+      await client.query(`DELETE FROM appointments WHERE LOWER(reference_no) = LOWER($1)`, [referenceNo]).catch(() => {});
+      await client.query(
+        `INSERT INTO appointments (reference_no, module, applicant_name, concern, status, office_location, notes, created_at, updated_at)
+         VALUES ($1, 'AICS', $2, $3, 'pending', 'Quezon City Hall', 'Awtomatikong pumasok mula sa AICS aplikasyon para sa scheduling at assessment.', NOW(), NOW())`,
+        [referenceNo, fullName, apptConcern]
+      ).catch(() => {});
+    });
+
     // Handle Uploaded Files
     let labelsArray = [];
     if (documentLabels) {

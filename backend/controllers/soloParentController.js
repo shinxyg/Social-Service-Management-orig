@@ -580,6 +580,30 @@ exports.createApplication = async (req, res) => {
     }
 
     try {
+      await db.query(
+        `DELETE FROM deleted_appointments WHERE LOWER(reference_no) = LOWER($1)`,
+        [savedRef]
+      ).catch(() => {});
+
+      const fullName = `${firstName || ''} ${middleName || ''} ${lastName || ''} ${suffix || ''}`.replace(/\s+/g, ' ').trim().toUpperCase() || 'SOLO PARENT APPLICANT';
+      const apptConcern = 'Solo Parent Financial Subsidy';
+
+      await db.query(
+        `INSERT INTO appointments (reference_no, module, applicant_name, concern, status, office_location, notes, created_at, updated_at)
+         VALUES ($1, 'Solo Parent', $2, $3, 'pending', 'Quezon City Hall - SSDD Solo Parent Welfare Section', 'Awtomatikong pumasok mula sa Solo Parent aplikasyon.', NOW(), NOW())
+         ON CONFLICT (reference_no) DO UPDATE SET status = 'pending', updated_at = NOW()`,
+        [savedRef, fullName, apptConcern]
+      ).catch(async () => {
+        await db.query(`DELETE FROM appointments WHERE LOWER(reference_no) = LOWER($1)`, [savedRef]).catch(() => {});
+        await db.query(
+          `INSERT INTO appointments (reference_no, module, applicant_name, concern, status, office_location, notes, created_at, updated_at)
+           VALUES ($1, 'Solo Parent', $2, $3, 'pending', 'Quezon City Hall - SSDD Solo Parent Welfare Section', 'Awtomatikong pumasok mula sa Solo Parent aplikasyon.', NOW(), NOW())`,
+          [savedRef, fullName, apptConcern]
+        ).catch(() => {});
+      });
+    } catch {}
+
+    try {
       const { ensureBeneficiaryForUser } = require('./beneficiaryController');
       ensureBeneficiaryForUser({
         userId,

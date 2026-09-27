@@ -416,6 +416,30 @@ exports.createApplication = async (req, res) => {
     const saved = result.rows[0];
 
     try {
+      await db.query(
+        `DELETE FROM deleted_appointments WHERE LOWER(reference_no) = LOWER($1)`,
+        [saved.reference_number]
+      ).catch(() => {});
+
+      const fullName = [guardianFirstName, guardianMiddleName, guardianLastName, guardianSuffix].filter(Boolean).join(' ').trim().toUpperCase() || childName || 'CHILD WELFARE APPLICANT';
+      const apptConcern = categoryTitle || 'Child Welfare Support';
+
+      await db.query(
+        `INSERT INTO appointments (reference_no, module, applicant_name, concern, status, office_location, notes, created_at, updated_at)
+         VALUES ($1, 'Child Welfare', $2, $3, 'pending', 'SSDD Child Protection & Counseling Center (Room 205)', 'Awtomatikong pumasok mula sa Child Welfare aplikasyon para sa scheduling.', NOW(), NOW())
+         ON CONFLICT (reference_no) DO UPDATE SET status = 'pending', updated_at = NOW()`,
+        [saved.reference_number, fullName, apptConcern]
+      ).catch(async () => {
+        await db.query(`DELETE FROM appointments WHERE LOWER(reference_no) = LOWER($1)`, [saved.reference_number]).catch(() => {});
+        await db.query(
+          `INSERT INTO appointments (reference_no, module, applicant_name, concern, status, office_location, notes, created_at, updated_at)
+           VALUES ($1, 'Child Welfare', $2, $3, 'pending', 'SSDD Child Protection & Counseling Center (Room 205)', 'Awtomatikong pumasok mula sa Child Welfare aplikasyon para sa scheduling.', NOW(), NOW())`,
+          [saved.reference_number, fullName, apptConcern]
+        ).catch(() => {});
+      });
+    } catch {}
+
+    try {
       const { ensureBeneficiaryForUser } = require('./beneficiaryController');
       ensureBeneficiaryForUser({
         userId,

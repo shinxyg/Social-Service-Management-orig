@@ -540,6 +540,31 @@ exports.createApplication = async (req, res) => {
           newApp.submittedAt || new Date().toISOString(),
         ]
       );
+
+      // Un-dismiss reference in deleted_appointments so it shows up in Admin Appointments immediately
+      await db.query(
+        `DELETE FROM deleted_appointments WHERE LOWER(reference_no) = LOWER($1) OR LOWER(reference_no) = LOWER($2)`,
+        [newApp.referenceNumber, String(newApp.id)]
+      ).catch(() => {});
+
+      // Sync directly into appointments table as pending
+      const apptModule = (newApp.category || '').toLowerCase().includes('pwd') ? 'PWD' : 'Senior Citizen';
+      const apptConcern = apptModule === 'PWD' ? 'PWD Social Assistance' : 'Senior Social Assistance';
+      const fullName = `${newApp.firstName || ''} ${newApp.middleName || ''} ${newApp.lastName || ''} ${newApp.suffix || ''}`.replace(/\s+/g, ' ').trim().toUpperCase() || 'APPLICANT';
+
+      await db.query(
+        `INSERT INTO appointments (reference_no, module, applicant_name, concern, status, office_location, notes, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, 'pending', 'Quezon City Hall - PDAO Room 102', 'Awtomatikong pumasok mula sa PWD/Senior Social Assistance aplikasyon.', NOW(), NOW())
+         ON CONFLICT (reference_no) DO UPDATE SET status = 'pending', updated_at = NOW()`,
+        [newApp.referenceNumber, apptModule, fullName, apptConcern]
+      ).catch(async () => {
+        await db.query(`DELETE FROM appointments WHERE LOWER(reference_no) = LOWER($1)`, [newApp.referenceNumber]).catch(() => {});
+        await db.query(
+          `INSERT INTO appointments (reference_no, module, applicant_name, concern, status, office_location, notes, created_at, updated_at)
+           VALUES ($1, $2, $3, $4, 'pending', 'Quezon City Hall - PDAO Room 102', 'Awtomatikong pumasok mula sa PWD/Senior Social Assistance aplikasyon.', NOW(), NOW())`,
+          [newApp.referenceNumber, apptModule, fullName, apptConcern]
+        ).catch(() => {});
+      });
     } catch (dbErr) {
       console.warn('[DB Error] Could not insert to DB, saving to memory fallback:', dbErr.message);
       memoryApplications = [

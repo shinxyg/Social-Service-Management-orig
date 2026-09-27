@@ -233,6 +233,31 @@ exports.createApplication = async (req, res) => {
     }
 
     try {
+      if (savedApp && savedApp.reference_number) {
+        await db.query(
+          `DELETE FROM deleted_appointments WHERE LOWER(reference_no) = LOWER($1)`,
+          [savedApp.reference_number]
+        ).catch(() => {});
+
+        const fullName = `${firstName || ''} ${middleName || ''} ${lastName || ''} ${suffix || ''}`.replace(/\s+/g, ' ').trim().toUpperCase() || 'LIVELIHOOD APPLICANT';
+
+        await db.query(
+          `INSERT INTO appointments (reference_no, module, applicant_name, concern, status, office_location, notes, created_at, updated_at)
+           VALUES ($1, 'Livelihood', $2, 'Livelihood Capital Assistance', 'pending', 'Quezon City Hall - SSDD Livelihood Center', 'Awtomatikong pumasok mula sa na-aprubahang Livelihood Capital allocation para sa appointment scheduling.', NOW(), NOW())
+           ON CONFLICT (reference_no) DO UPDATE SET status = 'pending', updated_at = NOW()`,
+          [savedApp.reference_number, fullName]
+        ).catch(async () => {
+          await db.query(`DELETE FROM appointments WHERE LOWER(reference_no) = LOWER($1)`, [savedApp.reference_number]).catch(() => {});
+          await db.query(
+            `INSERT INTO appointments (reference_no, module, applicant_name, concern, status, office_location, notes, created_at, updated_at)
+             VALUES ($1, 'Livelihood', $2, 'Livelihood Capital Assistance', 'pending', 'Quezon City Hall - SSDD Livelihood Center', 'Awtomatikong pumasok mula sa na-aprubahang Livelihood Capital allocation para sa appointment scheduling.', NOW(), NOW())`,
+            [savedApp.reference_number, fullName]
+          ).catch(() => {});
+        });
+      }
+    } catch {}
+
+    try {
       const { ensureBeneficiaryForUser } = require('./beneficiaryController');
       ensureBeneficiaryForUser({
         userId,
