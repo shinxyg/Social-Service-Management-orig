@@ -275,8 +275,7 @@ exports.getDisbursements = async (req, res) => {
          f.id,
          f.disbursement_id,
          f.application_ref,
-         CASE 
-           COALESCE(NULLIF(TRIM(f.applicant_name), ''), 'BENEFICIARY APPLICANT') as applicant_name,
+         COALESCE(NULLIF(TRIM(f.applicant_name), ''), 'BENEFICIARY APPLICANT') as applicant_name,
          f.assistance_type,
          CASE WHEN f.fixed_amount::numeric > 0 THEN f.fixed_amount::numeric ELSE 5000 END as fixed_amount,
          f.date_approved,

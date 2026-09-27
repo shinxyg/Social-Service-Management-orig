@@ -110,53 +110,9 @@ function parseDateTime(dateStr, timeStr) {
 }
 
 async function autoReleaseScheduledLivelihood() {
-  try {
-    const result = await db.query(
-      `SELECT id, reference_number, assistance, monitoring FROM livelihood_applications 
-       WHERE LOWER(COALESCE(assistance->>'assistance_status', '')) = 'for_release'`
-    );
-
-    const now = new Date();
-    for (const app of result.rows) {
-      const assist = typeof app.assistance === 'string' ? JSON.parse(app.assistance) : (app.assistance || {});
-      if (!assist.release_date) continue;
-      const scheduledDt = parseDateTime(assist.release_date, assist.release_time);
-      if (scheduledDt && now.getTime() >= scheduledDt.getTime()) {
-        assist.assistance_status = 'released';
-        assist.released_at = now.toISOString();
-        assist.released_by = assist.released_by || 'Automated Scheduled Release System';
-        assist.updated_at = now.toISOString();
-
-        let monitoring = Array.isArray(app.monitoring) ? app.monitoring : (typeof app.monitoring === 'string' ? JSON.parse(app.monitoring) : []);
-        if (monitoring.length === 0) {
-          monitoring.unshift({
-            id: `MON-${Date.now()}`,
-            application_id: app.id,
-            reference_number: app.reference_number,
-            monitoring_status: 'active',
-            log_type: 'inspection',
-            title: 'Initial Assistance Release & Monitoring Setup',
-            notes: `Capital / Materials assistance automatically released at scheduled date and time (${assist.release_date} ${assist.release_time || ''}). Active monitoring initiated.`,
-            officer_name: 'Automated Scheduled Release System',
-            inspection_date: now.toISOString().split('T')[0],
-            created_at: now.toISOString(),
-          });
-        }
-
-        await db.query(
-          `UPDATE livelihood_applications SET
-            assistance = $1::jsonb,
-            monitoring = $2::jsonb,
-            updated_at = NOW()
-          WHERE id = $3`,
-          [JSON.stringify(assist), JSON.stringify(monitoring), app.id]
-        );
-      }
-    }
-  } catch (err) {}
+  // Manual release only: Releases must be explicitly triggered by Admin action
+  return;
 }
-
-setInterval(autoReleaseScheduledLivelihood, 30000);
 
 exports.createApplication = async (req, res) => {
   try {
