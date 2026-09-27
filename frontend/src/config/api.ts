@@ -29,7 +29,10 @@ export function getApiBase(): string {
     url = `https://${url}`;
   }
 
-  return url.replace(/\/+$/, "");
+  url = url.replace(/\/+$/, "");
+  url = url.replace(/\/api\/aics$/i, "");
+  url = url.replace(/\/api$/i, "");
+  return url;
 }
 
 export const API_BASE = getApiBase();

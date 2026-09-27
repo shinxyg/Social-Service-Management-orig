@@ -17,7 +17,7 @@ import {
   Search
 } from 'lucide-react'
 
-const API_BASE = `${APP_API_BASE}/api/aics`
+const API_BASE = APP_API_BASE.replace(/\/+$/, '').replace(/\/api\/aics$/i, '').replace(/\/api$/i, '') + '/api/aics'
 
 const DESIGN = {
   colors: {
