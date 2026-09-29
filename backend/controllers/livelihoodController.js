@@ -284,6 +284,11 @@ exports.createApplication = async (req, res) => {
       }).catch(() => {});
     } catch {}
 
+    try {
+      const { syncAndCleanAppointments } = require('./appointmentController');
+      syncAndCleanAppointments().catch(() => {});
+    } catch (err) {}
+
     return res.status(201).json({
       success: true,
       message: 'Matagumpay na naisumite ang iyong Livelihood Program Application.',

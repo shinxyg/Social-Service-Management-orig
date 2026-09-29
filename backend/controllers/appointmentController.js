@@ -173,15 +173,20 @@ async function syncAndCleanAppointments() {
       SELECT 
         l.reference_number,
         'Livelihood',
-        UPPER(TRIM(CONCAT_WS(' ', l.first_name, l.last_name))),
+        COALESCE(NULLIF(UPPER(TRIM(CONCAT_WS(' ', l.first_name, l.last_name))), ''), UPPER(TRIM(CONCAT_WS(' ', l.first_name, l.middle_name, l.last_name))), 'LIVELIHOOD APPLICANT'),
         'Livelihood Capital Assistance',
-        'pending' AS status,
+        CASE 
+          WHEN l.application_status IN ('approved', 'completed', 'released', 'for_release') THEN 'approved'
+          WHEN l.application_status IN ('scheduled', 'interview_scheduled') THEN 'scheduled'
+          ELSE 'pending'
+        END,
         'Quezon City Hall - SSDD Livelihood Center',
-        'Awtomatikong pumasok mula sa na-aprubahang Livelihood Capital allocation para sa appointment scheduling.',
+        'Awtomatikong pumasok mula sa Livelihood Capital aplikasyon para sa appointment scheduling.',
         COALESCE(l.created_at, NOW()),
         NOW()
       FROM livelihood_applications l
-      WHERE l.application_status = 'approved'
+      WHERE l.application_status NOT IN ('rejected', 'denied', 'disapproved', 'cancelled', 'draft')
+        AND l.reference_number IS NOT NULL AND l.reference_number <> ''
         AND NOT EXISTS (
           SELECT 1 FROM deleted_appointments d WHERE LOWER(d.reference_no) = LOWER(l.reference_number)
         )
@@ -198,15 +203,20 @@ async function syncAndCleanAppointments() {
       SELECT 
         p.reference_number,
         CASE WHEN p.category ILIKE '%pwd%' THEN 'PWD' ELSE 'Senior Citizen' END,
-        UPPER(TRIM(CONCAT_WS(' ', p.first_name, p.middle_name, p.last_name, p.suffix))),
+        COALESCE(NULLIF(UPPER(TRIM(CONCAT_WS(' ', p.first_name, p.middle_name, p.last_name, p.suffix))), ''), 'APPLICANT'),
         CASE WHEN p.category ILIKE '%pwd%' THEN 'PWD Social Assistance' ELSE 'Senior Social Assistance' END,
-        'pending' AS status,
+        CASE 
+          WHEN p.status IN ('approved', 'completed', 'released', 'for_release') THEN 'approved'
+          WHEN p.status IN ('scheduled', 'interview_scheduled') THEN 'scheduled'
+          ELSE 'pending'
+        END,
         'Quezon City Hall - PDAO Room 102',
         'Awtomatikong pumasok mula sa PWD/Senior Social Assistance aplikasyon.',
         COALESCE(p.submitted_at, p.created_at, NOW()),
         NOW()
       FROM pwd_senior_applications p
       WHERE p.status NOT IN ('rejected', 'denied', 'disapproved', 'cancelled', 'draft')
+        AND p.reference_number IS NOT NULL AND p.reference_number <> ''
         AND NOT EXISTS (
           SELECT 1 FROM deleted_appointments d WHERE LOWER(d.reference_no) = LOWER(p.reference_number)
         )
@@ -223,9 +233,17 @@ async function syncAndCleanAppointments() {
       SELECT 
         s.reference_number,
         'Solo Parent',
-        UPPER(TRIM(CONCAT_WS(' ', s.first_name, s.middle_name, s.last_name, s.suffix))),
+        COALESCE(
+          NULLIF(UPPER(TRIM(CONCAT_WS(' ', s.first_name, s.middle_name, s.last_name, s.suffix))), ''),
+          NULLIF(UPPER(TRIM(CONCAT_WS(' ', s.guardian_first_name, s.guardian_last_name))), ''),
+          'SOLO PARENT APPLICANT'
+        ),
         CASE WHEN (s.application_type ILIKE '%edu%' OR s.reference_number ILIKE '%SP-EDU%') THEN 'Solo Parent Educational Assistance' ELSE 'Solo Parent Financial Subsidy' END,
-        'pending' AS status,
+        CASE 
+          WHEN s.application_status IN ('approved', 'completed', 'for_release', 'released') THEN 'approved' 
+          WHEN s.application_status IN ('scheduled', 'interview_scheduled') THEN 'scheduled'
+          ELSE 'pending' 
+        END,
         'Quezon City Hall - SSDD Solo Parent Welfare Section',
         'Awtomatikong pumasok mula sa Solo Parent aplikasyon.',
         COALESCE(s.created_at, NOW()),
@@ -233,6 +251,7 @@ async function syncAndCleanAppointments() {
       FROM solo_parent_child_welfare_applications s
       WHERE (s.module_type = 'SOLO_PARENT' OR s.reference_number ILIKE 'SP-%')
         AND s.application_status NOT IN ('rejected', 'denied', 'disapproved', 'cancelled', 'draft')
+        AND s.reference_number IS NOT NULL AND s.reference_number <> ''
         AND NOT EXISTS (
           SELECT 1 FROM deleted_appointments d WHERE LOWER(d.reference_no) = LOWER(s.reference_number)
         )
@@ -249,9 +268,13 @@ async function syncAndCleanAppointments() {
       SELECT 
         s.reference_number,
         'Child Welfare',
-        COALESCE(NULLIF(UPPER(TRIM(CONCAT_WS(' ', s.guardian_first_name, s.guardian_last_name))), ''), UPPER(TRIM(s.child_name)), 'BENEFICIARY'),
+        COALESCE(NULLIF(UPPER(TRIM(CONCAT_WS(' ', s.guardian_first_name, s.guardian_last_name))), ''), NULLIF(UPPER(TRIM(CONCAT_WS(' ', s.first_name, s.middle_name, s.last_name))), ''), UPPER(TRIM(s.child_name)), 'CHILD WELFARE BENEFICIARY'),
         COALESCE(NULLIF(s.category_title, ''), 'Child Welfare Support'),
-        'pending' AS status,
+        CASE 
+          WHEN s.application_status IN ('approved', 'completed', 'for_release', 'released') THEN 'approved' 
+          WHEN s.application_status IN ('scheduled', 'interview_scheduled') THEN 'scheduled'
+          ELSE 'pending' 
+        END,
         'SSDD Child Protection & Counseling Center (Room 205)',
         'Awtomatikong pumasok mula sa Child Welfare aplikasyon para sa scheduling.',
         COALESCE(s.created_at, NOW()),
@@ -259,6 +282,7 @@ async function syncAndCleanAppointments() {
       FROM solo_parent_child_welfare_applications s
       WHERE (s.module_type = 'CHILD_WELFARE' OR s.reference_number ILIKE 'CW-%')
         AND s.application_status NOT IN ('rejected', 'denied', 'disapproved', 'cancelled', 'draft')
+        AND s.reference_number IS NOT NULL AND s.reference_number <> ''
         AND NOT EXISTS (
           SELECT 1 FROM deleted_appointments d WHERE LOWER(d.reference_no) = LOWER(s.reference_number)
         )
@@ -946,3 +970,7 @@ exports.updateAppointmentStatus = async (req, res) => {
     res.status(500).json({ success: false, error: 'Failed to update appointment status.', details: err.message });
   }
 };
+
+exports.syncAndCleanAppointments = syncAndCleanAppointments;
+exports.triggerAppointmentSyncIfStale = triggerAppointmentSyncIfStale;
+

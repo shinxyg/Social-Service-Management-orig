@@ -269,6 +269,11 @@ exports.createApplication = async (req, res) => {
     await client.query('COMMIT');
     memoryAicsApplications.unshift(newApp);
 
+    try {
+      const { syncAndCleanAppointments } = require('./appointmentController');
+      syncAndCleanAppointments().catch(() => {});
+    } catch (err) {}
+
     // Notify User
     const userIdentifier = targetQcId || email || referenceNo;
     await sendUserNotification(

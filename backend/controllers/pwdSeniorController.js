@@ -620,6 +620,12 @@ exports.createApplication = async (req, res) => {
     } catch {}
 
     invalidateAppsCache();
+
+    try {
+      const { syncAndCleanAppointments } = require('./appointmentController');
+      syncAndCleanAppointments().catch(() => {});
+    } catch (err) {}
+
     return res.status(201).json({ success: true, application: newApp });
   } catch (err) {
     console.error('Error creating PWD/Senior application:', err);

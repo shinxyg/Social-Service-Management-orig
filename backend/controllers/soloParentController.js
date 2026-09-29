@@ -632,6 +632,12 @@ exports.createApplication = async (req, res) => {
     } catch {}
 
     invalidateSoloCache();
+
+    try {
+      const { syncAndCleanAppointments } = require('./appointmentController');
+      syncAndCleanAppointments().catch(() => {});
+    } catch (err) {}
+
     return res.status(201).json({
       success: true,
       message: 'Application created successfully',
