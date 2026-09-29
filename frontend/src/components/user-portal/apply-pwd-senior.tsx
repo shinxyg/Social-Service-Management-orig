@@ -125,16 +125,6 @@ function evaluateActiveAppBlockedState(
   })
 
   if (isSeniorSocial) {
-    const socialApps = seniorApps.filter((a) => {
-      const t = String(a.type || a.service || a.assistanceType || "").toLowerCase()
-      return t.includes("assistance") || t.includes("social")
-    })
-    const approvedSocial = socialApps.find((a) => ["approved", "completed", "for_release"].includes(String(a.status || "").toLowerCase()))
-    const pendingSocial = socialApps.find((a) => ["pending", "under_review"].includes(String(a.status || "pending").toLowerCase()))
-    const rejectedSocial = socialApps.find((a) => ["rejected", "disapproved"].includes(String(a.status || "").toLowerCase()))
-    if (approvedSocial) return { isBlocked: true, blockedApp: approvedSocial, hasApprovedApp: true }
-    if (pendingSocial) return { isBlocked: true, blockedApp: pendingSocial, hasApprovedApp: false }
-    if (rejectedSocial) return { isBlocked: true, blockedApp: rejectedSocial, hasApprovedApp: false }
     return { isBlocked: false, blockedApp: null, hasApprovedApp: false }
   }
 
