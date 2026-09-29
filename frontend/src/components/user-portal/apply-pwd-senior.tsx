@@ -208,20 +208,24 @@ export default function ApplyPWDSenior() {
 
   const [bypassedBlock, setBypassedBlock] = useState(() => {
     try {
+      if (isSenior) return true
       const isUrlParam = typeof window !== "undefined" && window.location.search.includes("reapply=true")
       const isLocal =
+        localStorage.getItem("pwd_senior_reapplying") === "true" ||
         localStorage.getItem(`pwd_senior_reapplying_${urlCategory || "pwd"}_${urlType || "new"}`) === "true" ||
-        localStorage.getItem("pwd_senior_reapplying") === "true"
+        localStorage.getItem("pwd_senior_reapplying_senior_social-assistance") === "true" ||
+        localStorage.getItem("pwd_senior_reapplying_senior_social assistance") === "true" ||
+        localStorage.getItem("pwd_senior_reapplying_pwd_assistance") === "true"
       return Boolean(isUrlParam || isLocal)
     } catch {
-      return false
+      return isSenior
     }
   })
   const bypassedBlockRef = useRef(bypassedBlock)
 
-  const [isBlocked, setIsBlocked] = useState(initialBlockedState.isBlocked && !bypassedBlock)
-  const [blockedApp, setBlockedApp] = useState<any>(bypassedBlock ? null : initialBlockedState.blockedApp)
-  const [hasApprovedApp, setHasApprovedApp] = useState(bypassedBlock ? false : initialBlockedState.hasApprovedApp)
+  const [isBlocked, setIsBlocked] = useState(isSenior ? false : (initialBlockedState.isBlocked && !bypassedBlock))
+  const [blockedApp, setBlockedApp] = useState<any>((isSenior || bypassedBlock) ? null : initialBlockedState.blockedApp)
+  const [hasApprovedApp, setHasApprovedApp] = useState((isSenior || bypassedBlock) ? false : initialBlockedState.hasApprovedApp)
 
   useEffect(() => {
     let isMounted = true
@@ -229,10 +233,14 @@ export default function ApplyPWDSenior() {
     const checkActiveApp = async () => {
       try {
         const isReapp =
+          isSenior ||
           bypassedBlockRef.current ||
           bypassedBlock ||
           localStorage.getItem("pwd_senior_reapplying") === "true" ||
           localStorage.getItem(`pwd_senior_reapplying_${urlCategory || "pwd"}_${urlType || "new"}`) === "true" ||
+          localStorage.getItem("pwd_senior_reapplying_senior_social-assistance") === "true" ||
+          localStorage.getItem("pwd_senior_reapplying_senior_social assistance") === "true" ||
+          localStorage.getItem("pwd_senior_reapplying_pwd_assistance") === "true" ||
           (typeof window !== "undefined" && window.location.search.includes("reapply=true"))
         if (isReapp) {
           if (isMounted) {
@@ -248,7 +256,7 @@ export default function ApplyPWDSenior() {
 
         const localApps = getLocalApplications()
         const localRes = evaluateActiveAppBlockedState(localApps, urlCategory, urlType, userProf, currentQcid)
-        if (isMounted && localRes.isBlocked) {
+        if (isMounted && !isReapp && !bypassedBlockRef.current && localRes.isBlocked) {
           setIsBlocked(true)
           setBlockedApp(localRes.blockedApp)
           setHasApprovedApp(localRes.hasApprovedApp)
@@ -267,7 +275,7 @@ export default function ApplyPWDSenior() {
         } catch {}
 
         const finalRes = evaluateActiveAppBlockedState(allApps, urlCategory, urlType, userProf, currentQcid)
-        if (isMounted && !bypassedBlockRef.current) {
+        if (isMounted && !isReapp && !bypassedBlockRef.current) {
           setIsBlocked(finalRes.isBlocked)
           setBlockedApp(finalRes.blockedApp)
           setHasApprovedApp(finalRes.hasApprovedApp)
@@ -304,24 +312,25 @@ export default function ApplyPWDSenior() {
   useEffect(() => {
     try {
       const isReapp =
+        isSenior ||
         localStorage.getItem(`pwd_senior_reapplying_${urlCategory || "pwd"}_${urlType || "new"}`) === "true" ||
         localStorage.getItem("pwd_senior_reapplying") === "true" ||
+        localStorage.getItem("pwd_senior_reapplying_senior_social-assistance") === "true" ||
+        localStorage.getItem("pwd_senior_reapplying_senior_social assistance") === "true" ||
+        localStorage.getItem("pwd_senior_reapplying_pwd_assistance") === "true" ||
         (typeof window !== "undefined" && window.location.search.includes("reapply=true"))
       if (isReapp) {
         bypassedBlockRef.current = true
         setBypassedBlock(true)
-      } else {
-        bypassedBlockRef.current = false
-        setBypassedBlock(false)
+        setIsBlocked(false)
+        setBlockedApp(null)
+        setHasApprovedApp(false)
       }
-    } catch {
-      bypassedBlockRef.current = false
-      setBypassedBlock(false)
-    }
+    } catch {}
     setShowModal(false)
     setUnderstood(false)
     setCurrentStep(1)
-  }, [urlCategory, urlType])
+  }, [urlCategory, urlType, isSenior])
 
   const typeBadge = { label: t("badgeSocialAssistance") || "Social Assistance", color: "bg-blue-100 text-blue-700 border-blue-200" }
 
@@ -610,14 +619,19 @@ export default function ApplyPWDSenior() {
                 type="button"
                 onClick={() => {
                   try {
-                    localStorage.setItem(`pwd_senior_reapplying_${urlCategory || "pwd"}_${urlType || "new"}`, "true")
                     localStorage.setItem("pwd_senior_reapplying", "true")
+                    localStorage.setItem(`pwd_senior_reapplying_${urlCategory || "pwd"}_${urlType || "new"}`, "true")
+                    localStorage.setItem("pwd_senior_reapplying_senior_social-assistance", "true")
+                    localStorage.setItem("pwd_senior_reapplying_senior_social assistance", "true")
+                    localStorage.setItem("pwd_senior_reapplying_pwd_assistance", "true")
                   } catch {}
                   bypassedBlockRef.current = true
                   setBypassedBlock(true)
                   setIsBlocked(false)
                   setBlockedApp(null)
                   setHasApprovedApp(false)
+                  setShowModal(false)
+                  setCurrentStep(1)
                 }}
                 className="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer shadow-xs uppercase tracking-wide flex items-center justify-center gap-2"
               >
